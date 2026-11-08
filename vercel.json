@@ -1,0 +1,55 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "api": {
+      "root": "apps/api",
+      "framework": "nestjs",
+      "installCommand": "pnpm install --frozen-lockfile",
+      "buildCommand": "pnpm --workspace-root exec turbo run build --filter=@amc/api"
+    },
+    "web": {
+      "root": "apps/web",
+      "framework": "nextjs",
+      "installCommand": "pnpm install --frozen-lockfile",
+      "buildCommand": "pnpm --workspace-root exec turbo run build --filter=@amc/web",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "api",
+          "format": "url",
+          "env": "STAFF_API_ORIGIN"
+        }
+      ]
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/ops/(.*)",
+      "destination": {
+        "service": "api"
+      }
+    },
+    {
+      "source": "/health(.*)",
+      "destination": {
+        "service": "api"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "web"
+      }
+    }
+  ],
+  "crons": [
+    {
+      "path": "/ops/maintenance",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/ops/notifications/drain",
+      "schedule": "0 4 * * *"
+    }
+  ]
+}

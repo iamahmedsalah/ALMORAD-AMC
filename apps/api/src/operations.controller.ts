@@ -47,6 +47,7 @@ export class OperationsController {
  @ApiResponse({ status: 200, description: 'Batch processing summary' })
  @ApiResponse({ status: 401, description: 'Invalid or missing CRON_SECRET' })
  @ApiResponse({ status: 503, description: 'Maintenance secret not configured' })
+ @Get('notifications/drain')
  @Post('notifications/drain')
  async drainNotifications(@Req() request: Request) {
    const secret = process.env.CRON_SECRET;

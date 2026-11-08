@@ -12,8 +12,14 @@ export const sessionCookieName = () => process.env.NODE_ENV==='production'?'__Ho
 export function cookieToken(cookie:string|undefined) {const name=sessionCookieName();const values=(cookie||'').split(';').map(s=>s.trim()).filter(s=>s.startsWith(`${name}=`));if(values.length!==1)return undefined;return values[0]!.slice(name.length+1).match(/^[a-f0-9]{64}$/)?.[0];}
 export function sameOrigin(origin:string|undefined) {
   if(!origin)return false;
-  const expected=process.env.WEB_ORIGIN||'http://localhost:3000';
+  const fallbackOrigin=process.env.VERCEL_PROJECT_PRODUCTION_URL?`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`:'http://localhost:3000';
+  const expected=process.env.WEB_ORIGIN||fallbackOrigin;
   if(origin===expected)return true;
+  if(process.env.VERCEL_ENV==='preview'){
+    for(const host of [process.env.VERCEL_URL,process.env.VERCEL_BRANCH_URL]){
+      if(host&&origin===`https://${host}`)return true;
+    }
+  }
   if(process.env.NODE_ENV==='production')return false;
-  try {const url=new URL(origin);return url.origin===origin&&url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname)&&['3000','3100'].includes(url.port);}catch{return false;}
+  try {const url=new URL(origin);return url.origin===origin&&url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname);}catch{return false;}
 }
