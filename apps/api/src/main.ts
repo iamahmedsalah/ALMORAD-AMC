@@ -76,7 +76,6 @@ printBanner({
       label: 'PostgreSQL',
       status: 'online',
       value: 'Connected',
-      detail: env.DATABASE_URL.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:****@'),
       icon: '🐘',
     },
     { label: 'Security', status: 'ready', value: 'RBAC + CSRF + Rate Limiter', icon: '🛡️' },

@@ -40,4 +40,12 @@ describe('banner utility', () => {
     expect(consoleBanner.styles.length).toBeGreaterThan(0);
     expect(consoleBanner.styles[0]).toContain('#BE9D5B');
   });
+
+  it('never prints database connection credentials, hosts or query tokens', () => {
+    for (const scheme of ['postgres', 'postgresql', 'prisma+postgres']) {
+      const banner = formatBanner({ title: 'API', diagnostics: [{ label: 'PostgreSQL', status: 'online', value: 'Connected', detail: `${scheme}://synthetic-user:synthetic-password)with-parenthesis@private.example.invalid:5432/test?api_key=synthetic-token` }] });
+      expect(banner).toContain('[ ONLINE ] Connected');
+      for (const sensitive of [scheme + '://', 'synthetic-user', 'synthetic-password', 'private.example.invalid', 'synthetic-token']) expect(banner).not.toContain(sensitive);
+    }
+  });
 });

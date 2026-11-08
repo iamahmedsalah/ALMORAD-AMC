@@ -23,11 +23,11 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
             // 1. Hero entrance choreography
             gsap.fromTo(
               '[data-hero-line]',
-              { y: 34, opacity: 0 },
+              { y: 24, opacity: 1 },
               {
                 y: 0,
                 opacity: 1,
-                duration: 0.95,
+                duration: 0.75,
                 stagger: 0.12,
                 ease: 'power3.out',
                 clearProps: 'transform,opacity',
@@ -125,17 +125,11 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
               );
             });
 
-            // Editorial gallery: stagger the cards, then move artwork inside its
-            // clipped frame. Separate targets avoid competing transforms.
-            gsap.utils.toArray<HTMLElement>('[data-portfolio-card]').forEach((card, index) => {
-              const sign = (index % 3 - 1) * (document.documentElement.dir === 'rtl' ? -1 : 1);
-              gsap.fromTo(card, { y: 54, rotation: sign * 2, scale: 0.97 }, {
-                y: 0, rotation: 0, scale: 1, ease: 'power2.out',
-                scrollTrigger: { trigger: card, start: 'top 96%', end: 'top 55%', scrub: 0.6 },
-              });
-              gsap.fromTo(card.querySelector('.lp-photo-img'), { yPercent: -3, scale: 1.08 }, {
-                yPercent: 3, scale: 1.03, ease: 'none',
-                scrollTrigger: { trigger: card, start: 'top bottom', end: 'bottom top', scrub: 0.6 },
+            // Scroll-linked specialty accents, including the three executives.
+            gsap.utils.toArray<HTMLElement>('[data-scroll-card] .team-career-accents').forEach(accent => {
+              gsap.fromTo(accent, { rotation: -8, y: 8 }, {
+                rotation: 8, y: -8, ease: 'none',
+                scrollTrigger: { trigger: accent.closest('[data-scroll-card]'), start: 'top bottom', end: 'bottom top', scrub: .65 },
               });
             });
 
@@ -244,7 +238,8 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
             });
 
             // 10. Orbit rotation scrub
-            gsap.to('[data-orbit]', {
+            const orbits = root.current?.querySelectorAll('[data-orbit]');
+            if (orbits?.length) gsap.to(orbits, {
               rotation: 90,
               ease: 'none',
               scrollTrigger: {

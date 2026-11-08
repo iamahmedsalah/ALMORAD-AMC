@@ -2,7 +2,8 @@
 
 import type { Locale } from '@amc/shared';
 import { Link } from '@/i18n/navigation';
-import { SolarIcon } from '@/components/ui/solar-icon';
+import { SolarIcon, type SolarName } from '@/components/ui/solar-icon';
+import { DirectorsReel } from './directors-reel';
 
 interface TeamMember {
   id: string;
@@ -14,6 +15,19 @@ interface TeamMember {
   quote: { en: string; ar: string };
   tags: { en: string[]; ar: string[] };
   avatarType: 'ceo' | 'co_ceo' | 'coo' | 'creative' | 'growth' | 'tech' | 'operations' | 'client';
+}
+
+const careerIcons: Record<TeamMember['avatarType'], SolarName> = {
+  ceo: 'chart-2-linear', co_ceo: 'case-round-linear', coo: 'layers-linear',
+  creative: 'star-linear', growth: 'chart-2-linear', tech: 'code-square-linear',
+  operations: 'calendar-linear', client: 'chat-round-line-linear',
+};
+
+function CareerAccents({ type }: { type: TeamMember['avatarType'] }) {
+  return <div className={`team-career-accents career-${type}`} aria-hidden="true">
+    <span className="team-career-icon"><SolarIcon name={careerIcons[type]} /></span>
+    <span className="team-career-orbit"><SolarIcon name={type === 'tech' ? 'layers-linear' : 'star-linear'} /></span>
+  </div>;
 }
 
 const CEO_MEMBER: TeamMember = {
@@ -316,6 +330,10 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
             <span>{isAr ? 'احجز جلسة استراتيجية مع الفريق' : 'Book a Strategy Session with Us'}</span>
             <SolarIcon name="arrow-right-up-linear" />
           </Link>
+          <a href="#directors" className="button button-secondary team-directors-link">
+            {isAr ? 'تعرّف على مديري التخصصات' : 'Meet the discipline leads'}
+            <SolarIcon name="arrow-down-linear" />
+          </a>
         </div>
       </div>
 
@@ -327,6 +345,7 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
       >
         <div className="lp-team-ceo-portrait rounded-squircle-lg">
           <ExecutivePortraitSvg type="ceo" isFeatured />
+          <CareerAccents type="ceo" />
           <span className="lp-team-verified-pill">
             <span className="badge-dot" aria-hidden="true" />
             <span>{isAr ? 'رسم توضيحي مؤقت · CEO' : 'ILLUSTRATION PLACEHOLDER · CEO'}</span>
@@ -383,6 +402,7 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
           >
             <div className="lp-team-card-portrait rounded-squircle-lg">
               <ExecutivePortraitSvg type={member.avatarType} isFeatured />
+              <CareerAccents type={member.avatarType} />
               <span className="lp-team-card-badge badge rounded-squircle-sm">
                 {member.badge}
               </span>
@@ -407,27 +427,21 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
       </div>
 
       {/* 3. Team of 5 Discipline Leads */}
-      <div className="lp-team-sub-header mb-4">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--accent-text)]">
-          {isAr ? 'فريق القيادات المتخصصة (٥ قطاعات استراتيجية)' : 'DIRECTORS & DISCIPLINE LEADS (5 CORE PILLARS)'}
-        </h3>
-      </div>
-      <div className="lp-team-grid-5">
+      <DirectorsReel locale={locale} count={CORE_TEAM_5.length}>
         {CORE_TEAM_5.map((member) => (
           <article
             key={member.id}
             data-team-card
-            data-scroll-card
+            data-director-slide
             className="lp-team-card glass-surface rounded-squircle-xl"
           >
             <div className="lp-team-card-portrait rounded-squircle-lg">
               <ExecutivePortraitSvg type={member.avatarType} />
-              <span className="lp-team-card-badge badge rounded-squircle-sm">
-                {member.badge}
-              </span>
+              <CareerAccents type={member.avatarType} />
             </div>
 
             <div className="lp-team-card-body">
+              <span className="lp-team-card-badge director-card-kicker badge rounded-squircle-sm">{member.badge}</span>
               <small className="lp-team-card-discipline">{member.discipline[locale]}</small>
               <h4 className="lp-team-card-title text-lg">{member.name[locale]}</h4>
               <p className="lp-team-card-role text-xs">{member.role[locale]}</p>
@@ -443,7 +457,7 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
             </div>
           </article>
         ))}
-      </div>
+      </DirectorsReel>
     </section>
   );
 }

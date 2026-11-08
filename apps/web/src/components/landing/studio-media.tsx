@@ -100,7 +100,7 @@ const getReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduc
 
 export function StudioShowreel({ locale }: StudioShowreelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const playbackRef = useRef(0);
   const [userPaused, setPaused] = useState(false);
   const reducedMotion = useSyncExternalStore(subscribeMotion, getReducedMotion, () => true);
   const paused = userPaused || reducedMotion;
@@ -115,25 +115,24 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const videoEl = videoRef.current;
-    if (
-      videoEl &&
-      typeof canvas.captureStream === 'function' &&
-      !paused && !videoEl.srcObject
-    ) {
-      try {
-        const stream = canvas.captureStream(30);
-        videoEl.srcObject = stream;
-        videoEl.play().catch(() => {});
-      } catch {}
-    }
-
     let rafId = 0;
-    const duration = 12.0; // 12-second looping 4K studio broadcast showreel
-    const start = performance.now();
+    let visible = false;
+    let previous = performance.now();
+    let lastDraw = 0;
+    const duration = 12.0;
 
     const drawFrame = (now: number) => {
-      const elapsed = ((now - start) / 1000) % duration;
+      rafId = 0;
+      if (document.hidden) return;
+      // Canvas work is bounded to 30fps; the clock pauses offscreen/hidden.
+      if (now - lastDraw < 1000 / 30 && visible && !paused) {
+        rafId = requestAnimationFrame(drawFrame);
+        return;
+      }
+      if (!paused && visible) playbackRef.current += Math.min(.1, (now - previous) / 1000);
+      previous = now;
+      lastDraw = now;
+      const elapsed = playbackRef.current % duration;
       const autoScene = Math.min(3, Math.floor((elapsed / duration) * 4));
       const currentScene = manualScene !== null ? manualScene : autoScene;
       setSceneIndex((prev) => (prev === currentScene ? prev : currentScene));
@@ -261,18 +260,28 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
       ctx.fillStyle = '#BE9D5B';
       ctx.fillRect(42, h - 18, (w - 84) * progress, 4);
 
-      if (!paused) {
+      if (!paused && visible) {
         rafId = requestAnimationFrame(drawFrame);
       }
     };
 
+    const wake = () => {
+      cancelAnimationFrame(rafId);
+      previous = performance.now();
+      lastDraw = 0;
+      drawFrame(previous);
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry?.isIntersecting ?? false;
+      wake();
+    });
+    observer.observe(canvas);
+    document.addEventListener('visibilitychange', wake);
     drawFrame(performance.now());
     return () => {
       cancelAnimationFrame(rafId);
-      if (videoEl?.srcObject instanceof MediaStream) {
-        videoEl.srcObject.getTracks().forEach(track => track.stop());
-        videoEl.srcObject = null;
-      }
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', wake);
     };
   }, [paused, manualScene]);
 
@@ -287,7 +296,7 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
           <div className="flex items-center gap-3 flex-wrap">
             <span className="lp-tv-rec-pill">
               <span className="lp-tv-rec-dot" aria-hidden="true" />
-              <span>{isAr ? 'بث الاستوديو · 4K 60FPS' : 'STUDIO MONITOR · 4K 60FPS'}</span>
+              <span>{isAr ? 'عرض الاستوديو' : 'STUDIO MONITOR'}</span>
             </span>
             <span className="lp-showreel-scene-label">
               {activeScene.code} — {isAr ? activeScene.ar : activeScene.en}
@@ -347,15 +356,6 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
             <rect width="1280" height="680" fill="url(#tvGlare)" />
             <rect x="2" y="2" width="1276" height="676" rx="18" fill="none" stroke="rgba(216,190,134,0.22)" strokeWidth="2" />
           </svg>
-          <video
-            ref={videoRef}
-            className="lp-showreel-video-mirror"
-            poster="/studio/showreel-poster.svg"
-            muted
-            playsInline
-            loop
-            aria-hidden="true"
-          />
         </div>
 
         {/* Interactive Channel / Scene Switcher Buttons */}

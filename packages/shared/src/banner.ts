@@ -85,7 +85,9 @@ export function formatBanner(options: BannerOptions): string {
 
   lines.push(DOUBLE_LINE);
   lines.push('');
-  return lines.join('\n');
+  // A database URI must never reach terminal output, including usernames,
+  // hosts and query parameters. Keep this guard even when callers omit it.
+  return lines.join('\n').replace(/(?:postgres(?:ql)?|prisma\+postgres):\/\/\S+/gi, '[database connection redacted]');
 }
 
 export function printBanner(options: BannerOptions): void {

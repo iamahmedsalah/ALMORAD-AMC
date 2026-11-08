@@ -8,7 +8,7 @@ import { BrandArt, serviceArt } from '@/components/landing/brand-art';
 import { DisciplineCombiner } from '@/components/landing/discipline-combiner';
 import { TeamShowcase } from '@/components/landing/team-showcase';
 import { ArrowIcon, Lines } from '@/components/landing/primitives';
-import { StudioPhotoShowcase, StudioShowreel } from '@/components/landing/studio-media';
+import { StudioShowreel } from '@/components/landing/studio-media';
 import { AmcMarkContainer } from '@/components/three/amc-mark-container';
 import { copyFor } from './copy';
 import { landingCopyFor } from './landing-copy';
@@ -308,11 +308,6 @@ export function Landing({ locale }: { locale: Locale }) {
                   <SolarIcon name="arrow-right-up-linear" />
                 </Link>
               </div>
-            </div>
-
-            {/* Mock Studio Photography Grid (6 Asymmetric Editorial Shots) */}
-            <div className="  mb-14">
-              <StudioPhotoShowcase locale={locale} />
             </div>
 
             {/* Asymmetric Curated Service Gallery Rail (All 11 Services) */}

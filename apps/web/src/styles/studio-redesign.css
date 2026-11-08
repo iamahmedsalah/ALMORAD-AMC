@@ -780,13 +780,74 @@ html.dark .site-header .theme-cycle-button .theme-icon-motion { color:var(--amc-
   max-width: 960px;
   margin-inline: auto;
 }
+.directors-reel { position: relative; z-index: 25; margin-block-start: 2rem; }
+.directors-reel-stage { background: transparent; }
+.amc-landing .directors-reel [data-director-slide] {
+  background-color: var(--glass-fallback);
+  background-image: linear-gradient(135deg, var(--glass-reflection), transparent 38%, transparent 72%, var(--glass-glow));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .amc-landing .directors-reel [data-director-slide] { background-color: var(--glass-tint); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(120%); backdrop-filter: blur(var(--glass-blur)) saturate(120%); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .amc-landing .directors-reel [data-director-slide] { background-color: var(--glass-fallback); background-image: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+.team-directors-link { margin-block-start: .75rem; }
+#directors { scroll-margin-top: 28px; }
+.directors-reel[data-reel-active="manual"] .directors-reel-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 1rem; padding-block: 4px; padding-inline: max(4px, calc((100% - 370px) / 2)); overscroll-behavior-inline: contain; }
+.directors-reel[data-reel-active="manual"] [data-director-slide] { flex: 0 0 min(100%, 370px); scroll-snap-align: center; }
+.directors-reel[data-reel-active="manual"] .lp-team-card-portrait { width: min(100%, 250px); height: auto; max-height: none; aspect-ratio: 4 / 5; align-self: center; }
+.directors-reel-heading { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-block-end: 1.5rem; }
+.directors-reel-heading h3 { font-size: clamp(1.5rem, 3vw, 2.25rem); line-height: 1.35; }
+.directors-reel-hint { color: var(--fg-muted); font-size: .9rem; margin-block-start: .5rem; }
+.directors-reel-controls { display: flex; align-items: center; gap: .8rem; font-variant-numeric: tabular-nums; }
+.directors-reel-controls .button { min-width: 44px; padding: .65rem; }
+.directors-reel-progress { height: 3px; background: var(--border); margin-block-start: 1.25rem; overflow: hidden; }
+.directors-reel-progress span { display: block; height: 100%; background: var(--accent-text); transform-origin: left; transition: transform 250ms ease; }
+html[dir="rtl"] .directors-reel-progress span { transform-origin: right; }
+.directors-reel[data-reel-active="true"] { height: calc(var(--director-height, 450px) + 240px + 220svh); }
+.directors-reel[data-reel-active="true"] .directors-reel-stage { position: sticky; top: 110px; }
+.directors-reel[data-reel-active="true"] .directors-reel-track { display: grid; grid-template-columns: minmax(0, 1fr); overflow: clip; padding: 12px 64px; }
+.directors-reel[data-reel-active="true"] [data-director-slide] { grid-area: 1 / 1; display: flex; flex-direction: column; gap: .75rem; width: min(100%, 360px); justify-self: center; min-height: 0; backface-visibility: hidden; transform-origin: center; transition: border-color .2s ease; }
+.directors-reel[data-reel-active="true"] .lp-team-card-portrait { width: auto; height: clamp(220px, 28vh, 300px); max-height: none; aspect-ratio: 4 / 5; align-self: center; }
+.directors-reel[data-reel-active="true"] .lp-team-card-title { font-size: 1.4rem; }
+.directors-reel[data-reel-active="true"] .lp-team-card-bio { font-size: .9rem; }
+.directors-reel[data-reel-active="true"] .lp-team-tags { padding-block-start: 1rem; }
+@media (min-width: 768px) and (max-height: 850px) {
+  .directors-reel-heading { margin-block-end: 1rem; }
+  .directors-reel-heading h3 { font-size: 1.75rem; }
+  .directors-reel[data-reel-active="true"] .lp-team-card-portrait { height: 190px; }
+  .directors-reel[data-reel-active="true"] .lp-team-card-bio { font-size: .85rem; }
+  .directors-reel[data-reel-active="true"] .lp-team-tags { gap: .35rem; padding-block-start: .65rem; }
+  .directors-reel[data-reel-active="true"] .lp-team-tags .badge { font-size: .65rem; }
+}
+@media (max-width: 767px) {
+  .directors-reel[data-reel-active="true"] [data-director-slide] { gap: .7rem; }
+  .directors-reel[data-reel-active="true"] .lp-team-card-portrait { height: 150px; }
+  .directors-reel[data-reel-active="true"] .lp-team-card-title { font-size: 1.25rem; }
+  .directors-reel[data-reel-active="true"] .lp-team-card-bio { font-size: .85rem; }
+  .directors-reel-heading h3 { font-size: 1.5rem; }
+}
+.team-career-accents { position: absolute; inset: 0; pointer-events: none; color: var(--amc-orange-500); }
+.team-career-icon, .team-career-orbit { position: absolute; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid currentColor; border-radius: var(--radius-control); background: var(--surface); box-shadow: var(--shadow-sm); }
+.team-career-icon { inset-inline-end: 14px; top: 20%; transform: rotate(10deg); }
+.team-career-orbit { inset-inline-start: 14px; top: 56%; width: 34px; height: 34px; color: var(--accent-text); transform: rotate(-12deg); }
+.team-career-orbit .solar-icon { width: 18px; height: 18px; }
+.career-tech .team-career-icon, .career-co_ceo .team-career-icon, .career-client .team-career-icon { color: var(--foreground); }
+.career-operations .team-career-icon, .career-coo .team-career-icon { color: var(--accent-text); }
 .lp-team-grid-5 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(1rem, 2vw, 1.75rem);
 }
 .lp-team-grid-5 > article { min-width: 0; }
-.lp-team-grid-5 .lp-team-card-portrait { aspect-ratio: 16 / 10; max-height: 200px; }
+.lp-team-grid-5 .lp-team-card-portrait { aspect-ratio: 4 / 5; max-height: none; width: min(100%, 240px); align-self: center; }
+.lp-team-grid-5 .director-card-kicker { position: static; display: inline-flex; width: fit-content; max-width: 100%; margin-block-end: .65rem; background: var(--accent-soft); color: var(--accent-text); border-color: var(--glass-border); font-size: .65rem; }
+.lp-team-grid-5 .lp-team-card-portrait img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+.directors-reel-gallery { position: relative; isolation: isolate; }
+.directors-reel-track { position: relative; z-index: 1; }
 .lp-team-grid-5 .lp-team-portrait-svg { object-fit: contain; }
 .lp-team-grid-2 .lp-team-card-portrait { aspect-ratio: 16 / 9; max-height: 220px; }
 .lp-team-grid-5 .lp-team-card-body { padding: .25rem .25rem .5rem; }
