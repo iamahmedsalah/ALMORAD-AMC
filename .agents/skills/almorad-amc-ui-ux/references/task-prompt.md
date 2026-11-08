@@ -1,0 +1,2 @@
+# Agent task template
+Act as AMC senior design engineer and accessible motion director. First inspect approved `design.md`, portfolio/logo assets and existing Next.js components. Task: <USER REQUEST>. Preserve palette and fonts exactly. Provide section/component plan, responsive RTL/LTR design, dark/light tokens, progressive 3D/GSAP behavior and fallbacks, booking/admin UI states, accessibility/performance checks and precise changed files or proposed mockups.

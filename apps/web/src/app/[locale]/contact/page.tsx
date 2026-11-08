@@ -1,0 +1,32 @@
+﻿import {Container} from '@/components/layout/shell';
+import {Link} from '@/i18n/navigation';
+import {publicLocale} from '@/lib/public-page';
+import {pageMetadata} from '@/lib/seo/metadata';
+import {copyFor} from '@/features/marketing/copy';
+import {ContactForm} from '@/features/contact/contact-form';
+import {publicContact} from '@/lib/public-contact';
+
+export async function generateMetadata({params}: {params: Promise<{locale:string}>}) {
+  const locale = await publicLocale(params); const c = copyFor(locale);
+  return {...pageMetadata(locale,'/contact',c.nav.contact,c.contactPage.intro),robots:{index:false,follow:true}};
+}
+export default async function Contact({params}: {params: Promise<{locale:string}>}) {
+  const locale = await publicLocale(params); const ar = locale === 'ar';
+  const c = copyFor(locale); const contact = publicContact(locale);
+  return <Container className="studio-public-page">
+    <section className="page-intro"><p className="eyebrow">ALMORAD AMC</p><h1>{c.contactPage.title}</h1><p className="intro">{c.contactPage.intro}</p></section>
+    <div className="contact-page-grid"><ContactForm locale={locale}/>
+      <aside className="notice-panel" aria-labelledby="contact-options-title">
+        <h2 id="contact-options-title">{ar ? 'لنحدد نقطة البداية.' : 'Find your starting point.'}</h2>
+        <p>{ar ? 'شاركنا هدفك والتحدي الذي تواجهه. يمكنك إرسال رسالة، أو استكشاف الخدمات وخيارات الاجتماعات.' : 'Share your goal and the challenge ahead. Send a message, or explore our services and meeting options.'}</p>
+        {(contact.email || contact.phone || contact.address) && <dl className="contact-details">
+          {contact.email && <div><dt>{c.contactPage.email}</dt><dd><a dir="ltr" href={`mailto:${contact.email}`}>{contact.email}</a></dd></div>}
+          {contact.phone && <div><dt>{c.contactPage.phone}</dt><dd><a dir="ltr" href={`tel:${contact.phone}`}>{contact.phone}</a></dd></div>}
+          {contact.address && <div><dt>{c.contactPage.office}</dt><dd>{contact.address}</dd></div>}
+          {contact.maps && <div><dt>{c.contactPage.directions}</dt><dd><a href={contact.maps} target="_blank" rel="noopener noreferrer">{c.contactPage.directions} ↗</a></dd></div>}
+        </dl>}
+        <div className="contact-options"><Link className="button button-secondary" href="/booking">{ar ? 'خيارات الاجتماعات' : 'Meeting options'}<span aria-hidden="true">↗</span></Link><Link className="text-link" href="/services">{c.expertise.link}<span aria-hidden="true">↗</span></Link></div>
+      </aside>
+    </div>
+  </Container>;
+}

@@ -1,0 +1,60 @@
+name: almorad-amc-dev
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: almorad-amc-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-amc_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_only_password}
+      POSTGRES_DB: ${POSTGRES_DB:-amc_dev}
+    ports:
+      - '5432:5432'
+    volumes:
+      - almorad_amc_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: almorad-amc-dev-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      API_HOST: 0.0.0.0
+      API_PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-amc_dev}:${POSTGRES_PASSWORD:-local_only_password}@postgres:5432/${POSTGRES_DB:-amc_dev}?schema=public
+      WEB_ORIGIN: http://localhost:3000
+      STAFF_PROXY_SECRET: ${STAFF_PROXY_SECRET:-local_dev_staff_proxy_secret_0123456789abcdef0123456789abcdef0123456789abcdef}
+      CRON_SECRET: ${CRON_SECRET:-local_dev_cron_secret_0123456789abcdef0123456789abcdef}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '4000:4000'
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: almorad-amc-dev-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      STAFF_API_ORIGIN: http://api:4000
+      WEB_ORIGIN: http://localhost:3000
+      STAFF_PROXY_SECRET: ${STAFF_PROXY_SECRET:-local_dev_staff_proxy_secret_0123456789abcdef0123456789abcdef0123456789abcdef}
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+
+volumes:
+  almorad_amc_dev_data:

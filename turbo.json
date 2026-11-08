@@ -1,0 +1,103 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "ui": "stream",
+  "globalDependencies": [
+    "tsconfig.base.json",
+    "eslint.config.mjs",
+    ".env"
+  ],
+  "globalEnv": [
+    "NODE_ENV",
+    "NEXT_PUBLIC_CONTENT_APPROVED",
+    "NEXT_PUBLIC_SITE_URL",
+    "NEXT_PUBLIC_CONTACT_EMAIL",
+    "NEXT_PUBLIC_CONTACT_PHONE",
+    "NEXT_PUBLIC_OFFICE_ADDRESS_EN",
+    "NEXT_PUBLIC_OFFICE_ADDRESS_AR",
+    "NEXT_PUBLIC_OFFICE_HOURS_EN",
+    "NEXT_PUBLIC_OFFICE_HOURS_AR",
+    "NEXT_PUBLIC_MAPS_URL",
+    "VERCEL"
+  ],
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "SWC_NATIVE_BINDING_CACHE",
+    "NEXT_TELEMETRY_DISABLED",
+    "DIRECT_URL",
+    "VERCEL",
+    "VERCEL_ENV",
+    "VERCEL_URL",
+    "VERCEL_BRANCH_URL",
+    "WEB_ORIGIN",
+    "STAFF_API_ORIGIN",
+    "STAFF_PROXY_SECRET",
+    "STAFF_CSRF_SECRET",
+    "CRON_SECRET",
+    "STAFF_API_BYPASS_TOKEN",
+    "API_PORT",
+    "API_HOST",
+    "PORT",
+    "BOOKING_TOKEN_SECRET",
+    "BOOKING_APPROVED"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**"
+      ]
+    },
+    "typecheck": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": []
+    },
+    "dev": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false,
+      "persistent": true
+    },
+    "@amc/api#db:generate": {
+      "inputs": [
+        "prisma/schema.prisma",
+        "prisma.config.ts"
+      ],
+      "outputs": [
+        "src/generated/prisma/**"
+      ]
+    },
+    "@amc/api#build": {
+      "dependsOn": [
+        "^build",
+        "db:generate"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "@amc/api#typecheck": {
+      "dependsOn": [
+        "^build",
+        "db:generate"
+      ],
+      "outputs": []
+    },
+    "@amc/api#dev": {
+      "dependsOn": [
+        "^build",
+        "db:generate"
+      ],
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

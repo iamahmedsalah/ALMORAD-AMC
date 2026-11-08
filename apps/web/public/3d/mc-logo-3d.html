@@ -1,0 +1,208 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MC 3D Logo</title>
+<style>
+html,body{margin:0;height:100%;background:radial-gradient(circle at 50% 40%,#2a2a2e,#0b0b0d);overflow:hidden;font-family:system-ui,sans-serif;color:#eee}
+.bar{position:fixed;left:0;right:0;display:flex;flex-wrap:wrap;gap:6px;padding:10px;justify-content:center;z-index:2}
+#top{top:0}#bot{bottom:0}
+button{padding:7px 12px;border:1px solid #5a4a24;border-radius:999px;background:#17171a;color:#e7d3a1;cursor:pointer;font-size:13px}
+button.on{background:#C9A24A;color:#111;border-color:#C9A24A}
+.lbl{align-self:center;font-size:12px;opacity:.6;padding:0 4px}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head><body>
+<div class="bar" id="top"><span class="lbl">Animation</span></div>
+<div class="bar" id="bot"><span class="lbl">Material</span></div>
+<script type="module">
+import * as THREE from 'three';
+import {SVGLoader} from 'three/addons/loaders/SVGLoader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
+
+const MC_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="395 450 850 310" width="1700" height="620">
+  <g fill="#C9A24A">
+    <path d="M415 742 L578 540 L606 568 L450 742 Z"/>
+    <path d="M603 517 L628 484 L775 640 L935 478 L940 740 L908 740 L908 570 L775 708 Z"/>
+    <path d="M1193.4 525.2 A135 135 0 0 0 963.1 658.2 L1000.7 644.5 A95 95 0 0 1 1162.8 550.9 Z"/>
+    <path d="M1212.4 669.1 A135 135 0 0 1 1147.1 734.4 L1130.1 698.1 A95 95 0 0 0 1176.1 652.1 Z"/>
+    <path d="M1086 616 A22 22 0 1 0 1130 616 A22 22 0 1 0 1086 616 Z"/>
+  </g>
+</svg>
+`;
+
+// Pieces, in the order they appear in the SVG
+const PIECE_NAMES = ['slash','M','Ctop','Cbot','dot'];
+const C_CENTER = [1090, 612];           // pivot used by the C arcs (SVG units)
+
+// ---------- materials ----------
+const MATERIALS = {
+  gold:     () => new THREE.MeshPhysicalMaterial({color:0xC9A24A, metalness:1, roughness:0.22, clearcoat:0.6, clearcoatRoughness:0.15}),
+  roseGold: () => new THREE.MeshPhysicalMaterial({color:0xD9967F, metalness:1, roughness:0.25, clearcoat:0.5}),
+  chrome:   () => new THREE.MeshPhysicalMaterial({color:0xffffff, metalness:1, roughness:0.05}),
+  glass:    () => new THREE.MeshPhysicalMaterial({color:0xffffff, metalness:0, roughness:0.05, transmission:1, thickness:40, ior:1.5, clearcoat:1}),
+  neon:     () => new THREE.MeshStandardMaterial({color:0x111111, emissive:0xffc857, emissiveIntensity:1.6, metalness:0.3, roughness:0.4}),
+  matte:    () => new THREE.MeshStandardMaterial({color:0xC9A24A, metalness:0, roughness:0.7}),
+};
+
+// ---------- easing ----------
+const clamp = (x,a=0,b=1) => Math.min(b, Math.max(a, x));
+const ease = {
+  outCubic: x => 1 - Math.pow(1-x, 3),
+  inOut:    x => x < .5 ? 4*x*x*x : 1 - Math.pow(-2*x+2, 3)/2,
+  outBack:  x => { const c1=1.70158, c3=c1+1; return 1 + c3*Math.pow(x-1,3) + c1*Math.pow(x-1,2); },
+  elastic:  x => x===0 ? 0 : x===1 ? 1 : Math.pow(2,-10*x)*Math.sin((x*10-.75)*(2*Math.PI)/3)+1,
+};
+
+// ---------- animation presets ----------
+// Each preset: (piece, index, t, api) -> sets offsets. Use api.move(dx, dyScreen, dz), api.rot(x,y,z), api.scale(s)
+// dur = loop length in seconds (0 = runs forever, 'once' presets hold their final pose)
+const dirs = [[-1,.6],[0,-1],[.4,-1],[1,.5],[1,-1]];   // start directions for the intro
+
+const PRESETS = {
+  assemble: { label:'Assemble', once:true, fn:(m,i,t,a)=>{
+    const p = clamp((t - i*0.18)/1.3), e = ease.outBack(p), k = 1-e;
+    a.move(dirs[i][0]*700*k, dirs[i][1]*700*k, -500*k);
+    a.rot(k*2, k*3, k*(i%2?6.28:-6.28));
+    a.scale(Math.max(0.0001, ease.outCubic(clamp(p*1.6))));
+  }},
+  explode: { label:'Explode', dur:4, fn:(m,i,t,a)=>{
+    const k = ease.inOut(0.5-0.5*Math.cos(2*Math.PI*t/4));
+    const h = m.userData.home, cx = 840, cy = 610;          // logo centre in SVG units
+    a.move((h.x-cx)*1.1*k, (cy-h.y)*1.1*k, 220*k*(i%2?1:-1));
+    a.rot(k*.6*(i-2)*.3, k*.8*(2-i)*.3, k*.5*(i%2?1:-1));
+  }},
+  float: { label:'Float', fn:(m,i,t,a)=>{
+    a.move(0, Math.sin(t*1.1+i)*10, Math.sin(t*1.3+i*.9)*35);
+    a.rot(Math.sin(t*.9+i)*.12, Math.cos(t*.7+i)*.15, Math.sin(t*.5+i)*.05);
+  }},
+  spinC: { label:'Spin C', fn:(m,i,t,a)=>{
+    const n = PIECE_NAMES[i];
+    if(n==='Ctop') a.rot(0,0,t*.9);
+    if(n==='Cbot') a.rot(0,0,-t*1.4);
+    if(n==='dot')  a.move(Math.cos(t*2.4)*34, Math.sin(t*2.4)*34, 0);
+    a.move(0, Math.sin(t+i)*6, 0);
+  }},
+  wave: { label:'Wave', fn:(m,i,t,a)=>{
+    const ph = t*3 - m.userData.home.x*0.012;
+    a.move(0, 0, Math.sin(ph)*70);
+    a.rot(Math.cos(ph)*.18, Math.sin(ph)*.35, 0);
+  }},
+  flip: { label:'Flip', dur:4.5, fn:(m,i,t,a)=>{
+    const p = clamp((t%4.5 - i*0.22)/1.2);
+    a.rot(0, ease.inOut(p)*Math.PI*2, 0);
+    a.move(0, 0, Math.sin(p*Math.PI)*90);
+  }},
+  pulse: { label:'Glow pulse', fn:(m,i,t,a)=>{
+    const s = 0.5+0.5*Math.sin(t*2.4 - i*.5);
+    a.scale(1+.06*s); a.glow(.1+1.2*s);
+  }},
+  drop: { label:'Drop & bounce', dur:4, fn:(m,i,t,a)=>{
+    const p = clamp((t%4 - i*0.15)/1.4), e = ease.elastic(p);
+    a.move(0, 520*(1-e), 0); a.scale(clamp(p*3,0.001,1));
+  }},
+};
+// Showreel plays these back to back
+const REEL = [['assemble',3.2],['float',2.5],['spinC',5],['wave',4],['flip',4.5],['explode',4],['pulse',3],['drop',4]];
+
+// ---------- main factory ----------
+function createMCLogo({svg=MC_SVG, material='gold', depth=40, bevel=5} = {}){
+  let mat = typeof material === 'string' ? MATERIALS[material]() : material;
+  const data = new SVGLoader().parse(svg);
+  const inner = new THREE.Group();            // flipped (SVG y is down)
+  const root  = new THREE.Group();            // centred, safe to rotate/scale
+  const pieces = {};
+  data.paths.forEach((p, i) => {
+    const geo = new THREE.ExtrudeGeometry(SVGLoader.createShapes(p), {
+      depth, bevelEnabled:true, bevelThickness:bevel*1.2, bevelSize:bevel, bevelSegments:6, curveSegments:48 });
+    const name = PIECE_NAMES[i] || ('piece'+i);
+    let px, py;
+    if(name==='Ctop' || name==='Cbot'){ [px,py] = C_CENTER; }
+    else { geo.computeBoundingBox(); const b=geo.boundingBox; px=(b.min.x+b.max.x)/2; py=(b.min.y+b.max.y)/2; }
+    geo.translate(-px, -py, 0);
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(px, py, 0);
+    mesh.userData.home = mesh.position.clone();
+    mesh.name = name; pieces[name] = mesh; inner.add(mesh);
+  });
+  inner.scale.y = -1;
+  root.add(inner);
+  const box = new THREE.Box3().setFromObject(inner), c = box.getCenter(new THREE.Vector3());
+  inner.position.set(-c.x, -c.y, -c.z);
+
+  let current = 'assemble', t0 = 0, reelOn = false, now = 0;
+  const api = { dx:0,dy:0,dz:0, rx:0,ry:0,rz:0, s:1, g:0,
+    move(x,y,z){ this.dx+=x; this.dy+=y; this.dz+=z; },
+    rot(x,y,z){ this.rx+=x; this.ry+=y; this.rz+=z; },
+    scale(s){ this.s*=s; }, glow(v){ this.g=Math.max(this.g,v); } };
+
+  function apply(preset, t){
+    const meshes = PIECE_NAMES.map(n => pieces[n]).filter(Boolean);
+    let glow = 0;
+    meshes.forEach((m, i) => {
+      Object.assign(api, {dx:0,dy:0,dz:0,rx:0,ry:0,rz:0,s:1,g:0});
+      preset.fn(m, i, t, api);
+      m.position.set(m.userData.home.x + api.dx, m.userData.home.y - api.dy, m.userData.home.z + api.dz);
+      m.rotation.set(api.rx, api.ry, -api.rz);      // minus: the group is y-flipped
+      m.scale.setScalar(api.s);
+      glow = Math.max(glow, api.g);
+    });
+    if(mat.emissive){
+      if(!mat.userData.baseEmissive){ mat.userData.baseEmissive = { c: mat.emissive.clone(), i: mat.emissiveIntensity }; }
+      const b = mat.userData.baseEmissive;
+      if(glow>0 || mat.userData.glowed){
+        mat.emissive.copy(glow>0 ? new THREE.Color(0xC9A24A) : b.c);
+        mat.emissiveIntensity = glow>0 ? glow : b.i;
+        mat.userData.glowed = glow>0;
+      }
+    }
+  }
+
+  return {
+    root, pieces, material: mat,
+    presets: Object.keys(PRESETS), reel: REEL,
+    play(name){ reelOn = name==='showreel'; current = reelOn ? REEL[0][0] : name; t0 = now; },
+    update(elapsed){
+      now = elapsed; let t = elapsed - t0;
+      if(reelOn){
+        const total = REEL.reduce((s,r)=>s+r[1],0); let tt = t % total, k = 0;
+        while(tt >= REEL[k][1]){ tt -= REEL[k][1]; k++; }
+        apply(PRESETS[REEL[k][0]], tt); return;
+      }
+      apply(PRESETS[current], t);
+    },
+    setMaterial(name){ const m = MATERIALS[name](); Object.values(pieces).forEach(p=>p.material=m); mat = m; this.material = m; },
+  };
+}
+
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.toneMapping=THREE.ACESFilmicToneMapping;document.body.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+scene.environment=new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(),0.04).texture;
+const key=new THREE.DirectionalLight(0xffffff,2.2);key.position.set(300,400,600);scene.add(key);
+const camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,1,6000);camera.position.set(0,-40,1000);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.autoRotateSpeed=1.5;
+
+const logo=createMCLogo({material:'gold'});
+const tilt=new THREE.Group();tilt.add(logo.root);scene.add(tilt);
+logo.play('assemble');
+
+const top=document.getElementById('top'),bot=document.getElementById('bot');
+function btn(parent,label,fn,group){const b=document.createElement('button');b.textContent=label;
+  b.onclick=()=>{if(group)[...parent.querySelectorAll('button[data-g="'+group+'"]')].forEach(x=>x.classList.remove('on'));if(group)b.classList.add('on');fn(b)};
+  if(group)b.dataset.g=group;parent.appendChild(b);return b}
+const reel=btn(top,'Showreel',()=>logo.play('showreel'),'a');reel.classList.add('on');logo.play('showreel');
+Object.entries(PRESETS).forEach(([k,p])=>btn(top,p.label,()=>logo.play(k),'a'));
+btn(top,'Replay',()=>{const on=top.querySelector('button.on[data-g="a"]');on&&on.click()});
+Object.keys(MATERIALS).forEach((k,i)=>{const b=btn(bot,k,()=>logo.setMaterial(k),'m');if(i===0)b.classList.add('on')});
+btn(bot,'Auto-orbit',b=>{controls.autoRotate=!controls.autoRotate;b.classList.toggle('on',controls.autoRotate)});
+btn(bot,'Download .glb',()=>new GLTFExporter().parse(logo.root,r=>{const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([r],{type:'model/gltf-binary'}));a.download='mc-logo.glb';a.click()},console.error,{binary:true}));
+
+const mouse={x:0,y:0};addEventListener('pointermove',e=>{mouse.x=e.clientX/innerWidth-.5;mouse.y=e.clientY/innerHeight-.5});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+const clock=new THREE.Clock();
+(function loop(){requestAnimationFrame(loop);
+  logo.update(clock.getElapsedTime());
+  tilt.rotation.y+=(mouse.x*.5-tilt.rotation.y)*.06;tilt.rotation.x+=(mouse.y*.35-tilt.rotation.x)*.06;
+  controls.update();renderer.render(scene,camera)})();
+</script></body></html>

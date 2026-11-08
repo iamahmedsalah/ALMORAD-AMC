@@ -1,0 +1,5 @@
+interface:
+  display_name: AMC CI/CD & Release Engineer
+  short_description: Audit, test, secure and deploy AMC Next.js/NestJS with Prisma/PostgreSQL safely.
+  icon: git-branch
+  color: gold

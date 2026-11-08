@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model ContactInquiry {
+  id String @id @default(uuid()) @db.Uuid
+  idempotencyKey String @unique @db.Uuid
+  requestHash String @db.Char(64)
+  name String @db.VarChar(120)
+  email String @db.VarChar(254)
+  message String @db.VarChar(2000)
+  locale String @db.VarChar(2)
+  consentAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  ownerEmailStatus String @default("PENDING") @db.VarChar(20)
+  visitorEmailStatus String @default("PENDING") @db.VarChar(20)
+  hubspotStatus String @default("PENDING") @db.VarChar(20)
+  hubspotContactId String? @db.VarChar(40)
+  attempts Int @default(0)
+  lastError String? @db.VarChar(1000)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+  @@index([createdAt, id])
+}
+
+enum StaffRole {
+  RECEPTIONIST
+  MANAGER
+  CEO
+}
+
+model StaffUser {
+  id        String         @id @default(uuid()) @db.Uuid
+  email     String         @unique @db.VarChar(254)
+  role      StaffRole
+  active    Boolean        @default(true)
+  createdAt DateTime       @default(now()) @db.Timestamptz(3)
+  passwordHash String? @db.VarChar(200)
+  auditEvents StaffAuditEvent[]
+  bookingEvents BookingEvent[]
+  sessions  StaffSession[]
+}
+
+model StaffSession {
+  id        String    @id @default(uuid()) @db.Uuid
+  tokenHash String    @unique @db.Char(64)
+  userId    String    @db.Uuid
+  user      StaffUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime  @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model StaffAuditEvent {
+  id String @id @default(uuid()) @db.Uuid
+  actorId String? @db.Uuid
+  subjectId String? @db.Uuid
+  actor StaffUser? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action String @db.VarChar(64)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([createdAt, id])
+  @@index([actorId, createdAt])
+}
+model RequestThrottle {
+  key String @id @db.Char(64)
+  totalHits Int
+  expiresAt DateTime @db.Timestamptz(3)
+  blockedUntil DateTime? @db.Timestamptz(3)
+  @@index([expiresAt])
+}
+
+enum BookingStatus {
+ PENDING
+ CONFIRMED
+ CANCELLED
+ COMPLETED
+ NO_SHOW
+}
+enum MeetingType {
+ ONLINE
+ IN_PERSON
+}
+enum ChangeStatus {
+ OPEN
+ UNDER_REVIEW
+ ALTERNATIVE_PROPOSED
+ APPROVED
+ DECLINED
+ WITHDRAWN
+ EXPIRED
+}
+enum ChangeKind {
+ RESCHEDULE
+ CANCEL
+}
+model BookingSettings {
+ id String @id @default("agency") @db.VarChar(40)
+ enabled Boolean @default(false)
+ isDemo Boolean @default(false)
+ timezone String @db.VarChar(80)
+ durationMinutes Int
+ stepMinutes Int
+ bufferBeforeMinutes Int
+ bufferAfterMinutes Int
+ leadMinutes Int
+ lookaheadDays Int
+ changeCutoffMinutes Int
+ onlineEnabled Boolean @default(false)
+ inPersonEnabled Boolean @default(false)
+ officeAddressEn String? @db.VarChar(500)
+ officeAddressAr String? @db.VarChar(500)
+ directionsUrl String? @db.VarChar(1000)
+ weeklyHours Json
+ blackoutDates Json
+ serviceSlugs Json
+ version Int @default(1)
+ updatedAt DateTime @updatedAt @db.Timestamptz(3)
+ bookings Booking[]
+}
+model BookingService {
+ slug String @id @db.VarChar(80)
+ bookings Booking[]
+}
+model Booking {
+ id String @id @default(uuid()) @db.Uuid
+ reference String @unique @db.VarChar(24)
+ calendarId String @default("agency") @db.VarChar(40)
+ calendar BookingSettings @relation(fields:[calendarId],references:[id])
+ serviceSlug String @db.VarChar(80)
+ service BookingService @relation(fields:[serviceSlug],references:[slug])
+ meetingType MeetingType
+ status BookingStatus @default(CONFIRMED)
+ clientName String @db.VarChar(120)
+ email String @db.VarChar(254)
+ phone String? @db.VarChar(40)
+ company String? @db.VarChar(120)
+ notes String? @db.VarChar(1500)
+ locale String @db.VarChar(2)
+ timezone String @db.VarChar(80)
+ startsAt DateTime @db.Timestamptz(3)
+ endsAt DateTime @db.Timestamptz(3)
+ blockedStartsAt DateTime @db.Timestamptz(3)
+ blockedEndsAt DateTime @db.Timestamptz(3)
+ version Int @default(1)
+ tokenNonce String @db.Char(64)
+ tokenVersion Int @default(0)
+ tokenHash String @db.Char(64)
+ tokenExpiresAt DateTime @db.Timestamptz(3)
+ idempotencyKey String @unique @db.Uuid
+ requestHash String @db.Char(64)
+ isDemo Boolean @default(false)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ updatedAt DateTime @updatedAt @db.Timestamptz(3)
+ events BookingEvent[]
+ changes BookingChangeRequest[]
+ commands BookingCommand[]
+ notifications BookingOutbox[]
+ @@index([startsAt,status])
+ @@index([createdAt,serviceSlug])
+ @@index([email])
+}
+model BookingChangeRequest {
+ id String @id @default(uuid()) @db.Uuid
+ bookingId String @db.Uuid
+ booking Booking @relation(fields:[bookingId],references:[id],onDelete:Cascade)
+ kind ChangeKind
+ status ChangeStatus @default(OPEN)
+ requestedStartAt DateTime? @db.Timestamptz(3)
+ proposedStartAt DateTime? @db.Timestamptz(3)
+ reason String @db.VarChar(1000)
+ staffResponse String? @db.VarChar(1000)
+ respondedBy String? @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ updatedAt DateTime @updatedAt @db.Timestamptz(3)
+ resolvedAt DateTime? @db.Timestamptz(3)
+ @@index([status,createdAt])
+ @@index([bookingId,createdAt])
+}
+model BookingEvent {
+ id String @id @default(uuid()) @db.Uuid
+ bookingId String @db.Uuid
+ booking Booking @relation(fields:[bookingId],references:[id],onDelete:Cascade)
+ actorId String? @db.Uuid
+ actor StaffUser? @relation(fields:[actorId],references:[id],onDelete:SetNull)
+ kind String @db.VarChar(64)
+ details Json
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ @@index([bookingId,createdAt])
+}
+model BookingCommand {
+ id String @id @db.Uuid
+ bookingId String @db.Uuid
+ booking Booking @relation(fields:[bookingId],references:[id],onDelete:Cascade)
+ actorKey String @db.VarChar(70)
+ requestHash String @db.Char(64)
+ resultVersion Int
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+}
+model BookingOutbox {
+  id String @id @default(uuid()) @db.Uuid
+  bookingId String @db.Uuid
+  booking Booking @relation(fields:[bookingId],references:[id],onDelete:Cascade)
+  eventId String @unique @db.Uuid
+  kind String @db.VarChar(64)
+  status String @default("UNCONFIGURED") @db.VarChar(30)
+  attempts Int @default(0)
+  lastError String? @db.VarChar(1000)
+  deliveredAt DateTime? @db.Timestamptz(3)
+  nextRetryAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+  @@index([status,createdAt])
+  @@index([status,nextRetryAt])
+  @@index([bookingId])
+}

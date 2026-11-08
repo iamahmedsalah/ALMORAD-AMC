@@ -1,0 +1,5 @@
+interface:
+  display_name: ALMORAD AMC Engineer
+  short_description: Build and review the AMC bilingual Next.js/NestJS website with PostgreSQL and Prisma.
+  icon: code
+  color: gold

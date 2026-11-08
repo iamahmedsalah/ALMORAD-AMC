@@ -1,0 +1,7 @@
+# ALMORAD AMC
+
+Read `.agents/AGENTS.md`, the actual full-stack/UI skills under `.agents/skills`, and `docs/implementation-status.md` before changes. Requirements are in `docs/architecture.md`, `docs/design.md`, and `docs/implementation-master-prompt.md`; docs describe intended scope, not verified functionality. Follow the current user's authorized phase. Detailed master-prompt numbering is mapped in `docs/decisions.md`.
+
+Use pnpm workspaces, strict TypeScript, PostgreSQL/Prisma only, exact approved brand tokens, Arabic RTL and English LTR. Preserve official artwork. Never invent business details, credentials, availability, portfolio evidence or test outcomes. Staff permissions belong on the API. Booking changes remain staff-reviewed and conflict-safe in their later phase. All EGM and technical design artifacts, review reports, and drift reports must be saved under `docs/` (`docs/designs/`, `docs/reviews/`, `docs/reports/`); never output generated markdown files directly into the workspace root.
+
+Commands: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm db:generate`, `pnpm db:validate`, `pnpm test:e2e`. Windows may require `pnpm.cmd`. Database tests require isolated local *_test PostgreSQL. Do not reset databases, deploy, commit, push or connect external accounts unless authorized by the user. Keep actual validation results in implementation-status.md.

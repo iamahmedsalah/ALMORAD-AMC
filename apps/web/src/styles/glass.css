@@ -1,0 +1,131 @@
+/* Liquid glass is decorative; functional foregrounds remain theme tokens. */
+.amc-landing {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 90% 8%, var(--glass-glow), transparent 32%),
+    radial-gradient(ellipse at 8% 24%, color-mix(in srgb, var(--amc-navy-300) 12%, transparent), transparent 28%);
+}
+.amc-landing .glass-surface,
+.amc-landing :is(.lp-cap-card, .lp-process-band, .lp-combiner, .lp-tier-card, .lp-final-cta, .lp-faq-item),
+.site-header.site-header,
+.side-drawer.side-drawer {
+  background-color: var(--glass-fallback);
+  background-image:
+    linear-gradient(135deg, var(--glass-reflection), transparent 28%, transparent 76%, var(--glass-glow));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .amc-landing .glass-surface,
+  .amc-landing :is(.lp-cap-card, .lp-process-band, .lp-combiner, .lp-tier-card, .lp-final-cta, .lp-faq-item),
+  .site-header.site-header,
+  .side-drawer.side-drawer {
+    background-color: var(--glass-tint);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(135%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(135%);
+  }
+}
+.site-header.site-header { border-inline: 0; border-block-start: 0; }
+.side-drawer.side-drawer { border-radius: var(--radius-xl) 0 0 var(--radius-xl); }
+html[dir="rtl"] .side-drawer.side-drawer { border-radius: 0 var(--radius-xl) var(--radius-xl) 0; }
+.amc-landing :is(.lp-cap-card, .lp-tier-card, .lp-faq-item) { border-radius: var(--radius-lg); }
+.amc-landing :is(.lp-process-band, .lp-combiner, .lp-final-cta) { border-radius: var(--radius-xl); }
+.amc-landing .button { border-radius: var(--radius-md); }
+.amc-landing .button-primary { background: var(--primary); color: var(--primary-foreground); }
+.controls .theme-switcher-btn { min-width: 44px; min-height: 44px; }
+
+/* A lit studio cyclorama separates the official navy material from a dark page.
+   Keep this corridor above backgrounds and behind HTML; never blur the mark. */
+.amc-mark-stage {
+  position: fixed;
+  inset-block-start: 145px;
+  inset-inline-end: max(3.5rem, calc((100vw - 1320px) / 2));
+  width: min(42vw, 560px);
+  height: min(54vh, 510px);
+  z-index: 1;
+  pointer-events: none;
+  border-radius: var(--radius-xl);
+  background: radial-gradient(ellipse at 50% 48%, var(--scene-halo) 0%, color-mix(in srgb, var(--scene-halo) 70%, transparent) 36%, transparent 72%);
+}
+.amc-mark-canvas,
+.amc-mark-poster { position: absolute; inset: 0; }
+.amc-mark-canvas canvas { display: block; width: 100%; height: 100%; }
+.amc-mark-poster { display: grid; place-items: center; transition: opacity 240ms ease; }
+.amc-mark-poster[data-hidden="true"] { opacity: 0; }
+.amc-mark-static { width: 78%; height: auto; }
+.amc-landing .lp-hero-stage { align-content: end; min-height: 790px; }
+.amc-landing .lp-hero-frames { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.amc-landing .lp-hero-frame:first-child { grid-column: auto; }
+.amc-landing .lp-hero-frame { padding: 0.7rem; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.amc-landing .lp-hero-frame-art { height: 90px; }
+.amc-landing .lp-hero-frame strong { font-size: 0.8rem; }
+.amc-landing .lp-hero-frame small { font-size: 0.7rem; }
+.footer-brand-panel {
+  width: min(100%, 600px);
+  padding: clamp(1rem, 3vw, 2rem);
+  border-radius: var(--radius-xl);
+  background: var(--amc-navy-900);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 rgb(251 241 230 / 12%);
+}
+.footer-brand-art { display: block; width: 100%; height: auto; }
+@supports (corner-shape: squircle) {
+  .amc-mark-stage, .footer-brand-panel, .side-drawer.side-drawer,
+  .amc-landing :is(.lp-cap-card, .lp-process-band, .lp-combiner, .lp-tier-card, .lp-final-cta, .lp-faq-item) { corner-shape: squircle; }
+}
+@media (max-width: 1023px) {
+  .amc-mark-stage { position: relative; inset: auto; width: min(100% - 3rem, 640px); height: 330px; margin: 1rem auto 0; }
+  .amc-landing .lp-hero-stage { min-height: auto; }
+}
+@media (max-width: 767px) {
+  :root { --glass-blur: 12px; }
+  .amc-mark-stage { height: 210px; }
+  .amc-landing .lp-hero-frames { grid-template-columns: 1fr; }
+  .amc-landing .lp-hero-frame-art { height: 140px; }
+  .amc-landing .lp-hero-frame strong { font-size: 1rem; }
+  .amc-landing .lp-hero-frame small { font-size: 0.85rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .amc-mark-poster { transition: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .amc-landing .glass-surface,
+  .amc-landing :is(.lp-cap-card, .lp-process-band, .lp-combiner, .lp-tier-card, .lp-final-cta, .lp-faq-item),
+  .site-header.site-header, .side-drawer.side-drawer {
+    background-color: var(--glass-fallback); -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+}
+
+.amc-landing .lp-showreel-chapter strong { color: var(--accent-text); }
+
+/* Portaled drawer avoids the glass header's backdrop-filter containing block. */
+.side-drawer.side-drawer,
+html[dir="rtl"] .side-drawer.side-drawer {
+  transform: none;
+  clip-path: inset(0 0 0 100%);
+  visibility: hidden;
+  opacity: 0;
+  transition: clip-path 320ms ease, opacity 200ms ease, visibility 320ms;
+}
+html[dir="rtl"] .side-drawer.side-drawer { clip-path: inset(0 100% 0 0); }
+.side-drawer.side-drawer[data-open="true"],
+html[dir="rtl"] .side-drawer.side-drawer[data-open="true"] {
+  clip-path: inset(0);
+  visibility: visible;
+  opacity: 1;
+}
+
+.amc-landing .scroll-hud-rail { gap: 0; padding: 4px; }
+.amc-landing .scroll-hud-dot[data-active] {
+  width: 28px; height: 44px; background: transparent; box-shadow: none; transform: none;
+}
+.amc-landing .scroll-hud-dot::after {
+  content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--fg-muted);
+}
+.amc-landing .scroll-hud-dot[data-active="true"]::after { height: 24px; background: var(--accent-text); }
+.amc-landing .scroll-hud-dot:hover::after { background: var(--fg); }
+.amc-landing .lp-hero-fact strong,
+.amc-landing .scroll-hud-chapter-pill strong { color: var(--accent-text); }
+@media (scripting: none) { .amc-preloader { display: none; } }

@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Exact preserved requirements sentence; not a credential. Any changed sentence remains scanned."
+condition = "AND"
+regexTarget = "line"
+paths = ['''(^|/)docs/implementation-master-prompt\.md$''']
+regexes = ['''^- Staff authentication, receptionist/CEO RBAC, calendar/agenda, appointment management and searchable tables with paginated API; change-request tickets and audited transitions\.$''']

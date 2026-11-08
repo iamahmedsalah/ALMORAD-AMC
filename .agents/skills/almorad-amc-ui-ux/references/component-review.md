@@ -1,0 +1,11 @@
+# UI/UX final checklist
+- [ ] Official 2D/3D logo preserved and image rights verified
+- [ ] Exact eight swatches; complete dark/light token implementation
+- [ ] Cairo AR, IBM Plex Sans EN, Redaction 100 only selective large EN
+- [ ] EN+AR desktop/mobile plus tablet; true RTL, LTR technical inputs
+- [ ] All 11 service detail pages accessible from landing service hubs
+- [ ] No stock testimonials/client results/office details invented
+- [ ] Booking step flow and change-request staff approval accurate
+- [ ] Keyboard, focus, form errors, semantic headings, contrast and reduced motion
+- [ ] Static logo fallback, lazy maps and 3D, no CLS; no hydration mismatch
+- [ ] Staff UI remains task-focused; no animations obstructing tables

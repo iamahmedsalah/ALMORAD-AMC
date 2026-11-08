@@ -1,0 +1,64 @@
+name: Validate workspace
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      TURBO_TELEMETRY_DISABLED: '1'
+      DATABASE_URL: postgresql://amc_ci:ci_ephemeral_only@127.0.0.1:5432/amc_test
+      TEST_DATABASE_URL: postgresql://amc_ci:ci_ephemeral_only@127.0.0.1:5432/amc_test
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: amc_ci
+          POSTGRES_PASSWORD: ci_ephemeral_only
+          POSTGRES_DB: amc_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U amc_ci -d amc_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.11.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm icons:generate && git diff --exit-code -- apps/web/src/components/ui/solar-data.ts
+      - run: pnpm db:generate && pnpm db:validate
+      - run: pnpm lint && pnpm typecheck && pnpm test
+      # This service is disposable; this step never receives production credentials.
+      - run: pnpm db:migrate && pnpm test:db
+      - run: pnpm db:restore:check
+        env:
+          LOCAL_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - run: pnpm test:e2e:staff
+      - run: pnpm audit --prod --audit-level=high
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-results
+          path: |
+            playwright-report/
+            playwright-staff-report/
+            test-results/
+          retention-days: 7

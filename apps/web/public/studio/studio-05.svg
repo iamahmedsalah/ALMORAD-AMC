@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <linearGradient id="bg6" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#162B54"/>
+      <stop offset="100%" stop-color="#061430"/>
+    </linearGradient>
+    <filter id="shadow6" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="22" stdDeviation="20" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg6)"/>
+  <!-- Mobile E-Commerce Screens -->
+  <g filter="url(#shadow6)" transform="translate(180, 90) rotate(-4)">
+    <rect width="340" height="620" rx="42" fill="#0B1F44" stroke="#4A5F8F" stroke-width="3"/>
+    <rect x="18" y="18" width="304" height="584" rx="30" fill="#FCF8F3"/>
+    <rect x="42" y="54" width="256" height="220" rx="20" fill="#0B1F44"/>
+    <circle cx="170" cy="164" r="56" fill="#F7761E"/>
+    <rect x="42" y="300" width="180" height="22" rx="8" fill="#0B1F44"/>
+    <rect x="42" y="334" width="120" height="14" rx="6" fill="#6A7FAD"/>
+    <rect x="42" y="376" width="256" height="110" rx="16" fill="#EDE2D4"/>
+    <rect x="42" y="514" width="256" height="56" rx="16" fill="#F7761E"/>
+    <text x="112" y="548" fill="#061430" font-family="sans-serif" font-size="16" font-weight="800">COMMERCE 05</text>
+  </g>
+  <g filter="url(#shadow6)" transform="translate(620, 110) rotate(3)">
+    <rect width="420" height="580" rx="34" fill="#0B1F44" stroke="#F7761E" stroke-width="3"/>
+    <rect x="24" y="24" width="372" height="532" rx="22" fill="#162B54"/>
+    <text x="52" y="78" fill="#FA8A3A" font-family="monospace" font-size="14" font-weight="700">05 · OMNI-CHANNEL STOREFRONT</text>
+    <rect x="52" y="106" width="146" height="170" rx="16" fill="#0B1F44"/>
+    <rect x="220" y="106" width="146" height="170" rx="16" fill="#F7761E"/>
+    <rect x="52" y="296" width="146" height="170" rx="16" fill="#243962"/>
+    <rect x="220" y="296" width="146" height="170" rx="16" fill="#FCF8F3"/>
+    <text x="52" y="514" fill="#FBF1E6" font-family="sans-serif" font-size="22" font-weight="700">RTL + LTR Store Architecture</text>
+  </g>
+</svg>

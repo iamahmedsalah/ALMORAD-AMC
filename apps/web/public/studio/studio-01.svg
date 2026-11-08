@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#061430"/>
+      <stop offset="55%" stop-color="#0B1F44"/>
+      <stop offset="100%" stop-color="#162B54"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="0.75" cy="0.28" r="0.55">
+      <stop offset="0%" stop-color="#F7761E" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#EC5B13" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#061430" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cardCream" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FCF8F3"/>
+      <stop offset="100%" stop-color="#EDE2D4"/>
+    </linearGradient>
+    <filter id="shadow1" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="24" stdDeviation="24" flood-color="#020817" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg1)"/>
+  <rect width="1200" height="800" fill="url(#glow1)"/>
+  <!-- Perspective Studio Grid -->
+  <g stroke="#243962" stroke-width="1" opacity="0.55">
+    <line x1="0" y1="160" x2="1200" y2="160"/>
+    <line x1="0" y1="320" x2="1200" y2="320"/>
+    <line x1="0" y1="480" x2="1200" y2="480"/>
+    <line x1="0" y1="640" x2="1200" y2="640"/>
+    <line x1="240" y1="0" x2="240" y2="800"/>
+    <line x1="480" y1="0" x2="480" y2="800"/>
+    <line x1="720" y1="0" x2="720" y2="800"/>
+    <line x1="960" y1="0" x2="960" y2="800"/>
+  </g>
+  <!-- Editorial Brand Book Spread -->
+  <g filter="url(#shadow1)" transform="translate(130, 120) rotate(-3)">
+    <rect width="540" height="380" rx="24" fill="url(#cardCream)"/>
+    <rect x="36" y="36" width="180" height="308" rx="14" fill="#0B1F44"/>
+    <circle cx="126" cy="140" r="48" fill="#F7761E"/>
+    <rect x="64" y="220" width="124" height="12" rx="6" fill="#FBF1E6"/>
+    <rect x="64" y="244" width="88" height="8" rx="4" fill="#93A3C6"/>
+    <rect x="248" y="48" width="244" height="24" rx="8" fill="#0B1F44"/>
+    <rect x="248" y="88" width="190" height="12" rx="6" fill="#4A5F8F"/>
+    <rect x="248" y="136" width="72" height="140" rx="12" fill="#0B1F44"/>
+    <rect x="332" y="136" width="72" height="140" rx="12" fill="#F7761E"/>
+    <rect x="416" y="136" width="72" height="140" rx="12" fill="#DDCFBD"/>
+    <text x="248" y="318" fill="#0B1F44" font-family="sans-serif" font-size="15" font-weight="700" letter-spacing="3">BRAND SYSTEM 01</text>
+  </g>
+  <!-- Floating Pantone / Token Swatch Cards -->
+  <g filter="url(#shadow1)" transform="translate(650, 210) rotate(5)">
+    <rect width="410" height="440" rx="28" fill="#162B54" stroke="#354A78" stroke-width="2"/>
+    <rect x="28" y="28" width="354" height="230" rx="18" fill="#F7761E"/>
+    <path d="M120 190 L165 85 L195 140 L225 85 L270 190 Z" fill="#FBF1E6"/>
+    <text x="36" y="308" fill="#FBF1E6" font-family="sans-serif" font-size="22" font-weight="700">ALMORAD AMC — IDENT</text>
+    <text x="36" y="340" fill="#93A3C6" font-family="monospace" font-size="14">HEX #F7761E · #0B1F44 · #FBF1E6</text>
+    <rect x="36" y="370" width="120" height="32" rx="10" fill="#0B1F44"/>
+    <text x="54" y="391" fill="#F7761E" font-family="monospace" font-size="13" font-weight="700">MOCK PHOTO 01</text>
+  </g>
+</svg>

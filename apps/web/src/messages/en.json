@@ -1,0 +1,41 @@
+{
+  "site": {
+    "tagline": "Growth & Brand Studio",
+    "home": "Home",
+    "services": "Services",
+    "menu": "Menu",
+    "skip": "Skip to content",
+    "footer": "Four services. One partner.",
+    "language": "العربية",
+    "theme": "Appearance",
+    "dark": "Dark",
+    "light": "Light",
+    "system": "System",
+    "error": "Something went wrong.",
+    "retry": "Try again",
+    "notFound": "Page not found",
+    "back": "Back to home",
+    "faq": "FAQs"
+  },
+  "home": {
+    "eyebrow": "ALMORAD AMC / GROWTH & BRAND STUDIO",
+    "title": "Four services.",
+    "accent": "One partner.",
+    "intro": "We are a growth and brand studio. We work as your own marketing unit inside your company, suggesting ideas and acting as your partner.",
+    "cta": "Explore our services",
+    "secondary": "Our partnership",
+    "manifesto": "Better together.",
+    "body": "Get known. Get seen. Get ready to grow. Get chosen.",
+    "serviceIntro": "Marketing, advertising, consulting and web development — connected around your business."
+  },
+  "services": {
+    "eyebrow": "OUR EXPERTISE",
+    "title": "Built around your growth.",
+    "intro": "Four complementary disciplines. Eleven ways to move your business forward.",
+    "note": "Explore the offerings below. Individual service guides are in preparation.",
+    "marketing": "Strategy, content and identity that give your brand a clear voice.",
+    "advertising": "Media, outdoor communication and events that bring your brand into view.",
+    "consulting": "Practical direction for your business, operations and online commerce.",
+    "web-development": "Company websites, landing pages and online stores built for your audience."
+  }
+}

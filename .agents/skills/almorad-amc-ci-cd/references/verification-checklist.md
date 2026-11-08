@@ -1,0 +1,11 @@
+# CI/CD verification checklist
+- [ ] Actual scripts read from repo; frozen lockfile install
+- [ ] Lint / typecheck / unit / integration / e2e completed with recorded outcomes
+- [ ] Prisma migration reviewed, checked for destructive statements and drift
+- [ ] Parallel booking collision test and reviewed change-request workflow pass
+- [ ] Email/Slack outbox retry and deduplication tests pass
+- [ ] Secrets scan, dependency audit, container scan, no public DB credentials
+- [ ] Both locales, SEO routes, robots/sitemap and motion fallback smoke pass
+- [ ] Backup + restore plan validated, release SHA/digest captured
+- [ ] Manual prod authorization and no claim of deployment without execution
+- [ ] Post-deploy monitoring and rollback documentation ready

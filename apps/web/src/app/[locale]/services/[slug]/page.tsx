@@ -1,0 +1,18 @@
+﻿import {pillars,services} from '@amc/shared';
+import {notFound} from 'next/navigation';
+import {Container} from '@/components/layout/shell';
+import {Link} from '@/i18n/navigation';
+import {SolarIcon} from '@/components/ui/solar-icon';
+import {publicLocale} from '@/lib/public-page';
+import {pageMetadata,siteOrigin} from '@/lib/seo/metadata';
+import {copyFor} from '@/features/marketing/copy';
+import {briefFor} from '@/features/services/briefs';
+type Params=Promise<{locale:string;slug:string}>;
+function offering(slug:string){return services.find(s=>s.slug===slug)||pillars.find(p=>p.id===slug);}
+export function generateStaticParams(){return [...pillars.map(p=>p.id),...services.map(s=>s.slug)].map(slug=>({slug}));}
+export async function generateMetadata({params}:{params:Params}){const locale=await publicLocale(params);const {slug}=await params;const item=offering(slug);if(!item)notFound();const c=copyFor(locale);const description='slug' in item?briefFor(slug,locale).summary:c.pillars[pillars.findIndex(p=>p.id===slug)]!;return pageMetadata(locale,`/services/${slug}`,item[locale],description);}
+export default async function Offering({params}:{params:Params}){
+ const locale=await publicLocale(params);const {slug}=await params;const item=offering(slug);if(!item)notFound();const c=copyFor(locale);const service='slug' in item?item:undefined;const pillar=pillars.find(p=>p.id===(service?.pillar||slug))!;const brief=service?briefFor(slug,locale):undefined;const description=brief?.summary||c.pillars[pillars.findIndex(p=>p.id===slug)]!;
+ const related=services.filter(s=>s.pillar===pillar.id&&s.slug!==slug);const origin=siteOrigin();const data=origin?[{'@context':'https://schema.org','@type':'Service',name:item[locale],description,serviceType:item[locale],url:`${origin}/${locale}/services/${slug}`,provider:{'@type':'Organization',name:'ALMORAD AMC',url:origin}},{'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{name:c.detail.back,item:`${origin}/${locale}/services`},{name:pillar[locale],item:`${origin}/${locale}/services/${pillar.id}`},...(service?[{name:service[locale],item:`${origin}/${locale}/services/${slug}`}]:[])].map((entry,i)=>({'@type':'ListItem',position:i+1,...entry}))}]:[];
+ return <Container className="studio-public-page">{data.length>0&&<script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(data).replace(/</g,'\\u003c')}}/>}<nav aria-label={locale==='ar'?'مسار الصفحة':'Breadcrumb'}><ol className="breadcrumbs"><li><Link href="/services">{c.detail.back}</Link></li>{service&&<li><Link href={`/services/${pillar.id}`}>{pillar[locale]}</Link></li>}<li aria-current="page">{item[locale]}</li></ol></nav><section className="page-intro"><p className="eyebrow">ALMORAD AMC / {pillar[locale]}</p><h1>{item[locale]}</h1><p className="intro">{description}</p><Link className="text-link" href="/contact">{c.detail.talk}<SolarIcon name="arrow-right-up-linear"/></Link></section><div className="article-content">{brief&&<section className="split-content"><h2>{c.detail.scope}</h2><ul className="scope-list">{brief.areas.map(a=><li key={a}><SolarIcon name="check-circle-linear"/>{a}</li>)}</ul></section>}<section className="split-content"><h2>{c.detail.process}</h2><p>{c.detail.processBody}</p></section>{brief&&<section className="split-content"><h2>{c.detail.faq}</h2><div className="faq-list"><details><summary>{c.detail.q}<span aria-hidden="true">+</span></summary><p>{c.detail.a}</p></details></div></section>}<section className="split-content"><h2>{c.detail.related}</h2><div className="related-services">{related.map(s=><Link key={s.slug} href={`/services/${s.slug}`}>{s[locale]}<SolarIcon name="arrow-right-up-linear"/></Link>)}</div></section></div></Container>;
+}

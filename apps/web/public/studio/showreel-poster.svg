@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <linearGradient id="bg5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#061430"/>
+      <stop offset="60%" stop-color="#0B1F44"/>
+      <stop offset="100%" stop-color="#243962"/>
+    </linearGradient>
+    <radialGradient id="stageGlow" cx="0.5" cy="0.3" r="0.6">
+      <stop offset="0%" stop-color="#F7761E" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#EC5B13" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#061430" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg5)"/>
+  <rect width="1200" height="800" fill="url(#stageGlow)"/>
+  <!-- Stage Keyframes & Motion Waveforms -->
+  <g fill="none" stroke="#F7761E" stroke-width="2" opacity="0.5">
+    <ellipse cx="600" cy="360" rx="420" ry="140"/>
+    <ellipse cx="600" cy="360" rx="310" ry="100"/>
+    <ellipse cx="600" cy="360" rx="200" ry="64"/>
+  </g>
+  <!-- Center 3D Extruded AMC Emblem -->
+  <g transform="translate(380, 170) scale(0.55)">
+    <g transform="translate(14, 20)" opacity="0.35">
+      <path fill="#020817" d="M196.46,169.36l27.64,78.32-37.33,128.11h-64.06l73.75-206.43ZM221.35,442.22H0l42.86-123.5h99.55l-13.83,35.94h117.52l-24.75,87.56Z"/>
+      <polygon fill="#020817" points="220.43 637.13 386.34 59.65 449.95 162.88 308.92 637.13 220.43 637.13"/>
+      <polygon fill="#020817" points="398.33 637.13 503.41 259.68 564.24 363.84 486.82 637.13 398.33 637.13"/>
+      <polygon fill="#020817" points="717.07 329.27 806.48 0 658.08 0 541.48 0 475.12 108.31 681.58 108.31 612.91 329.27 717.07 329.27"/>
+      <polygon fill="#020817" points="558.53 331.11 667.3 331.11 638.72 442.22 529.03 442.22 558.53 331.11"/>
+    </g>
+    <path fill="#FBF1E6" d="M196.46,169.36l27.64,78.32-37.33,128.11h-64.06l73.75-206.43ZM221.35,442.22H0l42.86-123.5h99.55l-13.83,35.94h117.52l-24.75,87.56Z"/>
+    <polygon fill="#FBF1E6" points="220.43 637.13 386.34 59.65 449.95 162.88 308.92 637.13 220.43 637.13"/>
+    <polygon fill="#FBF1E6" points="398.33 637.13 503.41 259.68 564.24 363.84 486.82 637.13 398.33 637.13"/>
+    <polygon fill="#F7761E" points="717.07 329.27 806.48 0 658.08 0 541.48 0 475.12 108.31 681.58 108.31 612.91 329.27 717.07 329.27"/>
+    <polygon fill="#FBF1E6" points="558.53 331.11 667.3 331.11 638.72 442.22 529.03 442.22 558.53 331.11"/>
+  </g>
+  <rect x="80" y="660" width="1040" height="68" rx="18" fill="#162B54" opacity="0.88"/>
+  <text x="120" y="700" fill="#FBF1E6" font-family="monospace" font-size="16" font-weight="700">ALMORAD AMC — MOTION SHOWREEL (MOCK TEST REEL · 60FPS)</text>
+  <text x="940" y="700" fill="#FA8A3A" font-family="monospace" font-size="16" font-weight="700">00:00 / 00:08</text>
+</svg>

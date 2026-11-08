@@ -1,0 +1,71 @@
+name: almorad-amc-prod
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: almorad-amc-prod-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-amc_prod}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-prod_secure_password_only}
+      POSTGRES_DB: ${POSTGRES_DB:-amc_prod}
+    ports:
+      - '5432:5432'
+    volumes:
+      - almorad_amc_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: almorad-amc-prod-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_HOST: 0.0.0.0
+      API_PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-amc_prod}:${POSTGRES_PASSWORD:-prod_secure_password_only}@postgres:5432/${POSTGRES_DB:-amc_prod}?schema=public
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      STAFF_PROXY_SECRET: ${STAFF_PROXY_SECRET:?Set a 64+ char STAFF_PROXY_SECRET}
+      CRON_SECRET: ${CRON_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '4000:4000'
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: almorad-amc-prod-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      STAFF_API_ORIGIN: http://api:4000
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      STAFF_PROXY_SECRET: ${STAFF_PROXY_SECRET:?Set a 64+ char STAFF_PROXY_SECRET}
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+volumes:
+  almorad_amc_prod_data:

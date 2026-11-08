@@ -1,0 +1,28 @@
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <linearGradient id="bg7" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#020817"/>
+      <stop offset="65%" stop-color="#0B1F44"/>
+      <stop offset="100%" stop-color="#162B54"/>
+    </linearGradient>
+    <linearGradient id="beam1" x1="0.5" y1="0" x2="0.2" y2="1">
+      <stop offset="0%" stop-color="#F7761E" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#F7761E" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="beam2" x1="0.5" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#93A3C6" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#93A3C6" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg7)"/>
+  <!-- Stage Lighting Beams -->
+  <polygon points="360,0 120,660 580,660" fill="url(#beam1)"/>
+  <polygon points="840,0 620,660 1080,660" fill="url(#beam2)"/>
+  <!-- Keynote LED Backdrop -->
+  <rect x="200" y="150" width="800" height="390" rx="24" fill="#0B1F44" stroke="#F7761E" stroke-width="3"/>
+  <circle cx="600" cy="310" r="92" fill="#F7761E"/>
+  <path d="M546 352 L582 256 L600 296 L618 256 L654 352 Z" fill="#FBF1E6"/>
+  <text x="600" y="458" text-anchor="middle" fill="#FBF1E6" font-family="sans-serif" font-size="30" font-weight="800" letter-spacing="4">CORPORATE EVENTS &amp; STAGE DIRECTION · 06</text>
+  <!-- Stage Platform -->
+  <path d="M80 640 Q600 580 1120 640 L1200 740 L0 740 Z" fill="#061430" stroke="#354A78" stroke-width="2"/>
+</svg>

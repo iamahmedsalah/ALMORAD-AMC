@@ -1,0 +1,175 @@
+import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {NotificationsService} from './notifications.service.js';
+import type {PrismaService} from '../../prisma/prisma.service.js';
+
+function createPrismaMock() {
+  return {
+    $queryRaw: vi.fn(),
+    $transaction: vi.fn(async (queries: Promise<unknown>[]) => Promise.all(queries)),
+    booking: {findUnique: vi.fn()},
+    bookingOutbox: {update: vi.fn()},
+    bookingEvent: {create: vi.fn()}
+  };
+}
+
+describe('NotificationsService', () => {
+  let service: NotificationsService;
+  let mockPrisma: ReturnType<typeof createPrismaMock>;
+
+  beforeEach(() => {
+    mockPrisma = createPrismaMock();
+
+    service = new NotificationsService(mockPrisma as unknown as PrismaService);
+  });
+
+  describe('deriveManagementToken', () => {
+    it('produces a deterministic HMAC token matching booking identity', () => {
+      const booking = {
+        id: 'test-uuid-456',
+        tokenNonce: 'nonce-1234567890abcdef',
+        tokenVersion: 0
+      };
+
+      const token1 = service.deriveManagementToken(booking);
+      const token2 = service.deriveManagementToken(booking);
+
+      expect(token1).toBeDefined();
+      expect(token1).toBe(token2);
+      expect(token1).toMatch(/^[a-f0-9]{64}$/);
+    });
+
+    it('generates different tokens when tokenVersion increments', () => {
+      const booking1 = {id: 'test-uuid-456', tokenNonce: 'nonce-123', tokenVersion: 0};
+      const booking2 = {id: 'test-uuid-456', tokenNonce: 'nonce-123', tokenVersion: 1};
+
+      expect(service.deriveManagementToken(booking1)).not.toBe(service.deriveManagementToken(booking2));
+    });
+  });
+
+  describe('sanitizeError', () => {
+    it('redacts explicit client email address', () => {
+      const sanitized = service.sanitizeError('Failed delivery to client@example.com: mailbox full', 'client@example.com');
+      expect(sanitized).not.toContain('client@example.com');
+      expect(sanitized).toContain('[REDACTED_EMAIL]');
+    });
+
+    it('redacts generic leaked email addresses in stack traces', () => {
+      const sanitized = service.sanitizeError('SMTP response from bounce-handler@resend.net: 550 User unknown');
+      expect(sanitized).not.toContain('bounce-handler@resend.net');
+      expect(sanitized).toContain('[REDACTED_EMAIL]');
+    });
+  });
+
+  describe('drain', () => {
+    it('returns zero counts when no pending outbox records exist', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([]);
+
+      const result = await service.drain();
+
+      expect(result).toEqual({processed: 0, succeeded: 0, failed: 0});
+      expect(mockPrisma.booking.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('processes pending record, generates email + calendar, and marks DELIVERED', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([
+        {
+          id: 'outbox-uuid-1',
+          bookingId: 'booking-uuid-1',
+          eventId: 'event-uuid-1',
+          attempts: 1
+        }
+      ]);
+
+      mockPrisma.booking.findUnique.mockResolvedValue({
+        id: 'booking-uuid-1',
+        reference: 'AMC-789XYZ',
+        serviceSlug: 'branding',
+        meetingType: 'ONLINE',
+        clientName: 'Sarah Jenkins',
+        email: 'sarah@example.com',
+        locale: 'en',
+        timezone: 'Africa/Cairo',
+        startsAt: new Date('2026-11-12T10:00:00Z'),
+        endsAt: new Date('2026-11-12T11:00:00Z'),
+        tokenNonce: 'nonce-abc',
+        tokenVersion: 0,
+        calendar: {
+          officeAddressEn: '100 Studio Way, Cairo',
+          officeAddressAr: '100 شارع الاستوديو، القاهرة'
+        }
+      });
+
+      const result = await service.drain();
+
+      expect(result).toEqual({processed: 1, succeeded: 1, failed: 0});
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
+      expect(mockPrisma.bookingOutbox.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {id: 'outbox-uuid-1'},
+          data: expect.objectContaining({status: 'DELIVERED'})
+        })
+      );
+      expect(mockPrisma.bookingEvent.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            bookingId: 'booking-uuid-1',
+            kind: 'EMAIL_DELIVERED'
+          })
+        })
+      );
+    });
+
+    it('marks FAILED immediately upon deterministic 422 error', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([
+        {
+          id: 'outbox-uuid-2',
+          bookingId: 'booking-uuid-2',
+          eventId: 'event-uuid-2',
+          attempts: 1
+        }
+      ]);
+
+      mockPrisma.booking.findUnique.mockRejectedValue(new Error('Resend error: 422 Unprocessable Entity - invalid domain'));
+
+      const result = await service.drain();
+
+      expect(result).toEqual({processed: 1, succeeded: 0, failed: 1});
+      expect(mockPrisma.bookingOutbox.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {id: 'outbox-uuid-2'},
+          data: expect.objectContaining({
+            status: 'FAILED',
+            lastError: expect.stringContaining('422')
+          })
+        })
+      );
+    });
+
+    it('schedules exponential backoff retry upon transient 503 error', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([
+        {
+          id: 'outbox-uuid-3',
+          bookingId: 'booking-uuid-3',
+          eventId: 'event-uuid-3',
+          attempts: 2
+        }
+      ]);
+
+      mockPrisma.booking.findUnique.mockRejectedValue(new Error('Resend error: 503 Service Unavailable timeout'));
+
+      const result = await service.drain();
+
+      expect(result).toEqual({processed: 1, succeeded: 0, failed: 1});
+      expect(mockPrisma.bookingOutbox.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {id: 'outbox-uuid-3'},
+          data: expect.objectContaining({
+            status: 'PENDING',
+            nextRetryAt: expect.any(Date),
+            lastError: expect.stringContaining('503')
+          })
+        })
+      );
+    });
+  });
+});

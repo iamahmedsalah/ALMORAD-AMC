@@ -1,0 +1,11 @@
+# SEO QA
+- [ ] EN/AR URL pair for every publishable service; unique localized titles/H1
+- [ ] Self-canonical and reciprocal hreflang on equivalent pages
+- [ ] Correct sitemap published links and robots; private routes protected + noindex
+- [ ] No WebGL-only content; all key links are crawlable anchors
+- [ ] JSON-LD factual and validated; business NAP verified before LocalBusiness
+- [ ] CWV p75 goals measured or flagged as not yet available
+- [ ] Descriptive alt text, OG previews, correct 404/301 response codes
+- [ ] Consent-aware non-PII analytics; Search Console setup documented
+- [ ] Service internal links and approved portfolio evidence
+- [ ] Report exact tested URLs, dates, results and unresolved blockers

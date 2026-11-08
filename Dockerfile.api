@@ -1,0 +1,26 @@
+FROM node:24-bookworm-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9 AS base
+WORKDIR /app
+RUN npm install --global pnpm@11.11.0
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+FROM base AS build
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json turbo.json eslint.config.mjs ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/shared/package.json packages/shared/package.json
+RUN --mount=type=cache,id=amc-pnpm,target=/app/.pnpm-store pnpm --filter @amc/api... install --no-frozen-lockfile
+COPY apps/api apps/api
+COPY packages/shared packages/shared
+ENV TURBO_TELEMETRY_DISABLED=1
+ENV DATABASE_URL=postgresql://build_only:unused@127.0.0.1:5432/build_only
+RUN pnpm exec turbo run build --filter=@amc/api
+# Retain the workspace layout for Prisma's generated runtime imports and ESM resolution.
+FROM base AS runtime
+WORKDIR /app
+ENV NODE_ENV=production API_HOST=0.0.0.0 API_PORT=4000
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/apps/api ./apps/api
+COPY --from=build --chown=node:node /app/packages/shared ./packages/shared
+USER node
+EXPOSE 4000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD node -e "fetch('http://127.0.0.1:4000/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+CMD ["sh", "-c", "cd apps/api && npx prisma migrate deploy && cd ../.. && node apps/api/dist/apps/api/src/main.js"]

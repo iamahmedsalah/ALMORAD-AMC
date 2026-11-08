@@ -1,0 +1,272 @@
+/* =========================================================
+   Almorad AMC — Official Design Tokens & Tailwind v4 Theme
+   ========================================================= */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* ---------- Brand palette (Official Logo Palette) ---------- */
+  --amc-navy-50:  #EEF1F7;
+  --amc-navy-100: #DDE3EF;
+  --amc-navy-200: #BCC7DE;
+  --amc-navy-300: #93A3C6;
+  --amc-navy-400: #6A7FAD;
+  --amc-navy-500: #4A5F8F;
+  --amc-navy-600: #354A78;
+  --amc-navy-700: #243962;
+  --amc-navy-800: #162B54;
+  --amc-navy-900: #0B1F44; /* Official Brand Navy */
+  --amc-navy-950: #061430;
+
+  --amc-orange-50:  #FFF3EA;
+  --amc-orange-100: #FFE3CF;
+  --amc-orange-200: #FFC79E;
+  --amc-orange-300: #FFA666;
+  --amc-orange-400: #FA8A3A;
+  --amc-orange-500: #F7761E; /* Official Brand Orange */
+  --amc-orange-600: #EC5B13;
+  --amc-orange-700: #B84A05; /* Deep Burnt Orange for AA text on Cream */
+  --amc-orange-800: #9A3A0E;
+  --amc-orange-900: #7A310F;
+
+  --amc-cream-50:  #FCF8F3;
+  --amc-cream-100: #FBF1E6; /* Official Brand Cream */
+  --amc-cream-200: #F6EFE6;
+  --amc-cream-300: #EDE2D4;
+  --amc-cream-400: #DDCFBD;
+
+  /* ---------- Font Family Variables ---------- */
+  --font-main:    'Fira Sans', 'Cairo', system-ui, -apple-system, sans-serif;
+  --font-english: 'Fira Sans', 'Cairo', system-ui, -apple-system, sans-serif;
+  --font-arabic:  'Cairo', 'Fira Sans', system-ui, Tahoma, sans-serif;
+  --font-visual:  'Rock Salt', 'Cairo', cursive;
+
+  --font-body:    var(--font-main);
+  --font-heading: var(--font-main);
+  --font-accent:  var(--font-visual);
+
+  /* ---------- Semantic Tokens: LIGHT ---------- */
+  --bg:            var(--amc-cream-50);
+  --surface:       #FFFFFF;
+  --surface-2:     var(--amc-cream-200);
+  --surface-inv:   var(--amc-navy-900);
+  --fg:            var(--amc-navy-900);
+  --fg-muted:      var(--amc-navy-500);
+  --fg-inv:        var(--amc-cream-100);
+  --border:        #E4D8C8;
+  --border-strong: var(--amc-navy-200);
+
+  --accent:        var(--amc-orange-500);
+  --on-accent:     var(--amc-navy-900);
+  --accent-hover:  var(--amc-orange-400);
+  --accent-text:   var(--amc-orange-700);
+  --accent-soft:   var(--amc-orange-50);
+  --focus-ring:    var(--amc-orange-600);
+
+  /* ---------- Backward-Compatible Legacy Variables: LIGHT ---------- */
+  --background:             #FCF8F3;
+  --foreground:             #0B1F44;
+  --card:                   #FFFFFF;
+  --card-foreground:        #0B1F44;
+  --surface-raised:         #FFFFFF;
+  --muted:                  #F6EFE6;
+  --muted-foreground:       #354A78;
+  --border:                 #E4D8C8;
+  --input:                  #BCC7DE;
+  --ring:                   #EC5B13;
+  --primary:                #F7761E;
+  --primary-foreground:     #0B1F44; /* 5.67:1 WCAG AA */
+  --secondary:              #F6EFE6;
+  --secondary-foreground:   #0B1F44;
+  --destructive:            #B42318;
+  --success:                #17754D;
+  --warning:                #8A5A00;
+  --info:                   #1F55A6;
+  --brand-primary:          #0B1F44;
+  --brand-secondary:        #243962;
+  --brand-accent:           #B84A05; /* 4.98:1 WCAG AA on Cream */
+  --overlay:                rgb(11 31 68 / 65%);
+  --scene-ambient:          #93A3C6;
+  --scene-key:              #F7761E;
+
+  /* ---------- Radius / Shadow / Motion (Official Design System) ---------- */
+  --amc-radius-sm: 8px;
+  --amc-radius-md: 12px;
+  --amc-radius-lg: 20px;
+  --amc-radius-xl: 28px;
+  --amc-radius-pill: 999px;
+  --amc-radius-squircle: 22%;
+  --radius-sm: var(--amc-radius-sm);
+  --radius-md: var(--amc-radius-md);
+  --radius-lg: var(--amc-radius-lg);
+  --radius-xl: var(--amc-radius-xl);
+  --radius-pill: var(--amc-radius-pill);
+  --radius-squircle: var(--amc-radius-squircle);
+  --radius-control: 20px;
+
+  --glass-tint: rgb(251 241 230 / 88%);
+  --glass-border: rgb(11 31 68 / 23%);
+  --glass-reflection: rgb(255 255 255 / 80%);
+  --glass-shadow: 0 20px 60px rgb(11 31 68 / 10%), inset 0 1px 0 rgb(255 255 255 / 85%);
+  --glass-blur: 20px;
+  --glass-fallback: var(--amc-cream-50);
+  --glass-glow: rgb(247 118 30 / 10%);
+  --scene-halo: #eef1f7;
+
+  --shadow-sm: 0 1px 2px rgb(11 31 68 / 0.08);
+  --shadow-md: 0 6px 18px rgb(11 31 68 / 0.10);
+  --shadow-lg: 0 18px 48px rgb(11 31 68 / 0.16);
+
+  --logo-mark: var(--amc-navy-900);
+  --logo-c:    var(--amc-orange-500);
+}
+
+.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --glass-tint: rgb(11 31 68 / 88%);
+  --glass-border: rgb(188 199 222 / 28%);
+  --glass-reflection: rgb(188 199 222 / 16%);
+  --glass-shadow: 0 24px 64px rgb(0 0 0 / 24%), inset 0 1px 0 rgb(251 241 230 / 18%);
+  --glass-fallback: var(--amc-navy-900);
+  --glass-glow: rgb(247 118 30 / 12%);
+  --scene-halo: #bcc7de;
+
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --glass-shadow: none;
+  --glass-reflection: transparent;
+  --scene-halo: transparent;
+
+  /* ---------- Semantic Tokens: DARK ---------- */
+  --bg:            var(--amc-navy-950);
+  --surface:       var(--amc-navy-900);
+  --surface-2:     var(--amc-navy-800);
+  --surface-inv:   var(--amc-cream-100);
+  --fg:            var(--amc-cream-100);
+  --fg-muted:      var(--amc-navy-300);
+  --fg-inv:        var(--amc-navy-900);
+  --border:        var(--amc-navy-700);
+  --border-strong: var(--amc-navy-500);
+
+  --accent:        var(--amc-orange-500);
+  --on-accent:     var(--amc-navy-950);
+  --accent-hover:  var(--amc-orange-400);
+  --accent-text:   var(--amc-orange-400);
+  --accent-soft:   #3A2314;
+  --focus-ring:    var(--amc-orange-400);
+
+  /* ---------- Backward-Compatible Legacy Variables: DARK ---------- */
+  --background:             #061430;
+  --foreground:             #FBF1E6;
+  --card:                   #0B1F44;
+  --card-foreground:        #FBF1E6;
+  --surface-raised:         #162B54;
+  --muted:                  #162B54;
+  --muted-foreground:       #BCC7DE;
+  --border:                 #243962;
+  --input:                  #4A5F8F;
+  --ring:                   #FA8A3A;
+  --primary:                #F7761E;
+  --primary-foreground:     #061430; /* 6.51:1 WCAG AA */
+  --secondary:              #162B54;
+  --secondary-foreground:   #FBF1E6;
+  --destructive:            #FF8A80;
+  --success:                #5DD39E;
+  --warning:                #F2B84B;
+  --info:                   #86B5FF;
+  --brand-primary:          #0B1F44;
+  --brand-secondary:        #162B54;
+  --brand-accent:           #FA8A3A; /* 7.62:1 WCAG AA on Navy 950 */
+  --overlay:                rgb(6 20 48 / 80%);
+  --scene-ambient:          #BCC7DE;
+  --scene-key:              #FA8A3A;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 6px 18px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 18px 48px rgb(0 0 0 / 0.55);
+
+  --logo-mark: var(--amc-cream-100);
+  --logo-c:    var(--amc-orange-500);
+}
+
+/* ---------- Arabic Typography & Fallbacks ---------- */
+:lang(ar),
+[dir="rtl"] {
+  --font-body:    var(--font-arabic);
+  --font-heading: var(--font-arabic);
+  --font-accent:  var(--font-arabic);
+}
+
+.font-accent,
+.t-visual {
+  font-family: var(--font-accent);
+}
+
+:lang(ar) .font-accent,
+[dir="rtl"] .font-accent,
+:lang(ar) .t-visual,
+[dir="rtl"] .t-visual {
+  font-family: var(--font-arabic) !important;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* ---------- Tailwind v4 Theme Inlining ---------- */
+@theme inline {
+  --color-amc-navy-50: var(--amc-navy-50);
+  --color-amc-navy-100: var(--amc-navy-100);
+  --color-amc-navy-200: var(--amc-navy-200);
+  --color-amc-navy-300: var(--amc-navy-300);
+  --color-amc-navy-400: var(--amc-navy-400);
+  --color-amc-navy-500: var(--amc-navy-500);
+  --color-amc-navy-600: var(--amc-navy-600);
+  --color-amc-navy-700: var(--amc-navy-700);
+  --color-amc-navy-800: var(--amc-navy-800);
+  --color-amc-navy-900: var(--amc-navy-900);
+  --color-amc-navy-950: var(--amc-navy-950);
+
+  --color-amc-orange-50: var(--amc-orange-50);
+  --color-amc-orange-100: var(--amc-orange-100);
+  --color-amc-orange-200: var(--amc-orange-200);
+  --color-amc-orange-300: var(--amc-orange-300);
+  --color-amc-orange-400: var(--amc-orange-400);
+  --color-amc-orange-500: var(--amc-orange-500);
+  --color-amc-orange-600: var(--amc-orange-600);
+  --color-amc-orange-700: var(--amc-orange-700);
+  --color-amc-orange-800: var(--amc-orange-800);
+  --color-amc-orange-900: var(--amc-orange-900);
+
+  --color-amc-cream-50: var(--amc-cream-50);
+  --color-amc-cream-100: var(--amc-cream-100);
+  --color-amc-cream-200: var(--amc-cream-200);
+  --color-amc-cream-300: var(--amc-cream-300);
+  --color-amc-cream-400: var(--amc-cream-400);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-accent: var(--brand-accent);
+
+  --radius-sm: var(--amc-radius-sm);
+  --radius-md: var(--amc-radius-md);
+  --radius-lg: var(--amc-radius-lg);
+  --radius-xl: var(--amc-radius-xl);
+  --radius-pill: var(--amc-radius-pill);
+  --radius-squircle: var(--amc-radius-squircle);
+}

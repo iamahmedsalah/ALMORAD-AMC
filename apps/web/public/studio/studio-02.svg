@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#061430"/>
+      <stop offset="65%" stop-color="#162B54"/>
+      <stop offset="100%" stop-color="#3A2314"/>
+    </linearGradient>
+    <radialGradient id="sun2" cx="0.8" cy="0.72" r="0.45">
+      <stop offset="0%" stop-color="#FA8A3A" stop-opacity="0.75"/>
+      <stop offset="55%" stop-color="#EC5B13" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#061430" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow2" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="28" stdDeviation="22" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="800" fill="url(#sky2)"/>
+  <rect width="1200" height="800" fill="url(#sun2)"/>
+  <!-- Architectural Skyline Silhouettes -->
+  <rect x="60" y="360" width="150" height="440" fill="#061430" opacity="0.85"/>
+  <rect x="230" y="420" width="180" height="380" fill="#0B1F44" opacity="0.9"/>
+  <rect x="860" y="310" width="210" height="490" fill="#061430" opacity="0.85"/>
+  <!-- Architectural Billboard Structure -->
+  <g filter="url(#shadow2)">
+    <rect x="410" y="480" width="28" height="320" fill="#061430"/>
+    <rect x="760" y="480" width="28" height="320" fill="#061430"/>
+    <rect x="210" y="130" width="780" height="370" rx="22" fill="#0B1F44" stroke="#F7761E" stroke-width="3"/>
+    <rect x="234" y="154" width="732" height="322" rx="14" fill="#FCF8F3"/>
+    <!-- Billboard Artwork -->
+    <rect x="234" y="154" width="290" height="322" rx="14" fill="#0B1F44"/>
+    <circle cx="379" cy="315" r="88" fill="#F7761E"/>
+    <path d="M332 355 L368 265 L385 305 L402 265 L438 355 Z" fill="#FBF1E6"/>
+    <text x="560" y="255" fill="#0B1F44" font-family="sans-serif" font-size="40" font-weight="800">YOUR NEXT MOVE.</text>
+    <text x="560" y="308" fill="#F7761E" font-family="sans-serif" font-size="34" font-weight="700">MADE TOGETHER.</text>
+    <rect x="560" y="346" width="220" height="44" rx="12" fill="#0B1F44"/>
+    <text x="586" y="374" fill="#FBF1E6" font-family="monospace" font-size="14" font-weight="700">OUTDOOR CAMPAIGN · 02</text>
+  </g>
+</svg>

@@ -1,0 +1,105 @@
+/* Booking and staff: the studio identity, with restrained operational surfaces. */
+.booking-page.booking-page { max-width: 980px; padding-block: clamp(2.5rem, 6vw, 5rem); }
+.booking-page.booking-page > h1 { font-size: clamp(2.4rem, 4.8vw, 4rem); line-height: 1.2; margin-block: 1rem 1.25rem; }
+.booking-page.booking-page > p:not(.eyebrow) { color: var(--muted-foreground); line-height: 1.8; }
+.booking-wizard.booking-wizard { padding: clamp(1.25rem, 4vw, 2.5rem); border: 1px solid var(--glass-border); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-md); }
+.booking-wizard .booking-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.65rem; margin-block: 1rem 2rem; }
+.booking-steps > li { display: flex; align-items: center; gap: 0.65rem; padding: 0.85rem 0.65rem; border-radius: var(--radius-md); background: var(--surface-2); font-size: 0.8rem; min-width: 0; }
+.booking-steps > li[aria-current="step"] { background: var(--foreground); color: var(--background); text-decoration: none; }
+.booking-step-number { display: grid; place-items: center; flex: 0 0 28px; width: 28px; height: 28px; border: 1px solid currentColor; border-radius: var(--radius-sm); font-size: 0.8rem; }
+.booking-step-number .solar-icon { width: 20px; height: 20px; }
+.booking-wizard .staff-form { max-width: none; gap: 1.25rem; }
+.booking-wizard h2, .booking-confirmation h2 { font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.4; margin-block: 1rem; }
+.booking-wizard .staff-form > button { min-width: 160px; }
+.booking-page .staff-panel { border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-sm); }
+.booking-page .slot-picker { padding-block: 1rem; }
+.booking-page .slot-picker > label { max-width: 340px; margin-block-end: 1rem; }
+.booking-page .slot-picker fieldset { border-radius: var(--radius-lg); padding: 1.2rem; }
+.booking-page .slot { border-radius: var(--radius-md); background: var(--background); min-height: 52px; }
+.booking-page .slot.selected { background: var(--accent-soft); border-color: var(--accent-text); outline-color: var(--accent-text); color: var(--foreground); }
+.booking-page .booking-confirmation { padding: clamp(1rem, 3vw, 2rem); border-inline-start: 3px solid var(--success); background: var(--surface-2); border-radius: var(--radius-lg); }
+.booking-page .booking-ticket { border-radius: var(--radius-lg); }
+.booking-page .demo-banner, .staff-workspace .demo-banner { border-width: 1px; border-radius: var(--radius-md); font-size: 0.85rem; margin-block-end: 1.5rem; }
+:is(.booking-page, .staff-workspace, .staff-login) .staff-form :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+.staff-workspace .booking-filters :is(input:not([type="checkbox"]), select),
+.staff-workspace .booking-settings :is(input:not([type="checkbox"]), select, textarea),
+.staff-workspace .slot-picker > label input,
+.booking-page .slot-picker > label input {
+  display: block; width: 100%; min-width: 0; min-height: 48px; padding: 0.8rem 0.95rem;
+  background: var(--background); color: var(--foreground); border: 1px solid var(--input);
+  border-radius: var(--radius-md); font: inherit;
+}
+:is(.booking-page, .staff-workspace, .staff-login) .staff-form textarea { min-height: 120px; resize: vertical; }
+:is(.booking-page, .staff-workspace, .staff-login) .button { border-radius: var(--radius-md); min-height: 48px; }
+:is(.booking-page, .staff-workspace, .staff-login) [role="alert"] { border-radius: var(--radius-md); line-height: 1.7; }
+.staff-login.staff-login { max-width: 520px; margin-block: clamp(2rem, 6vw, 5rem); padding: clamp(1.5rem, 4vw, 3rem); min-height: auto; border: 1px solid var(--glass-border); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-md); }
+.staff-login .staff-login-emblem { width: 56px; height: 56px; border-radius: var(--radius-lg); display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-text); margin-block-end: 1.5rem; }
+.staff-login .staff-login-emblem .solar-icon { width: 28px; height: 28px; }
+.staff-login.staff-login h1 { font-size: clamp(2rem, 4vw, 2.8rem); line-height: 1.3; }
+.staff-login.staff-login .staff-form { max-width: none; }
+.staff-login .staff-form button { width: 100%; justify-self: stretch; }
+.staff-workspace.staff-workspace { padding-block: 3rem 5rem; }
+.operations-heading { padding-block-end: 2rem; margin-block-end: 2rem; border-bottom: 1px solid var(--glass-border); }
+.operations-heading h1 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.3; margin-block-start: 1rem; }
+.operations-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 2rem; align-items: start; }
+.operations-content { min-width: 0; }
+.staff-workspace .operations-nav { flex-direction: column; flex-wrap: nowrap; gap: 0.45rem; margin: 0; padding: 0.6rem; border: 1px solid var(--glass-border); border-radius: var(--radius-xl); background: var(--surface); position: sticky; top: 108px; }
+.staff-workspace .operations-nav a { display: flex; align-items: center; gap: 0.75rem; min-height: 48px; padding: 0.8rem; background: transparent; color: var(--foreground); border: 0; border-radius: var(--radius-md); font-size: 0.85rem; }
+.staff-workspace .operations-nav a[aria-current="page"] { background: var(--foreground); color: var(--background); }
+.staff-workspace .operations-nav a:hover { outline: 1px solid var(--border-strong); outline-offset: -1px; }
+.staff-workspace .operations-nav .solar-icon { width: 20px; height: 20px; flex-shrink: 0; }
+.staff-workspace .staff-panel { border-radius: var(--radius-xl); border-color: var(--glass-border); background: var(--surface); box-shadow: var(--shadow-sm); margin-block: 1.25rem; }
+.staff-workspace .staff-panel h2 { font-size: 1.2rem; font-weight: 600; }
+.staff-workspace .booking-filters { margin-block-start: 0; padding: 1.25rem; background: var(--surface); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); }
+.staff-workspace .booking-week { gap: 0.75rem; }
+.staff-workspace .booking-week > section { background: var(--background); border-radius: var(--radius-lg); padding: 1rem; }
+.staff-workspace .calendar-appointment { border-radius: var(--radius-md); padding: 1rem; box-shadow: var(--shadow-sm); }
+.staff-workspace .calendar-appointment strong { font-weight: 600; }
+.staff-workspace .staff-metrics { gap: 0.85rem; }
+.staff-workspace .staff-metrics > div { border: 1px solid var(--glass-border); border-radius: var(--radius-lg); padding: 1.25rem; background: var(--surface); }
+.staff-workspace .staff-metrics dd { margin-block-start: 0.75rem; color: var(--foreground); font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 500; overflow-wrap: anywhere; }
+.staff-workspace .booking-chart span { background: var(--accent); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.staff-workspace .staff-table-wrap { border: 1px solid var(--glass-border); border-radius: var(--radius-md); }
+.staff-workspace .staff-panel th { background: var(--surface-2); color: var(--foreground); font-size: 0.75rem; }
+.staff-workspace .staff-panel td { padding-block: 1.1rem; }
+.staff-workspace .staff-panel tbody tr:last-child td { border-bottom: 0; }
+.staff-workspace .booking-settings fieldset { border-radius: var(--radius-lg); padding: 1.25rem; background: var(--surface); }
+.staff-workspace .booking-history { list-style: none; padding-inline-start: 1rem; border-inline-start: 1px solid var(--border); }
+.staff-workspace .booking-history li { padding-inline-start: 0.5rem; }
+.staff-workspace .staff-pagination .button { min-width: 84px; }
+.staff-account.staff-account { display: grid; grid-template-columns: 210px minmax(0, 1fr); column-gap: 2rem; }
+.staff-account > .staff-heading { grid-column: 1 / -1; margin-block-end: 2.5rem; }
+.staff-account > .operations-nav { grid-column: 1; grid-row: 2 / span 8; align-self: start; }
+.staff-account > .staff-panel, .staff-account > .staff-alert { grid-column: 2; }
+.staff-account > .staff-panel:first-of-type { margin-block-start: 0; }
+.staff-account > * { min-width: 0; }
+@supports (corner-shape: squircle) {
+  :is(.booking-page, .staff-workspace, .staff-login) :is(.button, input, select, textarea, .staff-panel, fieldset, .slot),
+  .booking-wizard, .staff-login, .operations-nav, .calendar-appointment, .staff-metrics > div { corner-shape: squircle; }
+}
+@media (max-width: 900px) {
+  .operations-layout { grid-template-columns: 1fr; gap: 1.5rem; }
+  .staff-workspace .operations-nav { position: static; flex-direction: row; flex-wrap: wrap; padding: 0.5rem; }
+  .staff-workspace .operations-nav a { flex: 1 1 140px; }
+  .staff-account.staff-account { grid-template-columns: minmax(0, 1fr); }
+  .staff-account > .operations-nav, .staff-account > .staff-panel, .staff-account > .staff-alert { grid-column: 1; grid-row: auto; }
+}
+@media (max-width: 600px) {
+  .booking-wizard .booking-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .booking-steps > li { font-size: 0.75rem; padding: 0.65rem; }
+  .booking-page.booking-page > h1 { font-size: 2.3rem; }
+  .staff-workspace.staff-workspace { padding-block: 2rem 3rem; }
+  .staff-workspace .staff-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .staff-workspace .staff-metrics > div { padding: 1rem; }
+  .staff-workspace .staff-metrics dt { font-size: 0.75rem; }
+  .staff-workspace .staff-panel { padding: 1rem; }
+  .staff-workspace .operations-nav a { flex-basis: 120px; font-size: 0.8rem; }
+  .staff-login.staff-login { margin-block: 2rem; }
+}
+
+.booking-steps > li > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+
+.staff-workspace .hours-grid > div > label { min-width: 0; }
+@media (max-width: 420px) {
+  .staff-workspace .hours-grid > div { grid-template-columns: minmax(0, 1fr); gap: 0.4rem; padding-block: 1rem; }
+}

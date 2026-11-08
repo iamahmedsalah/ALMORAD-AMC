@@ -1,0 +1,6 @@
+﻿import {afterEach,expect,it,vi} from 'vitest';
+import {publicContact} from './public-contact';
+afterEach(()=>vi.unstubAllEnvs());
+it('does not publish invented contact details or orphaned directions',()=>{vi.stubEnv('NEXT_PUBLIC_CONTACT_EMAIL',undefined);vi.stubEnv('NEXT_PUBLIC_CONTACT_PHONE',undefined);vi.stubEnv('NEXT_PUBLIC_OFFICE_ADDRESS_EN',undefined);vi.stubEnv('NEXT_PUBLIC_MAPS_URL','https://maps.google.com/?q=test');expect(publicContact('en')).toEqual({email:undefined,phone:undefined,address:undefined,maps:undefined});});
+it('rejects unsafe contact and directions values',()=>{vi.stubEnv('NEXT_PUBLIC_CONTACT_EMAIL','bad\nvalue');expect(()=>publicContact('en')).toThrow();vi.stubEnv('NEXT_PUBLIC_CONTACT_EMAIL',undefined);vi.stubEnv('NEXT_PUBLIC_MAPS_URL','https://maps.google.com.evil.invalid/');expect(()=>publicContact('ar')).toThrow();});
+it('accepts configured bilingual details and approved maps hosts',()=>{vi.stubEnv('NEXT_PUBLIC_CONTACT_EMAIL','studio@example.invalid');vi.stubEnv('NEXT_PUBLIC_CONTACT_PHONE','+20 100 000 0000');vi.stubEnv('NEXT_PUBLIC_OFFICE_ADDRESS_AR','عنوان تجريبي للاختبار');vi.stubEnv('NEXT_PUBLIC_MAPS_URL','https://maps.app.goo.gl/test');expect(publicContact('ar').address).toBe('عنوان تجريبي للاختبار');expect(publicContact('ar').maps).toBe('https://maps.app.goo.gl/test');});
