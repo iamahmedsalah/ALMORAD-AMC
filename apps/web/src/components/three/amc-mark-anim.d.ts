@@ -16,7 +16,7 @@ export interface AMCMarkInstance {
   names: string[];
   finish: string;
   materials: Record<string, THREE.Material>;
-  update: (p: number, intro: number, time: number) => void;
+  update: (p: number, intro: number, time: number, autoSeconds?: number, autoWeight?: number) => void;
   camera: (p: number, intro: number, aspect: number, fov?: number) => AMCMarkCameraState;
   rest: () => void;
   state: () => Array<{ n: string; x: number; y: number; z: number; rz: number; s: number; hx: number; hy: number }>;

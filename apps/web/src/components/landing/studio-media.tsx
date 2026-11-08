@@ -395,7 +395,7 @@ export function StudioPhotoShowcase({ locale }: { locale: Locale }) {
       {MOCK_STUDIO_PHOTOS.map((photo) => (
         <figure
           key={photo.id}
-          data-scroll-card
+          data-portfolio-card
           className={`lp-photo-card lp-photo-${photo.span} glass-surface rounded-squircle-lg`}
         >
           <div className="lp-photo-img-wrap rounded-squircle-md">

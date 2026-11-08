@@ -1,6 +1,18 @@
-export const CHAPTER_IDS = ['chapter-hero', 'chapter-strategy', 'chapter-identity', 'chapter-digital', 'chapter-scale', 'chapter-booking'] as const;
+export const CHAPTER_METADATA = [
+  { id: 'chapter-hero', num: '01', en: 'The mark', ar: 'العلامة', pose: 0 },
+  { id: 'chapter-strategy', num: '02', en: 'Studio', ar: 'الاستوديو', pose: 0.09 },
+  { id: 'chapter-identity', num: '03', en: 'Disciplines', ar: 'التخصصات', pose: 0.28 },
+  { id: 'chapter-digital', num: '04', en: 'Creative gallery', ar: 'المعرض الإبداعي', pose: 0.5 },
+  { id: 'chapter-scale', num: '05', en: 'Our approach', ar: 'منهجنا', pose: 0.68 },
+  { id: 'chapter-together', num: '06', en: 'Better together', ar: 'معاً أفضل', pose: 0.73 },
+  { id: 'chapter-devices', num: '07', en: 'Digital experiences', ar: 'التجارب الرقمية', pose: 0.78 },
+  { id: 'chapter-team', num: '08', en: 'Meet the team', ar: 'تعرّف على الفريق', pose: 0.82 },
+  { id: 'chapter-booking', num: '09', en: 'Let’s talk', ar: 'لنتحدث', pose: 0.85 },
+  { id: 'chapter-faq', num: '10', en: 'FAQs', ar: 'الأسئلة الشائعة', pose: 0.94 },
+] as const;
+export const CHAPTER_IDS = CHAPTER_METADATA.map(chapter => chapter.id);
 // Semantic chapter starts map onto the supplied animation's key poses.
-const POSES = [0, 0.09, 0.28, 0.5, 0.68, 0.85, 1];
+const POSES = [...CHAPTER_METADATA.map(chapter => chapter.pose), 1];
 
 export function chapterTimeline(y: number, positions: readonly number[]) {
   if (positions.length !== POSES.length) return { progress: 0, activeChapter: 0 };

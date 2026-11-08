@@ -28,6 +28,7 @@ export function DisciplineCombiner({ locale, copy }: DisciplineCombinerProps) {
   const [animMode, setAnimMode] = useState<number>(0);
   const [autoCycle, setAutoCycle] = useState<boolean>(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const visibleRef = useRef(false);
   const isAr = locale === 'ar';
 
   const togglePillar = (id: string) => {
@@ -40,6 +41,7 @@ export function DisciplineCombiner({ locale, copy }: DisciplineCombinerProps) {
   useEffect(() => {
     if (!autoCycle) return;
     const timer = window.setInterval(() => {
+      if (!visibleRef.current || document.hidden || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       setAnimMode((prev) => (prev + 1) % ANIMATION_MODES.length);
     }, 4500);
     return () => window.clearInterval(timer);
@@ -53,10 +55,16 @@ export function DisciplineCombiner({ locale, copy }: DisciplineCombinerProps) {
     if (!ctx) return;
 
     let rafId = 0;
-    const start = performance.now();
+    let clock = 0;
+    let previous = performance.now();
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     const render3D = (now: number) => {
-      const t = (now - start) / 1000;
+      rafId = 0;
+      if (document.hidden || !visibleRef.current) return;
+      if (!motion.matches) clock += Math.min(0.05, (now - previous) / 1000);
+      previous = now;
+      const t = motion.matches ? 0 : clock;
       const w = canvas.width;
       const h = canvas.height;
       const cx = w / 2;
@@ -228,11 +236,31 @@ export function DisciplineCombiner({ locale, copy }: DisciplineCombinerProps) {
         ctx.restore();
       });
 
-      rafId = requestAnimationFrame(render3D);
+      if (!motion.matches) rafId = requestAnimationFrame(render3D);
     };
 
-    rafId = requestAnimationFrame(render3D);
-    return () => cancelAnimationFrame(rafId);
+    const wake = () => {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+      if (!document.hidden && visibleRef.current) {
+        previous = performance.now();
+        rafId = requestAnimationFrame(render3D);
+      }
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      visibleRef.current = entry?.isIntersecting ?? false;
+      wake();
+    });
+    observer.observe(canvas);
+    document.addEventListener('visibilitychange', wake);
+    motion.addEventListener('change', wake);
+    wake();
+    return () => {
+      cancelAnimationFrame(rafId);
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', wake);
+      motion.removeEventListener('change', wake);
+    };
   }, [selected, animMode, copy.centre]);
 
   const activeServices = services.filter((s) => selected.includes(s.pillar));

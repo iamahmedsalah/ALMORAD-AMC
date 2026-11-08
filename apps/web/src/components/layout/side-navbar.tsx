@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { SolarIcon, type SolarName } from '@/components/ui/solar-icon';
 
 const subscribeMount = () => () => {};
-const navigationIcons: SolarName[] = ['widget-2-linear', 'users-group-rounded-linear', 'case-round-linear', 'chat-round-line-linear', 'chat-round-line-linear', 'calendar-linear'];
+const navigationIcons: SolarName[] = ['widget-2-linear', 'users-group-rounded-linear', 'case-round-linear', 'users-group-rounded-linear', 'chat-round-line-linear', 'chat-round-line-linear', 'calendar-linear'];
 
 interface NavItem {
   href: string;

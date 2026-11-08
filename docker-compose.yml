@@ -31,8 +31,8 @@ services:
       API_PORT: 4000
       DATABASE_URL: postgresql://${POSTGRES_USER:-amc_dev}:${POSTGRES_PASSWORD:-local_only_password}@postgres:5432/${POSTGRES_DB:-amc_dev}?schema=public
       WEB_ORIGIN: http://localhost:3000
-      STAFF_PROXY_SECRET: ${STAFF_PROXY_SECRET:-local_dev_staff_proxy_secret_0123456789abcdef0123456789abcdef0123456789abcdef}
-      CRON_SECRET: ${CRON_SECRET:-local_dev_cron_secret_0123456789abcdef0123456789abcdef}
+      STAFF_PROXY_SECRET: ${STAFF_PROXY_SECRET:-}
+      CRON_SECRET: ${CRON_SECRET:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,7 +49,7 @@ services:
       NODE_ENV: development
       STAFF_API_ORIGIN: http://api:4000
       WEB_ORIGIN: http://localhost:3000
-      STAFF_PROXY_SECRET: ${STAFF_PROXY_SECRET:-local_dev_staff_proxy_secret_0123456789abcdef0123456789abcdef0123456789abcdef}
+      STAFF_PROXY_SECRET: ${STAFF_PROXY_SECRET:-}
     depends_on:
       api:
         condition: service_healthy

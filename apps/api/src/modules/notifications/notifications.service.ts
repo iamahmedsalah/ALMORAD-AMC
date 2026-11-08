@@ -1,5 +1,5 @@
 import {Injectable, Logger, Inject} from '@nestjs/common';
-import {createHmac} from 'node:crypto';
+import {createHmac, randomBytes} from 'node:crypto';
 import {Resend} from 'resend';
 import {PrismaService} from '../../prisma/prisma.service.js';
 import {generateIcs} from '@amc/shared';
@@ -36,7 +36,7 @@ export class NotificationsService {
       : undefined;
     this.fromEmail = process.env.RESEND_FROM_EMAIL || 'bookings@almorad-amc.com';
     this.webOrigin = process.env.WEB_ORIGIN || vercelOrigin || 'http://localhost:3000';
-    this.tokenSecret = process.env.BOOKING_TOKEN_SECRET || 'development-booking-token-secret-must-be-long';
+    this.tokenSecret = process.env.BOOKING_TOKEN_SECRET || randomBytes(32).toString('hex');
   }
 
   /**

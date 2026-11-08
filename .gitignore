@@ -3,7 +3,8 @@ node_modules/
 .next/
 dist/
 coverage/
-scripts/
+scripts/release/
+scripts/check-contact-storage.mts
 test-results/
 test-results*/
 playwright-report/

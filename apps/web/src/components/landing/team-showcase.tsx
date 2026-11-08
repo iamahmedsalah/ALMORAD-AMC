@@ -13,30 +13,66 @@ interface TeamMember {
   discipline: { en: string; ar: string };
   quote: { en: string; ar: string };
   tags: { en: string[]; ar: string[] };
-  avatarType: 'ceo' | 'creative' | 'growth' | 'tech';
+  avatarType: 'ceo' | 'co_ceo' | 'coo' | 'creative' | 'growth' | 'tech' | 'operations' | 'client';
 }
 
-const TEAM_MEMBERS: readonly TeamMember[] = [
+const CEO_MEMBER: TeamMember = {
+  id: 'ceo',
+  badge: '01 / FOUNDER & CEO',
+  featured: true,
+  name: { en: 'Eng.khaled Morad', ar: 'م.خالد مراد' },
+  role: { en: 'Founder & Chief Executive Officer', ar: 'المؤسس والرئيس التنفيذي (CEO)' },
+  discipline: { en: 'Executive Strategy & Brand Growth', ar: 'القيادة التنفيذية واستراتيجية النمو' },
+  quote: {
+    en: 'We built ALMORAD AMC so ambitious brands never have to choose between strategic rigor, bold creative direction, and engineering excellence.',
+    ar: 'أسسنا المراد AMC لتمكين العلامات الطموحة من الجمع بين دقة الاستراتيجية، وقوة الإبداع البصري، والتميز التقني في منظومة واحدة.',
+  },
+  tags: {
+    en: ['Brand Positioning', 'Growth Architecture', 'Executive Advisory'],
+    ar: ['تموضع العلامة', 'هندسة النمو', 'الاستشارات التنفيذية'],
+  },
+  avatarType: 'ceo',
+};
+
+const CO_LEADERSHIP: readonly TeamMember[] = [
   {
-    id: 'ceo',
-    badge: '01 / CEO & FOUNDER',
-    featured: true,
-    name: { en: 'Ahmed Salah', ar: 'أحمد صلاح' },
-    role: { en: 'Founder & Chief Executive Officer', ar: 'المؤسس والرئيس التنفيذي (CEO)' },
-    discipline: { en: 'Executive Strategy & Brand Growth', ar: 'القيادة التنفيذية واستراتيجية النمو' },
+    id: 'co-ceo',
+    badge: '02 / EXECUTIVE LEADERSHIP',
+    name: { en: 'Co-Chief Executive Officer', ar: 'الرئيس التنفيذي المشارك (Co-CEO)' },
+    role: { en: 'Co-Chief Executive Officer & Partner', ar: 'الرئيس التنفيذي المشارك والشريك' },
+    discipline: { en: 'Corporate Strategy & Global Partnerships', ar: 'الاستراتيجية المؤسسية والشراكات الدولية' },
     quote: {
-      en: 'We built ALMORAD AMC so ambitious brands never have to choose between strategic rigor, bold creative direction, and engineering excellence.',
-      ar: 'أسسنا المراد AMC لتمكين العلامات الطموحة من الجمع بين دقة الاستراتيجية، وقوة الإبداع البصري، والتميز التقني في منظومة واحدة.',
+      en: 'Driving institutional partnerships, market expansion, and long-term brand capital across regional and international sectors.',
+      ar: 'قيادة الشراكات المؤسسية والتوسع السوقي وبناء القيمة المستدامة للعلامات عبر الأسواق الإقليمية والدولية.',
     },
     tags: {
-      en: ['Brand Positioning', 'Growth Architecture', 'Executive Advisory'],
-      ar: ['تموضع العلامة', 'هندسة النمو', 'الاستشارات التنفيذية'],
+      en: ['Market Expansion', 'Enterprise Strategy', 'Commercial Scale'],
+      ar: ['التوسع السوقي', 'استراتيجية المؤسسات', 'النمو التجاري'],
     },
-    avatarType: 'ceo',
+    avatarType: 'co_ceo',
   },
   {
+    id: 'coo',
+    badge: '03 / OPERATIONS EXCELLENCE',
+    name: { en: 'Chief Operating Officer', ar: 'رئيس العمليات التنفيذي (COO)' },
+    role: { en: 'Chief Operating Officer', ar: 'رئيس العمليات التنفيذي والشريك التشغيلي' },
+    discipline: { en: 'Studio Delivery & Governance Systems', ar: 'إدارة العمليات وحوكمة المشاريع وجودة التسليم' },
+    quote: {
+      en: 'Ensuring seamless project execution, sprint velocity, and rigorous quality benchmarks across every multidisciplinary brief.',
+      ar: 'ضمان دقة التنفيذ، وسرعة دورات العمل، وتطبيق أعلى معايير الجودة والحوكمة في كافة مشاريع الاستوديو.',
+    },
+    tags: {
+      en: ['Operational Rigor', 'Delivery Excellence', 'Resource Architecture'],
+      ar: ['حوكمة العمليات', 'دقة التسليم', 'إدارة الموارد'],
+    },
+    avatarType: 'coo',
+  },
+] as const;
+
+const CORE_TEAM_5: readonly TeamMember[] = [
+  {
     id: 'creative',
-    badge: '02 / BRAND ARCHITECTURE',
+    badge: '04 / BRAND ARCHITECTURE',
     name: { en: 'Creative Direction Lead', ar: 'إدارة الإبداع والهوية البصرية' },
     role: { en: 'Executive Creative Director', ar: 'المدير الإبداعي التنفيذي' },
     discipline: { en: 'Identity Systems & Visual Craft', ar: 'أنظمة الهوية والإخراج الفني' },
@@ -52,7 +88,7 @@ const TEAM_MEMBERS: readonly TeamMember[] = [
   },
   {
     id: 'growth',
-    badge: '03 / PERFORMANCE & MEDIA',
+    badge: '05 / PERFORMANCE & MEDIA',
     name: { en: 'Growth & Media Lead', ar: 'إدارة النمو والحملات الإعلانية' },
     role: { en: 'Head of Performance & Campaigns', ar: 'رئيس قطاع النمو وشراء الوسائط' },
     discipline: { en: 'Media Buying, Outdoor & ROI', ar: 'شراء المساحات الإعلانية والحملات الخارجية' },
@@ -68,7 +104,7 @@ const TEAM_MEMBERS: readonly TeamMember[] = [
   },
   {
     id: 'tech',
-    badge: '04 / DIGITAL ENGINEERING',
+    badge: '06 / DIGITAL ENGINEERING',
     name: { en: 'Digital Systems Lead', ar: 'إدارة الهندسة والمنصات الرقمية' },
     role: { en: 'Lead Technology & Web Architect', ar: 'كبير مهندسي المنصات وتطوير الويب' },
     discipline: { en: 'Full-Stack Web & E-Commerce', ar: 'تطوير المواقع والتجارة الإلكترونية' },
@@ -81,6 +117,38 @@ const TEAM_MEMBERS: readonly TeamMember[] = [
       ar: ['منصات الويب التفاعلية', 'التجارة الإلكترونية', 'الأرشفة التقنية SEO'],
     },
     avatarType: 'tech',
+  },
+  {
+    id: 'operations',
+    badge: '07 / PRODUCTION & SPRINT',
+    name: { en: 'Head of Production & Sprints', ar: 'إدارة الإنتاج وإدارة المشاريع' },
+    role: { en: 'Senior Production Director', ar: 'مدير عام الإنتاج وإدارة المشاريع' },
+    discipline: { en: 'Agile Delivery, Timelines & QA', ar: 'إدارة الجداول الزمنية وضمان الجودة البرمجية والتصميمية' },
+    quote: {
+      en: 'Aligning milestones, creative assets, and client sign-offs with unwavering precision and clockwork predictability.',
+      ar: 'تنسيق الجداول الزمنية، ومخرجات التصميم، والتسليمات البرمجية بدقة تامة وانضباط احترافي.',
+    },
+    tags: {
+      en: ['Sprint Leadership', 'QA Benchmarks', 'Resource Tracking'],
+      ar: ['إدارة الدورات', 'معايير الجودة QA', 'إدارة المخرجات'],
+    },
+    avatarType: 'operations',
+  },
+  {
+    id: 'client',
+    badge: '08 / CLIENT SUCCESS & VALUE',
+    name: { en: 'Client Strategy & Success Lead', ar: 'إدارة نجاح العملاء والاستشارات' },
+    role: { en: 'Director of Strategic Client Success', ar: 'مدير نجاح العملاء والاستشارات الاستراتيجية' },
+    discipline: { en: 'Account Growth, Reporting & Value', ar: 'إدارة حسابات الشركاء والتقارير وتحقيق العائد' },
+    quote: {
+      en: 'Serving as the direct strategic conduit between client goals and our multidisciplinary studio team at every phase.',
+      ar: 'نقطة الاتصال الاستراتيجية المباشرة لضمان توافق أهداف العميل مع كافة مراحل العمل في الاستوديو.',
+    },
+    tags: {
+      en: ['Client Advisory', 'Quarterly ROI', 'Partner Relations'],
+      ar: ['استشارات العملاء', 'متابعة العائد ROI', 'علاقات الشركاء'],
+    },
+    avatarType: 'client',
   },
 ] as const;
 
@@ -165,7 +233,7 @@ function ExecutivePortraitSvg({ type, isFeatured }: { type: TeamMember['avatarTy
           stroke={`url(#gold-${type})`}
           strokeWidth="2.2"
         />
-        {type === 'ceo' && (
+        {(type === 'ceo' || type === 'co_ceo') && (
           <path
             d="M204 328 L216 328 L220 415 L210 430 L200 415 Z"
             fill="#BE9D5B"
@@ -192,7 +260,7 @@ function ExecutivePortraitSvg({ type, isFeatured }: { type: TeamMember['avatarTy
           strokeWidth="3"
           strokeLinecap="round"
         />
-        {/* Subtle Glasses / Executive Visor Accent for Specialized Leads */}
+        {/* Glasses / Visor Details */}
         {type === 'ceo' && (
           <g stroke="#D8BE86" strokeWidth="2" fill="rgba(11,10,8,0.45)">
             <rect x="174" y="166" width="30" height="18" rx="4" />
@@ -207,9 +275,9 @@ function ExecutivePortraitSvg({ type, isFeatured }: { type: TeamMember['avatarTy
 
       {/* Top Corner Studio Watermark */}
       <g transform="translate(24, 26)">
-        <rect width="74" height="26" rx="8" fill="rgba(11, 10, 8, 0.78)" stroke="rgba(190, 157, 91, 0.45)" />
-        <text x="37" y="17" textAnchor="middle" fill="#D8BE86" fontSize="11" fontWeight="700" fontFamily="monospace">
-          AMC EXEC
+        <rect width="84" height="26" rx="8" fill="rgba(11, 10, 8, 0.78)" stroke="rgba(190, 157, 91, 0.45)" />
+        <text x="42" y="17" textAnchor="middle" fill="#D8BE86" fontSize="10" fontWeight="700" fontFamily="monospace">
+          {type === 'ceo' ? 'FOUNDER' : type === 'co_ceo' || type === 'coo' ? 'EXECUTIVE' : 'LEADERSHIP'}
         </text>
       </g>
     </svg>
@@ -218,11 +286,10 @@ function ExecutivePortraitSvg({ type, isFeatured }: { type: TeamMember['avatarTy
 
 export function TeamShowcase({ locale }: { locale: Locale }) {
   const isAr = locale === 'ar';
-  const ceo = TEAM_MEMBERS[0]!;
-  const directors = TEAM_MEMBERS.slice(1);
+  const ceo = CEO_MEMBER;
 
   return (
-    <div className="lp-team-section my-20">
+    <section id="chapter-team" aria-labelledby="team-title" className="lp-team-section my-20">
       {/* Section Header */}
       <div className="lp-team-header mb-12" data-reveal>
         <div>
@@ -230,7 +297,7 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
             <span className="badge-dot" aria-hidden="true" />
             <span>{isAr ? '٠٦ — القيادة وفريق الاستوديو' : '06 — LEADERSHIP & STUDIO TEAM'}</span>
           </p>
-          <h2 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">
+          <h2 id="team-title" className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">
             {isAr
               ? 'رؤية يقودها المؤسسون. وتنفيذ بمعايير عالمية.'
               : 'Meet the minds shaping your next chapter.'}
@@ -242,6 +309,9 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
               ? 'نجمع بين القيادة الاستراتيجية المباشرة وخبراء الهوية والإعلان والهندسة الرقمية لنضمن لك تواصلاً مباشراً مع صناع القرار في كل مشروع.'
               : 'Direct partner-level leadership backed by multidisciplinary specialists across brand architecture, media performance, and full-stack engineering.'}
           </p>
+          <p className="lp-team-preview-note">
+            {isAr ? 'معاينة التصميم: الملفات التعريفية والرسوم التوضيحية مؤقتة لحين اعتماد الأسماء والصور والسير الذاتية.' : 'Design preview: profiles and illustrations are placeholders pending approved names, photographs and biographies.'}
+          </p>
           <Link href="/booking" className="button button-primary rounded-squircle-md">
             <span>{isAr ? 'احجز جلسة استراتيجية مع الفريق' : 'Book a Strategy Session with Us'}</span>
             <SolarIcon name="arrow-right-up-linear" />
@@ -249,8 +319,9 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      {/* Featured CEO Spotlight Card */}
+      {/* 1. Featured CEO Spotlight Card */}
       <article
+        data-team-card
         data-scroll-card
         className="lp-team-ceo-card glass-surface rounded-squircle-xl mb-8"
       >
@@ -258,7 +329,7 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
           <ExecutivePortraitSvg type="ceo" isFeatured />
           <span className="lp-team-verified-pill">
             <span className="badge-dot" aria-hidden="true" />
-            <span>{isAr ? 'القيادة التنفيذية · AMC' : 'EXECUTIVE LEADERSHIP · AMC'}</span>
+            <span>{isAr ? 'رسم توضيحي مؤقت · CEO' : 'ILLUSTRATION PLACEHOLDER · CEO'}</span>
           </span>
         </div>
 
@@ -273,9 +344,7 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
           <h3 className="lp-team-ceo-name">{ceo.name[locale]}</h3>
           <p className="lp-team-ceo-role">{ceo.role[locale]}</p>
 
-          <blockquote className="lp-team-ceo-quote">
-            “{ceo.quote[locale]}”
-          </blockquote>
+          <p className="lp-team-ceo-quote">{ceo.quote[locale]}</p>
 
           <ul className="lp-team-tags" aria-label={isAr ? 'مجالات التخصص' : 'Specializations'}>
             {ceo.tags[locale].map((tag) => (
@@ -287,7 +356,7 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
 
           <div className="lp-team-ceo-actions">
             <Link href="/booking" className="button button-primary rounded-squircle-md">
-              <span>{isAr ? 'احجز استشارة مباشرة' : 'Schedule Executive Consultation'}</span>
+              <span>{isAr ? 'احجز اجتماعاً' : 'Book a meeting'}</span>
               <SolarIcon name="arrow-right-up-linear" />
             </Link>
             <Link href="/contact" className="button button-secondary rounded-squircle-md">
@@ -298,16 +367,22 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
         </div>
       </article>
 
-      {/* 3 Practice Directors Grid */}
-      <div className="lp-team-grid">
-        {directors.map((member) => (
+      {/* 2. Co-Leadership Row: Co-CEO & COO */}
+      <div className="lp-team-sub-header mb-4">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--accent-text)]">
+          {isAr ? 'القيادة التنفيذية المشاركة (Co-CEO & COO)' : 'CO-EXECUTIVE & OPERATIONS LEADERSHIP'}
+        </h3>
+      </div>
+      <div className="lp-team-grid-2 mb-10">
+        {CO_LEADERSHIP.map((member) => (
           <article
             key={member.id}
+            data-team-card
             data-scroll-card
             className="lp-team-card glass-surface rounded-squircle-xl"
           >
             <div className="lp-team-card-portrait rounded-squircle-lg">
-              <ExecutivePortraitSvg type={member.avatarType} />
+              <ExecutivePortraitSvg type={member.avatarType} isFeatured />
               <span className="lp-team-card-badge badge rounded-squircle-sm">
                 {member.badge}
               </span>
@@ -315,7 +390,7 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
 
             <div className="lp-team-card-body">
               <small className="lp-team-card-discipline">{member.discipline[locale]}</small>
-              <h3 className="lp-team-card-title">{member.name[locale]}</h3>
+              <h4 className="lp-team-card-title">{member.name[locale]}</h4>
               <p className="lp-team-card-role">{member.role[locale]}</p>
               <p className="lp-team-card-bio">{member.quote[locale]}</p>
 
@@ -330,6 +405,45 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
           </article>
         ))}
       </div>
-    </div>
+
+      {/* 3. Team of 5 Discipline Leads */}
+      <div className="lp-team-sub-header mb-4">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--accent-text)]">
+          {isAr ? 'فريق القيادات المتخصصة (٥ قطاعات استراتيجية)' : 'DIRECTORS & DISCIPLINE LEADS (5 CORE PILLARS)'}
+        </h3>
+      </div>
+      <div className="lp-team-grid-5">
+        {CORE_TEAM_5.map((member) => (
+          <article
+            key={member.id}
+            data-team-card
+            data-scroll-card
+            className="lp-team-card glass-surface rounded-squircle-xl"
+          >
+            <div className="lp-team-card-portrait rounded-squircle-lg">
+              <ExecutivePortraitSvg type={member.avatarType} />
+              <span className="lp-team-card-badge badge rounded-squircle-sm">
+                {member.badge}
+              </span>
+            </div>
+
+            <div className="lp-team-card-body">
+              <small className="lp-team-card-discipline">{member.discipline[locale]}</small>
+              <h4 className="lp-team-card-title text-lg">{member.name[locale]}</h4>
+              <p className="lp-team-card-role text-xs">{member.role[locale]}</p>
+              <p className="lp-team-card-bio text-xs leading-relaxed">{member.quote[locale]}</p>
+
+              <ul className="lp-team-tags mt-auto pt-3">
+                {member.tags[locale].map((tag) => (
+                  <li key={tag} className="badge rounded-squircle-sm text-[0.7rem] px-2 py-0.5">
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }

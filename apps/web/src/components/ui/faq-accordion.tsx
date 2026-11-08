@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export function FaqAccordion({ items, locale }: { items: readonly (readonly [string, string])[]; locale: string }) {
   return (
-    <div className="faq-list faq-accordion">
+    <div className="faq-accordion">
       {items.map(([question, answer], index) => (
         <FaqItem
           key={question}
@@ -100,9 +100,7 @@ function FaqItem({ question, answer, number }: { question: string; answer: strin
         </span>
       </summary>
       <div ref={body} className="faq-accordion-answer">
-        <div className="faq-accordion-answer-inner">
-          <p>{answer}</p>
-        </div>
+        <p>{answer}</p>
       </div>
     </details>
   );

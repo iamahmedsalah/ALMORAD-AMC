@@ -38,6 +38,7 @@ export async function Header() {
     { href: '/services', label: t('services') },
     { href: '/about', label: c.nav.about },
     { href: '/work', label: c.nav.work },
+    { href: '/#chapter-team', label: locale === 'ar' ? 'تعرّف على الفريق' : 'Meet the team' },
     { href: '/contact', label: c.nav.contact },
     { href: '/faq', label: t('faq') },
     { href: '/booking', label: bCopy.title },

@@ -435,7 +435,7 @@ export function Landing({ locale }: { locale: Locale }) {
             </div>
 
             {/* Section F: Advanced Features — Interactive Discipline Combiner */}
-            <div className="my-20  " data-together>
+            <div id="chapter-together" className="my-20" data-together>
               <div className="mb-8" data-reveal>
                 <p className="eyebrow badge badge-accent rounded-squircle-md mb-4">
                   <span className="badge-dot" aria-hidden="true" />
@@ -462,7 +462,7 @@ export function Landing({ locale }: { locale: Locale }) {
             </div>
 
             {/* Section G: Cross-Device Experience Showcase */}
-            <div className="lp-devices-grid my-20   glass-surface rounded-squircle-xl p-8 sm:p-12">
+            <div id="chapter-devices" className="lp-devices-grid my-20 glass-surface rounded-squircle-xl p-8 sm:p-12">
               <div data-reveal>
                 <p className="eyebrow badge badge-accent rounded-squircle-md mb-4">
                   <span className="badge-dot" aria-hidden="true" />
@@ -605,7 +605,7 @@ export function Landing({ locale }: { locale: Locale }) {
             </div>
 
             {/* FAQ Section */}
-            <div className="faq-section mt-16">
+            <div id="chapter-faq" className="faq-section mt-16">
               <div className="mb-6" data-reveal>
                 <p className="eyebrow badge badge-accent rounded-squircle-md mb-3">
                   <span className="badge-dot" aria-hidden="true" />

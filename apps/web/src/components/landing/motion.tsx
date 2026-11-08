@@ -125,6 +125,20 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
               );
             });
 
+            // Editorial gallery: stagger the cards, then move artwork inside its
+            // clipped frame. Separate targets avoid competing transforms.
+            gsap.utils.toArray<HTMLElement>('[data-portfolio-card]').forEach((card, index) => {
+              const sign = (index % 3 - 1) * (document.documentElement.dir === 'rtl' ? -1 : 1);
+              gsap.fromTo(card, { y: 54, rotation: sign * 2, scale: 0.97 }, {
+                y: 0, rotation: 0, scale: 1, ease: 'power2.out',
+                scrollTrigger: { trigger: card, start: 'top 96%', end: 'top 55%', scrub: 0.6 },
+              });
+              gsap.fromTo(card.querySelector('.lp-photo-img'), { yPercent: -3, scale: 1.08 }, {
+                yPercent: 3, scale: 1.03, ease: 'none',
+                scrollTrigger: { trigger: card, start: 'top bottom', end: 'bottom top', scrub: 0.6 },
+              });
+            });
+
             // 6. Progressively enable the stack only when each card fits on screen.
             // No pin spacers or scroll interception: sticky HTML remains navigable.
             const stack = root.current?.querySelector<HTMLElement>('[data-card-stack]');

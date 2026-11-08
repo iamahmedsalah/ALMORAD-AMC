@@ -63,7 +63,7 @@ export function createAMCMark({svg=AMC_SVG, finish='glossy', depth=34, bevel=5, 
   const data=new SVGLoader().parse(svg);
   const inner=new THREE.Group(),rig=new THREE.Group(),root=new THREE.Group(),pieces={};
   data.paths.forEach((p,i)=>{
-    const geo=new THREE.ExtrudeGeometry(SVGLoader.createShapes(p),{depth,bevelEnabled:true,bevelThickness:bevel,bevelSize:bevel,
+    const geo=new THREE.ExtrudeGeometry(p.toShapes(),{depth,bevelEnabled:true,bevelThickness:bevel,bevelSize:bevel,
       bevelOffset:-bevel,bevelSegments:4,curveSegments:1});
     geo.computeBoundingBox();const b=geo.boundingBox.clone();
     const px=(b.min.x+b.max.x)/2,py=(b.min.y+b.max.y)/2;
@@ -81,12 +81,18 @@ export function createAMCMark({svg=AMC_SVG, finish='glossy', depth=34, bevel=5, 
   const worldC={x:Cc.x-L.x,y:-(Cc.y-L.y)};                          // ring centre in world (y up)
   const size=all.getSize(new THREE.Vector3());
 
-  const S={dx:[],dy:[],dz:[],s:[],g:[],rot:0,lift:0};
+  const S={dx:[],dy:[],dz:[],s:[],g:[],rot:0,lift:0,focusA:0,flipA:0};
   const base=new Map();
-  function layout(p,intro){
-    const rotC=ease.inOut(seg(p,0.28,0.40))*Math.PI*2;
-    const lift=100*bump(p,0.24,0.28,0.40,0.44);
-    const glowC=bump(p,0.26,0.30,0.40,0.45)+0.6*bump(p,0.90,0.94,0.97,1.0);
+  function layout(p,intro,autoSeconds,autoWeight){
+    const au=autoSeconds??-1, aw=autoWeight;
+    // Supplied timed ripple, rigid C-ring lift/turn, then full dimensional turn.
+    const rotC=ease.inOut(seg(p,0.28,0.40))*Math.PI*2+(au>=0?ease.inOut(seg(au,3.2,5.2))*Math.PI*2*aw:0);
+    const lift=100*bump(p,0.24,0.28,0.40,0.44)+(au>=0?90*bump(au,2.6,3.2,5.2,5.8)*aw:0);
+    const glowC=Math.max(bump(p,0.26,0.30,0.40,0.45)+0.6*bump(p,0.90,0.94,0.97,1.0),au>=0?bump(au,2.8,3.4,5.0,5.8)*aw:0);
+    const u2=seg(au,0,2.4),awc=-60+u2*680;
+    const wwA=au>=0?sstep(seg(u2,0,.08))*(1-sstep(seg(u2,.92,1)))*aw:0;
+    S.focusA=au>=0?bump(au,2.6,3.4,5.2,6.0)*aw:0;
+    S.flipA=au>=0?ease.inOut(seg(au,5.9,8.3))*aw:0;
     const L1=bump(p,0.03,0.09,0.15,0.21);
     const wu=seg(p,0.50,0.64), wc=-60+wu*680, ww=sstep(seg(wu,0,.08))*(1-sstep(seg(wu,.92,1)));
     NAMES.forEach((n,i)=>{
@@ -96,19 +102,20 @@ export function createAMCMark({svg=AMC_SVG, finish='glossy', depth=34, bevel=5, 
       dx+=DIR[i][0]*900*k;dy+=DIR[i][1]*900*k;dz+=550*k;s=Math.max(1e-4,ease.outCubic(seg(q,0,.6)));
       dz+=LAYER_Z[i]*L1;                                                  // layers
       dz+=70*ww*Math.exp(-Math.pow((h.x-wc)/110,2));                      // wave
+      dz+=60*wwA*Math.exp(-Math.pow((h.x-awc)/110,2));                    // timed ripple
       if(n==='Corange'||n==='Ctail'){dz+=lift;}
       if(n==='Corange')g=Math.max(g,glowC);
       S.dx[i]=dx;S.dy[i]=dy;S.dz[i]=dz;S.s[i]=s;S.g[i]=g;
     });
     return rotC;
   }
-  function apply(p,intro,time){
-    const rotC=layout(p,intro);
+  function apply(p,intro,time,autoSeconds,autoWeight=1){
+    const rotC=layout(p,intro,autoSeconds,autoWeight);
     // global rig
     const flip=ease.inOut(seg(p,0.68,0.82));
-    rig.rotation.set(Math.sin(time*.4)*.03,flip*Math.PI*2+Math.sin(time*.5)*.05,0);
+    rig.rotation.set(Math.sin(time*.4)*.03,(flip+S.flipA)*Math.PI*2+Math.sin(time*.5)*.05,0);
     rig.position.set(0,Math.sin(time*1.1)*5,0);
-    rig.scale.setScalar(1-.1*Math.sin(Math.PI*flip));
+    rig.scale.setScalar(1-.1*(Math.sin(Math.PI*flip)+Math.sin(Math.PI*S.flipA)));
     NAMES.forEach((n,i)=>{
       const m=pieces[n],h=m.userData.home;let x=h.x+S.dx[i],y=h.y-S.dy[i],rz=0;
       if(n==='Corange'||n==='Ctail'){                                     // rigid ring rotation about the C centre
@@ -131,7 +138,7 @@ export function createAMCMark({svg=AMC_SVG, finish='glossy', depth=34, bevel=5, 
     const t=sstep(seg(p,a[0],b[0])),v=a.map((x,i)=>lerp(x,b[i],t));
     const d0=Math.max(640,size.x*1.5/(2*Math.tan(fov*Math.PI/360)*aspect));
     const ie=ease.outCubic(intro);
-    return {yaw:v[1]+(1-ie)*0.6,pitch:v[2],dist:d0*v[3]*(1+(1-ie)*0.35),tx:v[4]*worldC.x+v[5],ty:v[4]*worldC.y-0.07*d0*v[3]};
+    return {yaw:v[1]+(1-ie)*0.6,pitch:v[2],dist:d0*v[3]*(1+(1-ie)*0.35)*(1-0.05*S.focusA),tx:v[4]*worldC.x+v[5]+S.focusA*0.35*worldC.x,ty:v[4]*worldC.y-0.07*d0*v[3]+S.focusA*0.35*worldC.y};
   }
   return {root,pieces,size,worldC,names:NAMES,finish,get materials(){return mats},
     update:apply,camera,

@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useScrollTimeline } from '@/hooks/use-scroll-timeline';
+import { CHAPTER_METADATA } from '@/hooks/chapter-timeline';
 import type { AmcMarkSceneProps, ScrollTimelineState } from './amc-mark-scene';
 import { AmcMarkVectorFallback } from './amc-mark-vector-fallback';
 import { SolarIcon, type SolarName } from '@/components/ui/solar-icon';
 
-const chapterIcons: SolarName[] = ['widget-2-linear', 'layers-linear', 'star-linear', 'code-square-linear', 'chart-2-linear', 'calendar-linear'];
+const chapterIcons: SolarName[] = ['widget-2-linear', 'layers-linear', 'star-linear', 'case-round-linear', 'chart-2-linear', 'layers-linear', 'code-square-linear', 'users-group-rounded-linear', 'calendar-linear', 'chat-round-line-linear'];
 
 function UnavailableScene({ onError }: AmcMarkSceneProps) {
   useEffect(() => onError(), [onError]);
@@ -19,15 +20,6 @@ const AmcMarkScene = dynamic(() => import('./amc-mark-scene')
 interface AmcMarkContainerProps {
   dir?: 'ltr' | 'rtl';
 }
-
-const CHAPTER_METADATA = [
-  { id: 'chapter-hero', num: '01', en: 'AMC — The Mark', ar: 'AMC — العلامة' },
-  { id: 'chapter-strategy', num: '02', en: 'Layers — Architecture', ar: 'الطبقات — البنية' },
-  { id: 'chapter-identity', num: '03', en: 'Growth — Momentum', ar: 'النمو — الزخم' },
-  { id: 'chapter-digital', num: '04', en: 'Rhythm — Craft', ar: 'الإيقاع — الحرفة الرقمية' },
-  { id: 'chapter-scale', num: '05', en: 'Turn — Full Dimension', ar: 'التحول — الأبعاد الكاملة' },
-  { id: 'chapter-booking', num: '06', en: 'Almorad AMC — Together', ar: 'المراد AMC — معاً' },
-] as const;
 
 function MarkSurface({ animated, mediaReady, progress, activeChapter, dir, scrollStateRef }: {
   animated: boolean; mediaReady: boolean; progress: number; activeChapter: number;
@@ -66,7 +58,7 @@ export function AmcMarkContainer({ dir = 'ltr' }: AmcMarkContainerProps) {
     if (!chapter) return;
     const targetEl = document.getElementById(chapter.id);
     if (targetEl) {
-      targetEl.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+      window.scrollTo({ top: targetEl.getBoundingClientRect().top + window.scrollY - 138, behavior: reducedMotion ? 'auto' : 'smooth' });
       return;
     }
     const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
@@ -124,7 +116,7 @@ export function AmcMarkContainer({ dir = 'ltr' }: AmcMarkContainerProps) {
       {/* Active Chapter Pill Indicator */}
       <div className="scroll-hud-chapter-pill rounded-squircle-md" aria-hidden="true">
         <strong>
-          {currentMeta.num} / 0{CHAPTER_METADATA.length}
+          {currentMeta.num} / {String(CHAPTER_METADATA.length).padStart(2, '0')}
         </strong>
         <span>{isRtl ? currentMeta.ar : currentMeta.en}</span>
       </div>

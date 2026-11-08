@@ -133,6 +133,12 @@ export function AmcMarkScene({
     let ty = 0;
     const t0 = performance.now();
     let prev = t0;
+    let clock = 0;
+    let autoSeconds = 0;
+    let autoWeight = 0;
+    let scrollOwnsMotion = window.scrollY > 8;
+    const handleScroll = () => { if (window.scrollY > 8) scrollOwnsMotion = true; };
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     const handlePointerMove = (e: PointerEvent) => {
       tx = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -157,28 +163,23 @@ export function AmcMarkScene({
     const render = (now: number) => {
       animationFrameId = 0;
       if (stopped || document.hidden) return;
-      const dt = Math.min(0.05, (now - prev) / 1000);
+      const dt = Math.min(0.2, (now - prev) / 1000);
       prev = now;
-      const elapsed = (now - t0) / 1000;
+      clock += Math.min(0.05, dt); // Hidden tabs pause the choreography instead of skipping poses.
+      const elapsed = clock;
       const intro = Math.min(1, elapsed / 1.4);
 
       const rawTarget = scrollStateRef
         ? scrollStateRef.current.progress
         : fallbackPropsRef.current.progress;
       const scrollVal = Math.max(0, Math.min(1, rawTarget));
-      const isScrollingNow = scrollStateRef ? scrollStateRef.current.isScrolling : fallbackPropsRef.current.isScrolling;
-
-      // Continuous multi-animation autoplay cycle (>3 distinct choreographed sequences) when not actively scrolling
-      const autoCycle = (elapsed * 0.085) % 1;
-      const autoProgress = autoCycle < 0.25
-        ? 0.08 + Math.sin(autoCycle * Math.PI * 4) * 0.06 // Anim 1: Layered Architectural Expansion
-        : autoCycle < 0.5
-          ? 0.34 + Math.cos((autoCycle - 0.25) * Math.PI * 4) * 0.05 // Anim 2: Signal C-Ring Orbit & Lift
-          : autoCycle < 0.75
-            ? 0.56 + Math.sin((autoCycle - 0.5) * Math.PI * 4) * 0.06 // Anim 3: Kinetic Wave Propagation
-            : 0.75 + Math.sin((autoCycle - 0.75) * Math.PI * 4) * 0.07; // Anim 4: Full 360 Dimensional Turn
-
-      const target = isScrollingNow || scrollVal > 0.03 ? scrollVal : autoProgress;
+      if (scrollVal > 0.001) scrollOwnsMotion = true;
+      // Autoplay belongs only to the opening visit. Scrolling takes ownership
+      // even when the reader stops, including when returning to the hero.
+      if (!scrollOwnsMotion && elapsed > 1.6) autoSeconds = (autoSeconds + dt) % 11.6;
+      const autoTarget = !scrollOwnsMotion && elapsed > 1.6 ? 1 : 0;
+      autoWeight += (autoTarget - autoWeight) * (1 - Math.exp(-dt * 9));
+      const target = scrollVal;
 
       cur += (target - cur) * (1 - Math.pow(0.0015, dt));
       px += (tx - px) * (1 - Math.pow(0.001, dt));
@@ -188,11 +189,12 @@ export function AmcMarkScene({
       const h = container.clientHeight || window.innerHeight;
       const aspect = w / Math.max(1, h);
 
+      mark.update(cur, intro, elapsed, autoSeconds, autoWeight);
       const cam = mark.camera(cur, intro, aspect, camera.fov);
       const isRtl = dir === 'rtl';
 
-      const idleOrbitYaw = Math.sin(elapsed * 0.55) * 0.16;
-      const idleOrbitPitch = Math.cos(elapsed * 0.42) * 0.06;
+      const idleOrbitYaw = Math.sin(elapsed * 0.55) * 0.06 * autoWeight;
+      const idleOrbitPitch = Math.cos(elapsed * 0.42) * 0.03 * autoWeight;
       const yaw = (isRtl ? -cam.yaw : cam.yaw) + px * 0.14 + idleOrbitYaw;
       const pitch = cam.pitch + -py * 0.1 + idleOrbitPitch;
       // The artwork is not mirrored: the C focus remains on its actual position.
@@ -205,7 +207,6 @@ export function AmcMarkScene({
       );
       camera.lookAt(targetX, cam.ty, 0);
 
-      mark.update(cur, intro, elapsed);
       // Keep the complete animated geometry inside the canvas during chapter
       // transitions, including expanded pieces and the focused C poses.
       mark.root.updateMatrixWorld(true);
@@ -228,14 +229,17 @@ export function AmcMarkScene({
         camera.position.copy(viewTarget).add(viewOffset);
         camera.lookAt(viewTarget);
       }
-      rimO.intensity = 1.4 + Math.sin(elapsed * 1.8) * 1.8;
+      rimO.intensity = 1.4 + Math.sin(elapsed * 1.8) * 0.35;
 
       if (!document.hidden) {
         try { renderer.render(scene, camera); }
         catch { stopped = true; onError(); return; }
         if (!ready && intro === 1) { ready = true; onReady(); }
       }
-      if (!stopped && !document.hidden) animationFrameId = requestAnimationFrame(render);
+      const settling = Math.abs(target - cur) > 0.0001 || Math.abs(tx - px) + Math.abs(ty - py) > 0.0001 || autoWeight > 0.001;
+      const active = intro < 1 || !scrollOwnsMotion || settling;
+      renderer.domElement.dataset.renderState = active ? 'active' : 'settled';
+      if (!stopped && !document.hidden && active) animationFrameId = requestAnimationFrame(render);
     };
 
     const wake = () => {
@@ -245,6 +249,7 @@ export function AmcMarkScene({
       }
     };
     wakeRef.current = wake;
+    window.addEventListener('scroll', wake, { passive: true });
     document.addEventListener('visibilitychange', wake);
     wake();
 
@@ -256,6 +261,8 @@ export function AmcMarkScene({
       document.removeEventListener('visibilitychange', wake);
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', wake);
       resizeObserver.disconnect();
       renderer.domElement.removeEventListener('webglcontextlost', contextLost);
 
