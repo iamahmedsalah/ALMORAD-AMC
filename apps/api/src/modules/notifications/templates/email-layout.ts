@@ -41,7 +41,10 @@ export function singleLine(value: string): string {
 }
 
 function siteOrigin(): string {
-  return (process.env.EMAIL_SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://almorad-amc.com').replace(/\/$/, '');
+  const vercelOrigin = (process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL)
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL}`
+    : undefined;
+  return (process.env.EMAIL_SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || vercelOrigin || 'https://almorad-amc.com').replace(/\/$/, '');
 }
 
 /** Only verified, owner-supplied details appear in the footer. */

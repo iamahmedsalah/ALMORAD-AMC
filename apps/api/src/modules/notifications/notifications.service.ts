@@ -31,8 +31,11 @@ export class NotificationsService {
     if (apiKey && apiKey !== 'mock') {
       this.resend = new Resend(apiKey);
     }
+    const vercelOrigin = (process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL)
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL}`
+      : undefined;
     this.fromEmail = process.env.RESEND_FROM_EMAIL || 'bookings@almorad-amc.com';
-    this.webOrigin = process.env.WEB_ORIGIN || 'http://localhost:3000';
+    this.webOrigin = process.env.WEB_ORIGIN || vercelOrigin || 'http://localhost:3000';
     this.tokenSecret = process.env.BOOKING_TOKEN_SECRET || 'development-booking-token-secret-must-be-long';
   }
 

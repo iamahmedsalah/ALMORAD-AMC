@@ -1,5 +1,6 @@
 import {z} from 'zod';
-import {emailRegex, phoneRegex} from './index.js';
+const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+const phoneRegex = /^\+?[0-9\s\-()]{7,25}$/;
 export const bookingStatuses=['PENDING','CONFIRMED','CANCELLED','COMPLETED','NO_SHOW'] as const;
 export const changeStatuses=['OPEN','UNDER_REVIEW','ALTERNATIVE_PROPOSED','APPROVED','DECLINED','WITHDRAWN','EXPIRED'] as const;
 export const activeChanges=['OPEN','UNDER_REVIEW','ALTERNATIVE_PROPOSED'] as const;
