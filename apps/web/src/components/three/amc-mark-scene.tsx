@@ -165,7 +165,20 @@ export function AmcMarkScene({
       const rawTarget = scrollStateRef
         ? scrollStateRef.current.progress
         : fallbackPropsRef.current.progress;
-      const target = Math.max(0, Math.min(1, rawTarget));
+      const scrollVal = Math.max(0, Math.min(1, rawTarget));
+      const isScrollingNow = scrollStateRef ? scrollStateRef.current.isScrolling : fallbackPropsRef.current.isScrolling;
+
+      // Continuous multi-animation autoplay cycle (>3 distinct choreographed sequences) when not actively scrolling
+      const autoCycle = (elapsed * 0.085) % 1;
+      const autoProgress = autoCycle < 0.25
+        ? 0.08 + Math.sin(autoCycle * Math.PI * 4) * 0.06 // Anim 1: Layered Architectural Expansion
+        : autoCycle < 0.5
+          ? 0.34 + Math.cos((autoCycle - 0.25) * Math.PI * 4) * 0.05 // Anim 2: Signal C-Ring Orbit & Lift
+          : autoCycle < 0.75
+            ? 0.56 + Math.sin((autoCycle - 0.5) * Math.PI * 4) * 0.06 // Anim 3: Kinetic Wave Propagation
+            : 0.75 + Math.sin((autoCycle - 0.75) * Math.PI * 4) * 0.07; // Anim 4: Full 360 Dimensional Turn
+
+      const target = isScrollingNow || scrollVal > 0.03 ? scrollVal : autoProgress;
 
       cur += (target - cur) * (1 - Math.pow(0.0015, dt));
       px += (tx - px) * (1 - Math.pow(0.001, dt));
@@ -178,8 +191,10 @@ export function AmcMarkScene({
       const cam = mark.camera(cur, intro, aspect, camera.fov);
       const isRtl = dir === 'rtl';
 
-      const yaw = (isRtl ? -cam.yaw : cam.yaw) + px * 0.14;
-      const pitch = cam.pitch + -py * 0.1;
+      const idleOrbitYaw = Math.sin(elapsed * 0.55) * 0.16;
+      const idleOrbitPitch = Math.cos(elapsed * 0.42) * 0.06;
+      const yaw = (isRtl ? -cam.yaw : cam.yaw) + px * 0.14 + idleOrbitYaw;
+      const pitch = cam.pitch + -py * 0.1 + idleOrbitPitch;
       // The artwork is not mirrored: the C focus remains on its actual position.
       const targetX = cam.tx;
 
@@ -213,15 +228,14 @@ export function AmcMarkScene({
         camera.position.copy(viewTarget).add(viewOffset);
         camera.lookAt(viewTarget);
       }
-      rimO.intensity = 1.4 + Math.sin(cur * Math.PI) * 2.2;
+      rimO.intensity = 1.4 + Math.sin(elapsed * 1.8) * 1.8;
 
       if (!document.hidden) {
         try { renderer.render(scene, camera); }
         catch { stopped = true; onError(); return; }
         if (!ready && intro === 1) { ready = true; onReady(); }
       }
-      const settling = Math.abs(target - cur) > 0.0001 || Math.abs(tx - px) + Math.abs(ty - py) > 0.001;
-      if (intro < 1 || settling) animationFrameId = requestAnimationFrame(render);
+      if (!stopped && !document.hidden) animationFrameId = requestAnimationFrame(render);
     };
 
     const wake = () => {

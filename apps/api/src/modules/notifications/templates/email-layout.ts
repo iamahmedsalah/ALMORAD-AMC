@@ -16,14 +16,14 @@ export interface EmailLayoutInput {
 }
 
 export const brand = {
-  navy: '#0B1F44',
-  navyDeep: '#061430',
-  orange: '#F7761E',
-  orangeText: '#B84A05',
-  cream: '#FBF1E6',
-  creamSoft: '#FCF8F3',
-  muted: '#354A78',
-  line: '#E4D8C8'
+  navy: '#0B0A08',
+  navyDeep: '#14120E',
+  orange: '#BE9D5B',
+  orangeText: '#7A5F28',
+  cream: '#F5F1E7',
+  creamSoft: '#FAF7F0',
+  muted: '#625D52',
+  line: '#CFCBC0'
 } as const;
 
 export function escapeHtml(value: string): string {

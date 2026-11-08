@@ -9,11 +9,21 @@ export type Permission = (typeof permissions)[number];
 export function can(role: StaffRole, permission: Permission): boolean {
   return role === 'MANAGER' || role === 'CEO' || (role === 'RECEPTIONIST' && (permission === 'appointments:read' || permission === 'appointments:write'));
 }
-// Shared validation boundary for bilingual contact forms.
-export const inquirySchema = z.object({locale: localeSchema, name: z.string().trim().min(2).max(120), email: z.email().max(254), message: z.string().trim().min(10).max(2000)});
+// Shared validation boundary for bilingual contact forms with production-grade email verification.
+export const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+export const phoneRegex = /^\+?[0-9\s\-()]{7,25}$/;
+
+export const inquirySchema = z.object({
+  locale: localeSchema,
+  name: z.string().trim().min(2, {message: 'Name must be at least 2 characters'}).max(120, {message: 'Name cannot exceed 120 characters'}),
+  email: z.string().trim().toLowerCase().regex(emailRegex, {message: 'Please provide a valid email address'}).max(254),
+  message: z.string().trim().min(10, {message: 'Message must be at least 10 characters'}).max(2000, {message: 'Message cannot exceed 2000 characters'})
+});
+
 export const contactSubmissionSchema = inquirySchema.extend({
-  email: z.email().max(254).transform(value => value.toLowerCase()),
-  consent: z.literal(true), website: z.string().max(200).default(''), idempotencyKey: z.uuid()
+  consent: z.literal(true, {message: 'Consent is required'}),
+  website: z.string().max(200).default(''),
+  idempotencyKey: z.uuid()
 }).strict();
 export const pillars = [
   {id: 'marketing', en: 'Marketing', ar: 'التسويق'},

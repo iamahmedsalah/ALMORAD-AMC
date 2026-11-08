@@ -503,4 +503,419 @@ html.dark .site-header .theme-cycle-button .theme-icon-motion { color:var(--amc-
  .amc-landing .faq-section h2 { max-width:20ch; }
 }
 @media(prefers-reduced-motion:reduce) { .theme-icon-motion,.ui-select-content { animation:none; } .theme-cycle-button,.social-item a { transition:none; } }
-@media(prefers-reduced-transparency:reduce) { .amc-landing :is(.glass-surface,.lp-gallery-card,.lp-photo-card,.approach-card,.lp-tier-card,.lp-compare-wrap,.faq-list > details,.lp-devices-grid), .studio-public-page :is(.service-group,.notice-panel,.faq-help,.faq-page-list details), :is(.booking-page,.staff-workspace) :is(.booking-wizard,.staff-card,.staff-metrics > div,.booking-settings > fieldset,.booking-office-panel) { background:var(--glass-fallback); backdrop-filter:none; } }
+@supports (prefers-reduced-transparency:reduce) { .amc-landing :is(.glass-surface,.lp-gallery-card,.lp-photo-card,.approach-card,.lp-tier-card,.lp-compare-wrap,.faq-list > details,.lp-devices-grid), .studio-public-page :is(.service-group,.notice-panel,.faq-help,.faq-page-list details), :is(.booking-page,.staff-workspace) :is(.booking-wizard,.staff-card,.staff-metrics > div,.booking-settings > fieldset,.booking-office-panel) { background:var(--glass-fallback); backdrop-filter:none; } }
+
+/* =========================================================
+   UI/UX Overhaul: Wide TV Showreel, 3D Combiner Stage,
+   Executive Team Showcase, Re-Gridded Finale & Smooth FAQ
+   ========================================================= */
+
+/* 1. Stacked Manifesto Header Above Wide TV Broadcast Unit */
+.amc-landing .manifesto-stacked.editorial-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  grid-template-columns: 1fr;
+}
+.amc-landing .manifesto-stacked > .manifesto-header {
+  max-width: 100%;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: end;
+  padding: clamp(1.75rem, 4vw, 3rem);
+  background: var(--glass-tint);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-feature);
+}
+.amc-landing .manifesto-kinetic-title .line-mask {
+  overflow: hidden;
+  padding-block: 0.08em;
+}
+.amc-landing .manifesto-kinetic-title .line-inner {
+  background: linear-gradient(125deg, var(--foreground) 35%, #D8BE86 70%, var(--foreground) 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: amcTextShimmer 7s ease-in-out infinite alternate;
+}
+@keyframes amcTextShimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+.amc-landing .manifesto-tv-wrap {
+  width: 100%;
+}
+.lp-tv-unit {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.lp-tv-bezel.lp-showreel {
+  width: 100%;
+  padding: clamp(1rem, 2.2vw, 1.65rem);
+  background: linear-gradient(165deg, #17140F 0%, #0B0A08 100%);
+  border: 2px solid rgba(216, 190, 134, 0.32);
+  border-radius: 32px;
+  box-shadow: 0 32px 72px rgba(0, 0, 0, 0.55);
+}
+.lp-tv-rec-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(190, 157, 91, 0.16);
+  border: 1px solid rgba(216, 190, 134, 0.42);
+  color: #F5F1E7;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.lp-tv-rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #BE9D5B;
+  animation: amcRecPulse 1.5s ease-in-out infinite;
+}
+@keyframes amcRecPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+.lp-tv-screen.lp-showreel-viewport {
+  aspect-ratio: 16 / 8.2;
+  border-radius: 20px;
+  border: 1.5px solid rgba(216, 190, 134, 0.25);
+  background: #070605;
+}
+.lp-tv-svg-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.lp-tv-pedestal {
+  width: min(360px, 65vw);
+  margin-top: -2px;
+}
+.lp-tv-stand-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 2. 3D Logo Stage inside Discipline Combiner */
+.lp-combiner-3d-stage {
+  border: 1px solid var(--glass-border);
+  background: #0B0A08;
+  padding: 1rem;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.lp-combiner-3d-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.lp-combiner-cycle-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(216, 190, 134, 0.35);
+  background: rgba(20, 18, 14, 0.9);
+  color: #D8BE86;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lp-combiner-canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 6 / 5;
+  display: block;
+  border-radius: 16px;
+}
+.lp-combiner-mode-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.lp-combiner-mode-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid rgba(207, 203, 192, 0.16);
+  background: rgba(20, 18, 14, 0.75);
+  color: #CFCBC0;
+  font-size: 0.72rem;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+.lp-combiner-mode-chip strong {
+  color: #BE9D5B;
+  font-variant-numeric: tabular-nums;
+}
+.lp-combiner-mode-chip[data-active="true"] {
+  border-color: #BE9D5B;
+  background: rgba(190, 157, 91, 0.16);
+  color: #F5F1E7;
+}
+
+/* 3. Leadership & Studio Team Section (Replacing Section 06) */
+.lp-team-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: end;
+}
+.lp-team-ceo-card {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.35fr);
+  gap: clamp(1.75rem, 4vw, 3.5rem);
+  padding: clamp(1.5rem, 3.5vw, 2.75rem);
+  align-items: center;
+  border: 1px solid rgba(216, 190, 134, 0.38);
+}
+.lp-team-ceo-portrait,
+.lp-team-card-portrait {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid rgba(216, 190, 134, 0.28);
+  background: #0E0C09;
+  aspect-ratio: 10 / 11;
+}
+.lp-team-portrait-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lp-team-ceo-card:hover .lp-team-portrait-svg,
+.lp-team-card:hover .lp-team-portrait-svg {
+  transform: scale(1.035);
+}
+.lp-team-verified-pill {
+  position: absolute;
+  bottom: 14px;
+  inset-inline-start: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(11, 10, 8, 0.86);
+  border: 1px solid rgba(216, 190, 134, 0.45);
+  color: #F5F1E7;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.lp-team-ceo-name {
+  font-size: clamp(2rem, 3.6vw, 3rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 0.35rem;
+}
+.lp-team-ceo-role {
+  color: var(--accent-text);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+.lp-team-ceo-quote {
+  margin: 0 0 1.5rem;
+  padding-inline-start: 1.15rem;
+  border-inline-start: 3px solid #BE9D5B;
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  line-height: 1.75;
+  color: var(--fg-muted);
+}
+.lp-team-tags {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.lp-team-ceo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  align-items: center;
+}
+.lp-team-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.lp-team-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.35rem;
+  gap: 1.25rem;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease;
+}
+.lp-team-card:hover {
+  transform: translateY(-5px);
+  border-color: #BE9D5B;
+}
+.lp-team-card-badge {
+  position: absolute;
+  bottom: 12px;
+  inset-inline-start: 12px;
+  background: rgba(11, 10, 8, 0.84);
+  color: #D8BE86;
+  border-color: rgba(216, 190, 134, 0.4);
+}
+.lp-team-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.lp-team-card-discipline {
+  color: var(--accent-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.35rem;
+}
+.lp-team-card-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+.lp-team-card-role {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--fg-muted);
+  margin-bottom: 0.85rem;
+}
+.lp-team-card-bio {
+  font-size: 0.9rem;
+  line-height: 1.68;
+  color: var(--fg-muted);
+}
+
+/* 4. Re-Gridded Finale "Let's Talk" Banner & Fluid FAQ Accordion */
+.amc-landing .contact-finale > .finale-banner-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr);
+  gap: clamp(2rem, 5vw, 4.5rem);
+  align-items: center;
+  padding: clamp(2rem, 4.5vw, 4rem);
+  border: 1px solid rgba(216, 190, 134, 0.35);
+  border-inline-start: 4px solid #BE9D5B;
+}
+.finale-banner-title {
+  font-size: clamp(2.4rem, 4.8vw, 4.4rem);
+  line-height: 1.06;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+html[lang="ar"] .finale-banner-title {
+  letter-spacing: 0;
+  line-height: 1.32;
+}
+.finale-banner-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  justify-content: center;
+}
+.finale-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  align-items: center;
+}
+.faq-accordion-item {
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+.faq-accordion-item[data-expanded="true"] {
+  border-color: #BE9D5B !important;
+}
+.faq-accordion-item summary {
+  display: grid !important;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+}
+.faq-accordion-number {
+  font-size: 0.78rem !important;
+  font-weight: 700;
+  color: var(--accent-text);
+  padding: 0.25rem 0.55rem;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  font-variant-numeric: tabular-nums;
+}
+.faq-accordion-question {
+  font-size: 1.02rem !important;
+  line-height: 1.45 !important;
+}
+.faq-accordion-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, color 0.25s ease;
+}
+.faq-accordion-item[data-expanded="true"] .faq-accordion-toggle {
+  transform: rotate(180deg);
+  background: #BE9D5B;
+  color: #0B0A08;
+  border-color: #BE9D5B;
+}
+.faq-accordion-answer-inner {
+  padding: 0 1.5rem 1.4rem 4.1rem;
+}
+html[dir="rtl"] .faq-accordion-answer-inner {
+  padding: 0 4.1rem 1.4rem 1.5rem;
+}
+.faq-accordion-answer-inner p {
+  margin: 0;
+  padding: 0 !important;
+  line-height: 1.78;
+}
+
+@media (max-width: 1023px) {
+  .amc-landing .manifesto-stacked > .manifesto-header,
+  .lp-team-header,
+  .lp-team-ceo-card,
+  .amc-landing .contact-finale > .finale-banner-grid {
+    grid-template-columns: 1fr;
+  }
+  .lp-team-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .lp-team-grid,
+  .lp-combiner-mode-bar {
+    grid-template-columns: 1fr;
+  }
+  .faq-accordion-answer-inner,
+  html[dir="rtl"] .faq-accordion-answer-inner {
+    padding: 0 1.2rem 1.2rem;
+  }
+}

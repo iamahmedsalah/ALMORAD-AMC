@@ -105,6 +105,7 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
   const reducedMotion = useSyncExternalStore(subscribeMotion, getReducedMotion, () => true);
   const paused = userPaused || reducedMotion;
   const [sceneIndex, setSceneIndex] = useState(0);
+  const [manualScene, setManualScene] = useState<number | null>(null);
   const [timecode, setTimecode] = useState('00:00.0');
   const isAr = locale === 'ar';
 
@@ -114,7 +115,6 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Attach real MediaStream to the <video> element when supported so the native <video> tag plays the live stream
     const videoEl = videoRef.current;
     if (
       videoEl &&
@@ -124,49 +124,46 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
       try {
         const stream = canvas.captureStream(30);
         videoEl.srcObject = stream;
-        videoEl.play().catch(() => {
-          /* Autoplay blocked or headless; canvas remains visible directly */
-        });
-      } catch {
-        /* Fallback to direct canvas rendering */
-      }
+        videoEl.play().catch(() => {});
+      } catch {}
     }
 
     let rafId = 0;
-    const duration = 8.0; // 8-second looping studio showreel
+    const duration = 12.0; // 12-second looping 4K studio broadcast showreel
     const start = performance.now();
 
     const drawFrame = (now: number) => {
       const elapsed = ((now - start) / 1000) % duration;
-      const currentScene = Math.min(3, Math.floor((elapsed / duration) * 4));
+      const autoScene = Math.min(3, Math.floor((elapsed / duration) * 4));
+      const currentScene = manualScene !== null ? manualScene : autoScene;
       setSceneIndex((prev) => (prev === currentScene ? prev : currentScene));
-      setTimecode(`00:0${elapsed.toFixed(1)}`);
+      setTimecode(`00:${elapsed < 10 ? '0' : ''}${elapsed.toFixed(1)}`);
 
       const w = canvas.width;
       const h = canvas.height;
 
-      // Deep Navy Studio Backdrop
+      // Deep OLED Studio Broadcast Backdrop (#0B0A08 -> #14120E)
       const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-      bgGrad.addColorStop(0, '#061430');
-      bgGrad.addColorStop(0.55, '#0B1F44');
-      bgGrad.addColorStop(1, '#162B54');
+      bgGrad.addColorStop(0, '#070605');
+      bgGrad.addColorStop(0.5, '#0F0D0A');
+      bgGrad.addColorStop(1, '#191610');
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, w, h);
 
-      // Animated Orange Radial Spotlight
-      const spotX = w * (0.5 + Math.cos(elapsed * 0.9) * 0.24);
-      const spotY = h * (0.46 + Math.sin(elapsed * 1.2) * 0.16);
-      const radGrad = ctx.createRadialGradient(spotX, spotY, 10, spotX, spotY, w * 0.48);
-      radGrad.addColorStop(0, 'rgba(247, 118, 30, 0.42)');
-      radGrad.addColorStop(0.5, 'rgba(236, 91, 19, 0.12)');
-      radGrad.addColorStop(1, 'rgba(6, 20, 48, 0)');
+      // Ambient Champagne Gold Broadcast Spotlight (#BE9D5B)
+      const spotX = w * (0.5 + Math.cos(elapsed * 0.7) * 0.28);
+      const spotY = h * (0.48 + Math.sin(elapsed * 0.95) * 0.18);
+      const radGrad = ctx.createRadialGradient(spotX, spotY, 15, spotX, spotY, w * 0.55);
+      radGrad.addColorStop(0, 'rgba(190, 157, 91, 0.34)');
+      radGrad.addColorStop(0.45, 'rgba(216, 190, 134, 0.12)');
+      radGrad.addColorStop(1, 'rgba(11, 10, 8, 0)');
       ctx.fillStyle = radGrad;
       ctx.fillRect(0, 0, w, h);
 
-      // Perspective Motion Grid
-      ctx.strokeStyle = 'rgba(147, 163, 198, 0.14)';
+      // Broadcast Architectural Perspective Grid
+      ctx.strokeStyle = 'rgba(207, 203, 192, 0.08)';
       ctx.lineWidth = 1;
-      const gridOffset = (elapsed * 48) % 64;
+      const gridOffset = (elapsed * 42) % 64;
       for (let x = -64 + gridOffset; x < w + 64; x += 64) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
@@ -182,68 +179,87 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
 
       // Orbiting Premotio-style Rings & Kinetic Cards
       ctx.save();
-      ctx.translate(w * 0.5, h * 0.48);
+      ctx.translate(w * 0.5, h * 0.47);
 
       for (let i = 0; i < 3; i++) {
         ctx.save();
-        ctx.rotate(elapsed * (0.35 + i * 0.18) * (i % 2 === 0 ? 1 : -1));
-        ctx.strokeStyle = i === 0 ? '#F7761E' : 'rgba(251, 241, 230, 0.25)';
+        ctx.rotate(elapsed * (0.32 + i * 0.16) * (i % 2 === 0 ? 1 : -1));
+        ctx.strokeStyle = i === 0 ? '#BE9D5B' : 'rgba(245, 241, 231, 0.22)';
         ctx.lineWidth = i === 0 ? 2.5 : 1.2;
         ctx.beginPath();
-        ctx.ellipse(0, 0, 190 + i * 55, 78 + i * 26, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, 260 + i * 75, 96 + i * 32, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
 
-      // 5 Floating Studio Cards in Elliptical Orbit
-      for (let k = 0; k < 5; k++) {
-        const angle = elapsed * 0.85 + (k * Math.PI * 2) / 5;
-        const cx = Math.cos(angle) * 220;
-        const cy = Math.sin(angle) * 76;
-        const scale = 0.78 + (Math.sin(angle) + 1) * 0.22;
+      // 4 Floating Discipline Broadcast Nodes in Wide Elliptical Orbit
+      const nodeTitles = ['01 BRANDING', '02 CAMPAIGNS', '03 STRATEGY', '04 WEB & 3D'];
+      for (let k = 0; k < 4; k++) {
+        const angle = elapsed * 0.72 + (k * Math.PI * 2) / 4;
+        const cx = Math.cos(angle) * 310;
+        const cy = Math.sin(angle) * 95;
+        const scale = 0.84 + (Math.sin(angle) + 1) * 0.2;
+        const isCurrent = k === currentScene;
 
         ctx.save();
         ctx.translate(cx, cy);
         ctx.scale(scale, scale);
 
-        ctx.fillStyle = k === currentScene ? '#F7761E' : '#162B54';
-        ctx.strokeStyle = '#FBF1E6';
-        ctx.lineWidth = 1.5;
+        ctx.fillStyle = isCurrent ? '#BE9D5B' : 'rgba(20, 18, 14, 0.92)';
+        ctx.strokeStyle = isCurrent ? '#F5F1E7' : 'rgba(190, 157, 91, 0.55)';
+        ctx.lineWidth = isCurrent ? 2 : 1.2;
         ctx.beginPath();
-        ctx.roundRect(-52, -34, 104, 68, 14);
+        ctx.roundRect(-72, -32, 144, 64, 14);
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = k === currentScene ? '#061430' : '#FBF1E6';
+        ctx.fillStyle = isCurrent ? '#0B0A08' : '#F5F1E7';
         ctx.font = '700 13px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(`AMC 0${k + 1}`, 0, 5);
+        ctx.fillText(nodeTitles[k]!, 0, 5);
         ctx.restore();
       }
 
-      // Center AMC Emblem Pulse
-      const pulse = 1 + Math.sin(elapsed * 3.2) * 0.05;
+      // Center AMC Monolith Broadcast Core
+      const pulse = 1 + Math.sin(elapsed * 2.8) * 0.045;
       ctx.scale(pulse, pulse);
-      ctx.fillStyle = '#0B1F44';
-      ctx.strokeStyle = '#F7761E';
+      ctx.fillStyle = '#14120E';
+      ctx.strokeStyle = '#BE9D5B';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.roundRect(-64, -44, 128, 88, 22);
+      ctx.roundRect(-86, -48, 172, 96, 24);
       ctx.fill();
       ctx.stroke();
 
-      ctx.fillStyle = '#FBF1E6';
-      ctx.font = '800 26px sans-serif';
+      ctx.fillStyle = '#F5F1E7';
+      ctx.font = '800 30px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('AMC', 0, 9);
+      ctx.fillText('AMC', 0, 4);
+      ctx.fillStyle = '#D8BE86';
+      ctx.font = '600 10px monospace';
+      ctx.fillText('STUDIO BROADCAST', 0, 24);
       ctx.restore();
+
+      // Broadcast Corner Viewfinder Brackets
+      ctx.strokeStyle = 'rgba(216, 190, 134, 0.45)';
+      ctx.lineWidth = 2;
+      const bLen = 22;
+      const pad = 28;
+      // Top-left
+      ctx.beginPath(); ctx.moveTo(pad, pad + bLen); ctx.lineTo(pad, pad); ctx.lineTo(pad + bLen, pad); ctx.stroke();
+      // Top-right
+      ctx.beginPath(); ctx.moveTo(w - pad - bLen, pad); ctx.lineTo(w - pad, pad); ctx.lineTo(w - pad, pad + bLen); ctx.stroke();
+      // Bottom-left
+      ctx.beginPath(); ctx.moveTo(pad, h - pad - bLen); ctx.lineTo(pad, h - pad); ctx.lineTo(pad + bLen, h - pad); ctx.stroke();
+      // Bottom-right
+      ctx.beginPath(); ctx.moveTo(w - pad - bLen, h - pad); ctx.lineTo(w - pad, h - pad); ctx.lineTo(w - pad, h - pad - bLen); ctx.stroke();
 
       // Bottom Progress Scrubber Line inside Canvas
       const progress = elapsed / duration;
-      ctx.fillStyle = 'rgba(251, 241, 230, 0.16)';
-      ctx.fillRect(36, h - 22, w - 72, 4);
-      ctx.fillStyle = '#F7761E';
-      ctx.fillRect(36, h - 22, (w - 72) * progress, 4);
+      ctx.fillStyle = 'rgba(245, 241, 231, 0.14)';
+      ctx.fillRect(42, h - 18, w - 84, 4);
+      ctx.fillStyle = '#BE9D5B';
+      ctx.fillRect(42, h - 18, (w - 84) * progress, 4);
 
       if (!paused) {
         rafId = requestAnimationFrame(drawFrame);
@@ -258,80 +274,114 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
         videoEl.srcObject = null;
       }
     };
-  }, [paused]);
+  }, [paused, manualScene]);
 
   const activeScene = REEL_SCENES[sceneIndex] ?? REEL_SCENES[0];
 
   return (
-    <div className="lp-showreel glass-surface rounded-squircle-xl">
-      <div className="lp-showreel-topbar">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="badge badge-accent rounded-squircle-sm">
-            <span className="badge-dot" aria-hidden="true" />
-            <span>{isAr ? 'عرض فيديو تجريبي · 60FPS' : 'MOCK SHOWREEL VIDEO · 60FPS'}</span>
-          </span>
-          <span className="lp-showreel-scene-label">
-            {activeScene.code} — {isAr ? activeScene.ar : activeScene.en}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="lp-showreel-timecode" aria-hidden="true">
-            {timecode} / 00:08.0
-          </span>
-          <button
-            type="button"
-            className="lp-showreel-btn rounded-squircle-sm"
-            aria-pressed={paused}
-            disabled={reducedMotion}
-            onClick={() => setPaused((p) => !p)}
-          >
-            {paused
-              ? isAr
-                ? 'تشغيل الفيديو'
-                : 'Play video'
-              : isAr
-                ? 'إيقاف مؤقت'
-                : 'Pause video'}
-          </button>
-        </div>
-      </div>
-
-      <div className="lp-showreel-viewport rounded-squircle-lg">
-        {/* Live 60FPS Procedural Studio Showreel Canvas + Mirrored <video> Element */}
-        <canvas
-          ref={canvasRef}
-          width={960}
-          height={520}
-          className="lp-showreel-canvas"
-          aria-label={
-            isAr
-              ? 'عرض فيديو تجريبي لاستوديو المراد AMC'
-              : 'ALMORAD AMC interactive studio motion showreel preview'
-          }
-        />
-        <video
-          ref={videoRef}
-          className="lp-showreel-video-mirror"
-          poster="/studio/showreel-poster.svg"
-          muted
-          playsInline
-          loop
-          aria-hidden="true"
-        />
-      </div>
-
-      <div className="lp-showreel-chapters" role="group" aria-label={isAr ? 'فصول العرض' : 'Showreel chapters'}>
-        {REEL_SCENES.map((sc, idx) => (
-          <div
-            key={sc.code}
-            className="lp-showreel-chapter rounded-squircle-sm"
-            data-active={sceneIndex === idx ? 'true' : 'false'}
-          >
-            <strong>{sc.code}</strong>
-            <span>{isAr ? sc.ar : sc.en}</span>
+    <div className="lp-tv-unit">
+      {/* Realistic Cinema Studio TV Bezel & SVG Broadcast Frame */}
+      <div className="lp-showreel lp-tv-bezel glass-surface rounded-squircle-xl">
+        {/* Top Broadcast Telemetry Bar */}
+        <div className="lp-showreel-topbar">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="lp-tv-rec-pill">
+              <span className="lp-tv-rec-dot" aria-hidden="true" />
+              <span>{isAr ? 'بث الاستوديو · 4K 60FPS' : 'STUDIO MONITOR · 4K 60FPS'}</span>
+            </span>
+            <span className="lp-showreel-scene-label">
+              {activeScene.code} — {isAr ? activeScene.ar : activeScene.en}
+            </span>
           </div>
-        ))}
+
+          <div className="flex items-center gap-3">
+            <span className="lp-showreel-timecode" aria-hidden="true">
+              TC {timecode} / 00:12.0
+            </span>
+            <button
+              type="button"
+              className="lp-showreel-btn rounded-squircle-sm"
+              aria-pressed={paused}
+              disabled={reducedMotion}
+              onClick={() => setPaused((p) => !p)}
+            >
+              {paused
+                ? isAr
+                  ? 'تشغيل الشاشة'
+                  : 'Play Monitor'
+                : isAr
+                  ? 'إيقاف مؤقت'
+                  : 'Pause Monitor'}
+            </button>
+          </div>
+        </div>
+
+        {/* Wide 16:9 TV Screen Viewport with SVG Glass Glare & Hardware Bezel */}
+        <div className="lp-showreel-viewport lp-tv-screen rounded-squircle-lg">
+          <canvas
+            ref={canvasRef}
+            width={1280}
+            height={680}
+            className="lp-showreel-canvas"
+            aria-label={
+              isAr
+                ? 'شاشة عرض استوديو المراد AMC التفاعلية'
+                : 'ALMORAD AMC wide studio monitor broadcast showreel'
+            }
+          />
+          {/* Authentic SVG Screen Glare & Broadcast Frame Overlay */}
+          <svg
+            className="lp-tv-svg-overlay"
+            viewBox="0 0 1280 680"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <defs>
+              <linearGradient id="tvGlare" x1="0%" y1="0%" x2="65%" y2="100%">
+                <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.06" />
+                <stop offset="35%" stopColor="#FFFFFF" stopOpacity="0.015" />
+                <stop offset="36%" stopColor="#FFFFFF" stopOpacity="0" />
+                <stop offset="100%" stopColor="#000000" stopOpacity="0.2" />
+              </linearGradient>
+            </defs>
+            <rect width="1280" height="680" fill="url(#tvGlare)" />
+            <rect x="2" y="2" width="1276" height="676" rx="18" fill="none" stroke="rgba(216,190,134,0.22)" strokeWidth="2" />
+          </svg>
+          <video
+            ref={videoRef}
+            className="lp-showreel-video-mirror"
+            poster="/studio/showreel-poster.svg"
+            muted
+            playsInline
+            loop
+            aria-hidden="true"
+          />
+        </div>
+
+        {/* Interactive Channel / Scene Switcher Buttons */}
+        <div className="lp-showreel-chapters" role="group" aria-label={isAr ? 'قنوات العرض' : 'Broadcast channels'}>
+          {REEL_SCENES.map((sc, idx) => (
+            <button
+              key={sc.code}
+              type="button"
+              onClick={() => setManualScene((prev) => (prev === idx ? null : idx))}
+              className="lp-showreel-chapter rounded-squircle-sm text-start cursor-pointer"
+              data-active={sceneIndex === idx ? 'true' : 'false'}
+            >
+              <strong>{sc.code}</strong>
+              <span>{isAr ? sc.ar : sc.en}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Realistic SVG TV Stand / Pedestal Neck */}
+      <div className="lp-tv-pedestal" aria-hidden="true">
+        <svg viewBox="0 0 360 42" className="lp-tv-stand-svg">
+          <path d="M135 0 L225 0 L245 28 L115 28 Z" fill="rgba(20, 18, 14, 0.95)" stroke="rgba(190, 157, 91, 0.35)" strokeWidth="1.5" />
+          <rect x="60" y="28" width="240" height="8" rx="4" fill="#14120E" stroke="rgba(216, 190, 134, 0.45)" strokeWidth="1.5" />
+          <circle cx="180" cy="14" r="3" fill="#BE9D5B" />
+        </svg>
       </div>
     </div>
   );

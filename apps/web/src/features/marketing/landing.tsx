@@ -6,12 +6,12 @@ import { SolarIcon } from '@/components/ui/solar-icon';
 import { LandingMotion } from '@/components/landing/motion';
 import { BrandArt, serviceArt } from '@/components/landing/brand-art';
 import { DisciplineCombiner } from '@/components/landing/discipline-combiner';
+import { TeamShowcase } from '@/components/landing/team-showcase';
 import { ArrowIcon, Lines } from '@/components/landing/primitives';
 import { StudioPhotoShowcase, StudioShowreel } from '@/components/landing/studio-media';
 import { AmcMarkContainer } from '@/components/three/amc-mark-container';
 import { copyFor } from './copy';
 import { landingCopyFor } from './landing-copy';
-import { engagementConfig, formatPrice } from './engagement';
 
 const icons = ['chart-2-linear', 'star-linear', 'compass-linear', 'code-square-linear'] as const;
 const heroFramePhotos = ['/studio/studio-01.svg', '/studio/studio-02.svg', '/studio/studio-03.svg'] as const;
@@ -131,38 +131,42 @@ export function Landing({ locale }: { locale: Locale }) {
         </div>
 
         <Container>
-          {/* Chapter 02: Strategy & Studio Manifesto */}
+          {/* Chapter 02: Strategy & Studio Manifesto — Stacked Header Above Wide TV Monitor */}
           <section
             id="chapter-strategy"
-            className="editorial-section manifesto my-20 lg:my-28"
+            className="editorial-section manifesto manifesto-stacked my-20 lg:my-28"
           >
             <div
               data-chapter-panel
-              className="  glass-surface rounded-squircle-xl p-8 sm:p-12"
+              className="manifesto-header glass-surface rounded-squircle-xl p-8 sm:p-12"
             >
-              <p className="eyebrow badge badge-accent rounded-squircle-md mb-4">
-                <span className="badge-dot" aria-hidden="true" />
-                <span>{c.manifesto.label}</span>
-              </p>
-              <Lines
-                as="h2"
-                text={c.manifesto.title}
-                className="text-3xl sm:text-5xl font-bold tracking-tight mb-6"
-              />
-              <p className="large-copy text-lg text-[var(--fg-muted)] leading-relaxed mb-8">
-                {c.manifesto.body}
-              </p>
-              <Link
-                className="button button-secondary rounded-squircle-md"
-                href="/about"
-              >
-                <span>{c.manifesto.link}</span>
-                <SolarIcon name="arrow-right-up-linear" />
-              </Link>
+              <div className="manifesto-header-top">
+                <p className="eyebrow badge badge-accent rounded-squircle-md mb-4">
+                  <span className="badge-dot" aria-hidden="true" />
+                  <span>{c.manifesto.label}</span>
+                </p>
+                <Lines
+                  as="h2"
+                  text={c.manifesto.title}
+                  className="manifesto-kinetic-title text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6"
+                />
+              </div>
+              <div className="manifesto-header-bottom">
+                <p className="large-copy text-lg text-[var(--fg-muted)] leading-relaxed mb-6">
+                  {c.manifesto.body}
+                </p>
+                <Link
+                  className="button button-secondary rounded-squircle-md"
+                  href="/about"
+                >
+                  <span>{c.manifesto.link}</span>
+                  <SolarIcon name="arrow-right-up-linear" />
+                </Link>
+              </div>
             </div>
 
-            {/* Interactive 60FPS Mock Showreel Video Player */}
-            <div className="mt-12  ">
+            {/* Wide Cinema TV Studio Monitor Showreel Below Header */}
+            <div className="manifesto-tv-wrap">
               <StudioShowreel locale={locale} />
             </div>
           </section>
@@ -552,102 +556,8 @@ export function Landing({ locale }: { locale: Locale }) {
               </div>
             </div>
 
-            {/* Section H: Configurable Engagement Models / Pricing */}
-            <div className="my-20  ">
-              <div className="mb-10" data-reveal>
-                <p className="eyebrow badge badge-accent rounded-squircle-md mb-4">
-                  <span className="badge-dot" aria-hidden="true" />
-                  <span>{lc.engagement.label}</span>
-                </p>
-                <h2 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">
-                  {lc.engagement.title}
-                </h2>
-                <p className="text-lg text-[var(--fg-muted)] max-w-2xl">
-                  {lc.engagement.body}
-                </p>
-              </div>
-
-              <div className="lp-tiers-grid">
-                {engagementConfig.tiers.map((tier, idx) => {
-                  const formatted = formatPrice(tier.prices.project, locale);
-                  return (
-                    <article
-                      key={tier.id}
-                      data-scroll-card
-                      data-recommended={tier.recommended ? 'true' : 'false'}
-                      className="lp-tier-card glass-surface rounded-squircle-xl"
-                    >
-                      <div>
-                        <div className="flex items-center justify-between gap-2 mb-4">
-                          <span className="badge rounded-squircle-sm">0{idx + 1}</span>
-                          {tier.recommended && (
-                            <span className="badge badge-accent rounded-squircle-sm">
-                              {lc.engagement.recommended}
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="text-2xl font-bold mb-2">{tier.name[locale]}</h3>
-                        <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
-                          {tier.summary[locale]}
-                        </p>
-                      </div>
-
-                      <div>
-                        <div className="lp-tier-price">
-                          {formatted ?? lc.engagement.onRequest}
-                        </div>
-                        <Link
-                          href="/booking"
-                          className={`button ${tier.recommended ? 'button-primary' : 'button-secondary'} rounded-squircle-md mt-4 w-full`}
-                        >
-                          <span>{lc.engagement.cta}</span>
-                          <ArrowIcon />
-                        </Link>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-
-              <div className="lp-compare-wrap glass-surface rounded-squircle-lg" data-reveal tabIndex={0} role="region" aria-label={lc.engagement.compare}>
-                <table className="lp-compare-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">{lc.engagement.compare}</th>
-                      {engagementConfig.tiers.map((tier) => (
-                        <th key={tier.id} scope="col">
-                          {tier.name[locale]}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {engagementConfig.features.map((feat) => (
-                      <tr key={feat.id}>
-                        <th scope="row">{feat.label[locale]}</th>
-                        {feat.values.map((val, idx) => (
-                          <td key={`${feat.id}-${idx}`}>
-                            {typeof val === 'boolean' ? (
-                              val ? (
-                                <span className="badge badge-accent rounded-squircle-sm">
-                                  {lc.engagement.yes}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-[var(--fg-muted)]">
-                                  {lc.engagement.no}
-                                </span>
-                              )
-                            ) : (
-                              <span>{val[locale]}</span>
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            {/* Section H: Leadership & Studio Team Showcase (Replacing 06 — Engagement) */}
+            <TeamShowcase locale={locale} />
           </section>
 
           {/* Section I (Chapter 06): Final CTA & FAQ */}
@@ -657,39 +567,46 @@ export function Landing({ locale }: { locale: Locale }) {
           >
             <div
               data-chapter-panel
-              className="  glass-surface rounded-squircle-xl p-8 sm:p-14"
+              className="finale-banner-grid glass-surface rounded-squircle-xl"
             >
-              <p className="eyebrow badge badge-accent rounded-squircle-md mb-4">
-                <span className="badge-dot" aria-hidden="true" />
-                <span>{c.contact.label}</span>
-              </p>
-              <h2 className="text-3xl sm:text-5xl font-bold tracking-tight mb-6">
-                {c.contact.title}
-              </h2>
-              <p className="text-lg text-[var(--fg-muted)] leading-relaxed mb-8">
-                {c.contact.body}
-              </p>
-              <div className="flex flex-wrap gap-4 items-center">
-                <Link
-                  href="/booking"
-                  className="button button-primary rounded-squircle-md"
-                >
-                  <span>{locale === 'ar' ? 'احجز استشارة نمو' : 'Book a Growth Consultation'}</span>
-                  <SolarIcon name="arrow-right-up-linear" />
-                </Link>
-                <Link
-                  href="/contact"
-                  className="button button-secondary rounded-squircle-md"
-                >
-                  <span>{c.contact.link}</span>
-                  <SolarIcon name="arrow-right-linear" />
-                </Link>
+              <div className="finale-banner-main">
+                <p className="eyebrow badge badge-accent rounded-squircle-md mb-5">
+                  <span className="badge-dot" aria-hidden="true" />
+                  <span>{c.contact.label}</span>
+                </p>
+                <Lines
+                  as="h2"
+                  text={c.contact.title}
+                  className="finale-banner-title font-bold tracking-tight"
+                />
+              </div>
+
+              <div className="finale-banner-aside">
+                <p className="finale-banner-copy text-lg text-[var(--fg-muted)] leading-relaxed">
+                  {c.contact.body}
+                </p>
+                <div className="finale-banner-actions">
+                  <Link
+                    href="/booking"
+                    className="button button-primary rounded-squircle-md"
+                  >
+                    <span>{locale === 'ar' ? 'احجز استشارة نمو' : 'Book a Growth Consultation'}</span>
+                    <SolarIcon name="arrow-right-up-linear" />
+                  </Link>
+                  <Link
+                    href="/contact"
+                    className="button button-secondary rounded-squircle-md"
+                  >
+                    <span>{c.contact.link}</span>
+                    <SolarIcon name="arrow-right-linear" />
+                  </Link>
+                </div>
               </div>
             </div>
 
             {/* FAQ Section */}
-            <div className="faq-section mt-16  ">
-              <div className="mb-8" data-reveal>
+            <div className="faq-section mt-16">
+              <div className="mb-6" data-reveal>
                 <p className="eyebrow badge badge-accent rounded-squircle-md mb-3">
                   <span className="badge-dot" aria-hidden="true" />
                   <span>{c.faq.label}</span>
@@ -698,7 +615,9 @@ export function Landing({ locale }: { locale: Locale }) {
                   {c.faq.title}
                 </h2>
               </div>
-              <Link href="/faq" className="faq-page-link">{locale === 'ar' ? '\u062c\u0645\u064a\u0639 \u0627\u0644\u0623\u0633\u0626\u0644\u0629' : 'All questions'} <ArrowIcon /></Link>
+              <Link href="/faq" className="faq-page-link">
+                {locale === 'ar' ? 'جميع الأسئلة' : 'All questions'} <ArrowIcon />
+              </Link>
               <FaqAccordion items={c.faq.items} locale={locale} />
             </div>
           </section>

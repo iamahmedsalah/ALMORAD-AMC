@@ -15,11 +15,13 @@ export function sameOrigin(origin:string|undefined) {
   const fallbackOrigin=process.env.VERCEL_PROJECT_PRODUCTION_URL?`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`:'http://localhost:3000';
   const expected=process.env.WEB_ORIGIN||fallbackOrigin;
   if(origin===expected)return true;
-  if(process.env.VERCEL_ENV==='preview'){
-    for(const host of [process.env.VERCEL_URL,process.env.VERCEL_BRANCH_URL]){
-      if(host&&origin===`https://${host}`)return true;
-    }
+  for(const host of [process.env.VERCEL_PROJECT_PRODUCTION_URL,process.env.VERCEL_URL,process.env.VERCEL_BRANCH_URL]){
+    if(host&&origin===`https://${host}`)return true;
   }
+  try {
+    const url=new URL(origin);
+    if(url.origin===origin&&/^[a-zA-Z0-9.-]+\.vercel\.app$/.test(url.hostname))return true;
+  } catch {}
   if(process.env.NODE_ENV==='production')return false;
   try {const url=new URL(origin);return url.origin===origin&&url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname);}catch{return false;}
 }

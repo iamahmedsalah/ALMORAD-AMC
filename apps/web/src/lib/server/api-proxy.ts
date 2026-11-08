@@ -14,10 +14,15 @@ export async function forward(request:NextRequest,endpoint:string,namespace:'sta
  const fallbackOrigin=process.env.VERCEL_PROJECT_PRODUCTION_URL?`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`:request.nextUrl.origin||'http://localhost:3000';
  const expected=process.env.WEB_ORIGIN||fallbackOrigin;
  if(request.method==='POST'){
+  const reqOrigin=request.headers.get('origin')||'';
   const origins=new Set([expected]);
-  if(process.env.VERCEL_ENV==='preview')for(const host of [process.env.VERCEL_URL,process.env.VERCEL_BRANCH_URL])if(host&&/^[a-zA-Z0-9.-]+\.vercel\.app$/.test(host))origins.add(`https://${host}`);
-  const local=process.env.NODE_ENV!=='production'&&request.headers.get('origin')===request.nextUrl.origin&&['127.0.0.1','localhost'].includes(request.nextUrl.hostname);
-  if(!origins.has(request.headers.get('origin')||'')&&!local)return NextResponse.json({message:'Forbidden'},{status:403,headers});
+  if(process.env.VERCEL_PROJECT_PRODUCTION_URL)origins.add(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
+  if(process.env.VERCEL_URL)origins.add(`https://${process.env.VERCEL_URL}`);
+  if(process.env.VERCEL_BRANCH_URL)origins.add(`https://${process.env.VERCEL_BRANCH_URL}`);
+  const isVercelHost=/^[a-zA-Z0-9.-]+\.vercel\.app$/.test(new URL(reqOrigin || 'http://unknown').hostname);
+  const isSameHost=reqOrigin===request.nextUrl.origin;
+  const local=process.env.NODE_ENV!=='production'&&isSameHost&&['127.0.0.1','localhost'].includes(request.nextUrl.hostname);
+  if(!origins.has(reqOrigin)&&!local&&!(isSameHost&&isVercelHost))return NextResponse.json({message:'Forbidden'},{status:403,headers});
  }
  const value=process.env.STAFF_API_ORIGIN||(process.env.NODE_ENV==='production'?undefined:'http://127.0.0.1:4000');
  const secret=process.env.STAFF_PROXY_SECRET;
