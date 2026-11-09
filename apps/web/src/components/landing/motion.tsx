@@ -251,7 +251,23 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
             });
           }, root);
 
-          return () => { stackMedia.revert(); context.revert(); };
+          // Group selection and progressive sections change the layout below
+          // the team. Re-measure triggers without changing their animations.
+          let refreshFrame = 0;
+          const refreshLayout = () => {
+            cancelAnimationFrame(refreshFrame);
+            refreshFrame = requestAnimationFrame(() => ScrollTrigger.refresh());
+          };
+          const layoutObserver = new ResizeObserver(refreshLayout);
+          if (root.current) layoutObserver.observe(root.current);
+          refreshLayout();
+
+          return () => {
+            cancelAnimationFrame(refreshFrame);
+            layoutObserver.disconnect();
+            stackMedia.revert();
+            context.revert();
+          };
         });
 
         dispose = () => media.revert();

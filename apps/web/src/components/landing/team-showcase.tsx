@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import type { Locale } from '@amc/shared';
 import { Link } from '@/i18n/navigation';
 import { SolarIcon, type SolarName } from '@/components/ui/solar-icon';
@@ -23,10 +24,22 @@ const careerIcons: Record<TeamMember['avatarType'], SolarName> = {
   operations: 'calendar-linear', client: 'chat-round-line-linear',
 };
 
-function CareerAccents({ type }: { type: TeamMember['avatarType'] }) {
+const surroundingIcons: Record<TeamMember['avatarType'], [SolarName, SolarName, SolarName, SolarName]> = {
+  ceo: ['chart-2-linear', 'star-linear', 'compass-linear', 'case-round-linear'],
+  co_ceo: ['case-round-linear', 'users-group-rounded-linear', 'chart-2-linear', 'compass-linear'],
+  coo: ['layers-linear', 'calendar-linear', 'check-circle-linear', 'users-group-rounded-linear'],
+  creative: ['star-linear', 'layers-linear', 'lightbulb-linear', 'compass-linear'],
+  growth: ['chart-2-linear', 'global-linear', 'compass-linear', 'users-group-rounded-linear'],
+  tech: ['code-square-linear', 'layers-linear', 'monitor-linear', 'widget-2-linear'],
+  operations: ['calendar-linear', 'check-circle-linear', 'layers-linear', 'case-round-linear'],
+  client: ['chat-round-line-linear', 'users-group-rounded-linear', 'chart-2-linear', 'case-round-linear'],
+};
+
+function CareerAccents({ type, surrounding = false }: { type: TeamMember['avatarType']; surrounding?: boolean }) {
+  const icons: SolarName[] = surrounding ? surroundingIcons[type] : [careerIcons[type], type === 'tech' ? 'layers-linear' : 'star-linear'];
+  const positions = ['team-career-icon', 'team-career-orbit', 'team-career-extra-1', 'team-career-extra-2'];
   return <div className={`team-career-accents career-${type}`} aria-hidden="true">
-    <span className="team-career-icon"><SolarIcon name={careerIcons[type]} /></span>
-    <span className="team-career-orbit"><SolarIcon name={type === 'tech' ? 'layers-linear' : 'star-linear'} /></span>
+    {icons.map((name, index) => <span key={name} className={positions[index]}><SolarIcon name={name} /></span>)}
   </div>;
 }
 
@@ -301,9 +314,26 @@ function ExecutivePortraitSvg({ type, isFeatured }: { type: TeamMember['avatarTy
 export function TeamShowcase({ locale }: { locale: Locale }) {
   const isAr = locale === 'ar';
   const ceo = CEO_MEMBER;
+  const teamRoot = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const element = teamRoot.current;
+    if (!element) return;
+    const visibility = () => { element.dataset.pageVisible = String(!document.hidden); };
+    visibility();
+    document.addEventListener('visibilitychange', visibility);
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => { (entry.target as HTMLElement).dataset.inView = String(entry.isIntersecting); });
+    }, { rootMargin: '40px' });
+    element.querySelectorAll('.director-portrait-stage').forEach(stage => observer.observe(stage));
+    const revealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => { (entry.target as HTMLElement).dataset.cardInView = String(entry.isIntersecting); });
+    }, { rootMargin: '0px 0px -8% 0px' });
+    element.querySelectorAll('.team-card-reveal').forEach(card => revealObserver.observe(card));
+    return () => { observer.disconnect(); revealObserver.disconnect(); document.removeEventListener('visibilitychange', visibility); };
+  }, []);
 
   return (
-    <section id="chapter-team" aria-labelledby="team-title" className="lp-team-section my-20">
+    <section ref={teamRoot} id="chapter-team" aria-labelledby="team-title" className="lp-team-section my-20">
       {/* Section Header */}
       <div className="lp-team-header mb-12" data-reveal>
         <div>
@@ -394,21 +424,20 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
       </div>
       <div className="lp-team-grid-2 mb-10">
         {CO_LEADERSHIP.map((member) => (
+          <div key={member.id} className="team-card-reveal">
           <article
-            key={member.id}
             data-team-card
-            data-scroll-card
-            className="lp-team-card glass-surface rounded-squircle-xl"
+            className="lp-team-card lp-team-portrait-card glass-surface rounded-squircle-xl"
           >
-            <div className="lp-team-card-portrait rounded-squircle-lg">
-              <ExecutivePortraitSvg type={member.avatarType} isFeatured />
-              <CareerAccents type={member.avatarType} />
-              <span className="lp-team-card-badge badge rounded-squircle-sm">
-                {member.badge}
-              </span>
+            <div className="director-portrait-stage">
+              <div className="lp-team-card-portrait rounded-squircle-lg">
+                <ExecutivePortraitSvg type={member.avatarType} isFeatured />
+              </div>
+              <CareerAccents type={member.avatarType} surrounding />
             </div>
 
             <div className="lp-team-card-body">
+              <span className="lp-team-card-badge director-card-kicker badge rounded-squircle-sm">{member.badge}</span>
               <small className="lp-team-card-discipline">{member.discipline[locale]}</small>
               <h4 className="lp-team-card-title">{member.name[locale]}</h4>
               <p className="lp-team-card-role">{member.role[locale]}</p>
@@ -423,21 +452,24 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
               </ul>
             </div>
           </article>
+          </div>
         ))}
       </div>
 
       {/* 3. Team of 5 Discipline Leads */}
       <DirectorsReel locale={locale} count={CORE_TEAM_5.length}>
         {CORE_TEAM_5.map((member) => (
+          <div key={member.id} className="team-card-reveal">
           <article
-            key={member.id}
             data-team-card
             data-director-slide
-            className="lp-team-card glass-surface rounded-squircle-xl"
+            className="lp-team-card lp-team-portrait-card glass-surface rounded-squircle-xl"
           >
-            <div className="lp-team-card-portrait rounded-squircle-lg">
-              <ExecutivePortraitSvg type={member.avatarType} />
-              <CareerAccents type={member.avatarType} />
+            <div className="director-portrait-stage">
+              <div className="lp-team-card-portrait rounded-squircle-lg">
+                <ExecutivePortraitSvg type={member.avatarType} />
+              </div>
+              <CareerAccents type={member.avatarType} surrounding />
             </div>
 
             <div className="lp-team-card-body">
@@ -456,6 +488,7 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
               </ul>
             </div>
           </article>
+          </div>
         ))}
       </DirectorsReel>
     </section>
