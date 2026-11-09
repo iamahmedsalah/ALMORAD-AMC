@@ -12,25 +12,25 @@ const REEL_SCENES = [
     code: '01',
     en: 'BRAND ARCHITECTURE · SYSTEM TOKENS',
     ar: 'بنية العلامة · نظام الألوان والهوية',
-    accent: '#F7761E',
+    accent: '#BE9D5B',
   },
   {
     code: '02',
     en: 'KINETIC TYPOGRAPHY · BILINGUAL GRID',
     ar: 'تايبوغرافي حركي · شبكة ثنائية اللغة',
-    accent: '#FA8A3A',
+    accent: '#D8BE86',
   },
   {
     code: '03',
     en: 'OUTDOOR & CAMPAIGN DIRECTION',
     ar: 'إخراج الحملات والإعلانات الخارجية',
-    accent: '#EC5B13',
+    accent: '#7A5F28',
   },
   {
     code: '04',
     en: 'INTERACTIVE WEB & 3D EXPERIENCES',
     ar: 'تجارب الويب التفاعلية وثلاثية الأبعاد',
-    accent: '#FFA666',
+    accent: '#BE9D5B',
   },
 ] as const;
 
@@ -143,9 +143,9 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
 
       // Deep OLED Studio Broadcast Backdrop (#0B0A08 -> #14120E)
       const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-      bgGrad.addColorStop(0, '#070605');
-      bgGrad.addColorStop(0.5, '#0F0D0A');
-      bgGrad.addColorStop(1, '#191610');
+      bgGrad.addColorStop(0, '#0B0A08');
+      bgGrad.addColorStop(0.5, '#14120E');
+      bgGrad.addColorStop(1, '#14120E');
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, w, h);
 
@@ -366,6 +366,7 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
               type="button"
               onClick={() => setManualScene((prev) => (prev === idx ? null : idx))}
               className="lp-showreel-chapter rounded-squircle-sm text-start cursor-pointer"
+              aria-pressed={sceneIndex === idx}
               data-active={sceneIndex === idx ? 'true' : 'false'}
             >
               <strong>{sc.code}</strong>

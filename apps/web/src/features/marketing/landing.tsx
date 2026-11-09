@@ -1,3 +1,5 @@
+import {ServiceMotionStage} from '@/components/landing/service-motion-stage';
+import {disciplineCopy,disciplineFor} from '@/features/services/discipline-content';
 import { FaqAccordion } from '@/components/ui/faq-accordion';
 import { pillars, services, type Locale } from '@amc/shared';
 import { Link } from '@/i18n/navigation';
@@ -20,6 +22,8 @@ const galleryAspectClasses = ['lp-gallery-art-tall', 'lp-gallery-art-wide', 'lp-
 
 export function Landing({ locale }: { locale: Locale }) {
   const c = copyFor(locale);
+  const dc = disciplineCopy(locale);
+  const web = disciplineFor('web-development',locale);
   const lc = landingCopyFor(locale);
   const isRtl = locale === 'ar';
 
@@ -184,15 +188,15 @@ export function Landing({ locale }: { locale: Locale }) {
               <div>
                 <p className="eyebrow badge badge-accent rounded-squircle-md mb-4">
                   <span className="badge-dot" aria-hidden="true" />
-                  <span>{c.expertise.label}</span>
+                  <span>{dc.section.eyebrow}</span>
                 </p>
                 <h2 id="expertise-title" className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">
-                  {c.expertise.title}
+                  {dc.section.title}
                 </h2>
               </div>
               <div>
                 <p className="text-lg text-[var(--fg-muted)] mb-6">
-                  {c.expertise.body}
+                  {dc.section.lede}
                 </p>
                 <Link
                   className="button button-secondary rounded-squircle-md"
@@ -218,14 +222,8 @@ export function Landing({ locale }: { locale: Locale }) {
                       <span className="lp-cap-visual-badge badge badge-accent rounded-squircle-sm">
                         0{i + 1} / 0{pillars.length}
                       </span>
-                      <img
-                        src={pillarPhotos[i] ?? '/studio/studio-01.svg'}
-                        alt={p[locale]}
-                        width={600}
-                        height={400}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
+                      <ServiceMotionStage scene={p.id} locale={locale} label={p[locale]} fallback={pillarPhotos[i]}/>
+
                     </div>
 
                     <div className="lp-cap-copy">
@@ -244,7 +242,7 @@ export function Landing({ locale }: { locale: Locale }) {
                           </h3>
                         </div>
                         <p className="text-base text-[var(--fg-muted)] leading-relaxed mb-5">
-                          {c.pillars[i]}
+                          {disciplineFor(p.id,locale).tagline}
                         </p>
                         <ul className="flex flex-wrap gap-2">
                           {pillarServices.map((s) => (
@@ -464,19 +462,14 @@ export function Landing({ locale }: { locale: Locale }) {
                   <span>{lc.devices.label}</span>
                 </p>
                 <h2 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">
-                  {lc.devices.title}
+                  {web.tagline}
                 </h2>
                 <p className="text-base text-[var(--fg-muted)] leading-relaxed">
-                  {lc.devices.body}
+                  {web.body}
                 </p>
-                <ul className="lp-device-points">
-                  {lc.devices.points.map((pt) => (
-                    <li key={pt}>
-                      <SolarIcon name="check-circle-linear" className="text-[var(--amc-orange-500)]" />
-                      <span>{pt}</span>
-                    </li>
-                  ))}
-                </ul>
+                <ol className="service-build-process">
+                  {web.process?.map(step=><li key={step.step}><strong>{step.step}</strong><span>{step.detail}</span></li>)}
+                </ol>
                 <Link
                   href="/services/web-development"
                   className="button button-secondary rounded-squircle-md"
@@ -486,69 +479,8 @@ export function Landing({ locale }: { locale: Locale }) {
                 </Link>
               </div>
 
-              <div className="lp-device-stage" aria-hidden="true">
-                <div data-device-float className="lp-device-frame rounded-squircle-lg">
-                  <div className="lp-device-bar">
-                    <span className="lp-device-dots">
-                      <i />
-                      <i />
-                      <i />
-                    </span>
-                    <span>Desktop · 1440px</span>
-                  </div>
-                  <div className="lp-device-screen">
-                    <img
-                      src="/studio/studio-03.svg"
-                      alt=""
-                      width={600}
-                      height={400}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
+              <ServiceMotionStage scene="devices" locale={locale} label={web.name} fallback="/studio/studio-03.svg"/>
 
-                <div className="lp-device-stack">
-                  <div data-device-float className="lp-device-frame rounded-squircle-lg">
-                    <div className="lp-device-bar">
-                      <span className="lp-device-dots">
-                        <i />
-                        <i />
-                      </span>
-                      <span>Tablet · 768px</span>
-                    </div>
-                    <div className="lp-device-screen">
-                      <img
-                        src="/studio/studio-01.svg"
-                        alt=""
-                        width={600}
-                        height={400}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-
-                  <div data-device-float className="lp-device-frame rounded-squircle-lg">
-                    <div className="lp-device-bar">
-                      <span className="lp-device-dots">
-                        <i />
-                      </span>
-                      <span>Mobile · 390px</span>
-                    </div>
-                    <div className="lp-device-screen lp-device-screen-mobile">
-                      <img
-                        src="/studio/studio-05.svg"
-                        alt=""
-                        width={600}
-                        height={400}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Section H: Leadership & Studio Team Showcase (Replacing 06 — Engagement) */}

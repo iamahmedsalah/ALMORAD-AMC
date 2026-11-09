@@ -18,7 +18,6 @@ describe('NotificationsService', () => {
 
   beforeEach(() => {
     mockPrisma = createPrismaMock();
-
     service = new NotificationsService(mockPrisma as unknown as PrismaService);
   });
 
@@ -70,12 +69,17 @@ describe('NotificationsService', () => {
       expect(mockPrisma.booking.findUnique).not.toHaveBeenCalled();
     });
 
-    it('processes pending record, generates email + calendar, and marks DELIVERED', async () => {
+    it('processes pending record, generates email + calendar, and marks DELIVERED when Resend is configured', async () => {
+      // Configure mock Resend provider
+      const sendMock = vi.fn().mockResolvedValue({data: {id: 'resend-msg-1'}, error: null});
+      (service as unknown as {resend: unknown}).resend = {emails: {send: sendMock}};
+
       mockPrisma.$queryRaw.mockResolvedValue([
         {
           id: 'outbox-uuid-1',
           bookingId: 'booking-uuid-1',
           eventId: 'event-uuid-1',
+          kind: 'BOOKING_CREATED:EMAIL',
           attempts: 1
         }
       ]);
@@ -102,6 +106,13 @@ describe('NotificationsService', () => {
       const result = await service.drain();
 
       expect(result).toEqual({processed: 1, succeeded: 1, failed: 0});
+      expect(sendMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'sarah@example.com',
+          from: expect.stringContaining('onboarding@resend.dev')
+        }),
+        expect.any(Object)
+      );
       expect(mockPrisma.$transaction).toHaveBeenCalled();
       expect(mockPrisma.bookingOutbox.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -119,17 +130,73 @@ describe('NotificationsService', () => {
       );
     });
 
+    it('marks UNCONFIGURED when RESEND_API_KEY is not configured', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([
+        {
+          id: 'outbox-uuid-unconfigured',
+          bookingId: 'booking-uuid-1',
+          eventId: 'event-uuid-1',
+          kind: 'BOOKING_CREATED:EMAIL',
+          attempts: 1
+        }
+      ]);
+
+      mockPrisma.booking.findUnique.mockResolvedValue({
+        id: 'booking-uuid-1',
+        reference: 'AMC-789XYZ',
+        serviceSlug: 'branding',
+        meetingType: 'ONLINE',
+        clientName: 'Sarah Jenkins',
+        email: 'sarah@example.com',
+        locale: 'en',
+        timezone: 'Africa/Cairo',
+        startsAt: new Date('2026-11-12T10:00:00Z'),
+        endsAt: new Date('2026-11-12T11:00:00Z'),
+        tokenNonce: 'nonce-abc',
+        tokenVersion: 0,
+        calendar: {}
+      });
+
+      const result = await service.drain();
+
+      expect(result).toEqual({processed: 1, succeeded: 0, failed: 1});
+      expect(mockPrisma.bookingOutbox.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {id: 'outbox-uuid-unconfigured'},
+          data: expect.objectContaining({status: 'UNCONFIGURED'})
+        })
+      );
+    });
+
     it('marks FAILED immediately upon deterministic 422 error', async () => {
+      const sendMock = vi.fn().mockResolvedValue({data: null, error: {name: '422', message: 'Unprocessable Entity - invalid domain'}});
+      (service as unknown as {resend: unknown}).resend = {emails: {send: sendMock}};
+
       mockPrisma.$queryRaw.mockResolvedValue([
         {
           id: 'outbox-uuid-2',
           bookingId: 'booking-uuid-2',
           eventId: 'event-uuid-2',
+          kind: 'BOOKING_CREATED:EMAIL',
           attempts: 1
         }
       ]);
 
-      mockPrisma.booking.findUnique.mockRejectedValue(new Error('Resend error: 422 Unprocessable Entity - invalid domain'));
+      mockPrisma.booking.findUnique.mockResolvedValue({
+        id: 'booking-uuid-2',
+        reference: 'AMC-789XYZ',
+        serviceSlug: 'branding',
+        meetingType: 'ONLINE',
+        clientName: 'Sarah Jenkins',
+        email: 'sarah@example.com',
+        locale: 'en',
+        timezone: 'Africa/Cairo',
+        startsAt: new Date('2026-11-12T10:00:00Z'),
+        endsAt: new Date('2026-11-12T11:00:00Z'),
+        tokenNonce: 'nonce-abc',
+        tokenVersion: 0,
+        calendar: {}
+      });
 
       const result = await service.drain();
 
@@ -146,16 +213,34 @@ describe('NotificationsService', () => {
     });
 
     it('schedules exponential backoff retry upon transient 503 error', async () => {
+      const sendMock = vi.fn().mockResolvedValue({data: null, error: {name: '503', message: 'Service Unavailable timeout'}});
+      (service as unknown as {resend: unknown}).resend = {emails: {send: sendMock}};
+
       mockPrisma.$queryRaw.mockResolvedValue([
         {
           id: 'outbox-uuid-3',
           bookingId: 'booking-uuid-3',
           eventId: 'event-uuid-3',
+          kind: 'BOOKING_CREATED:EMAIL',
           attempts: 2
         }
       ]);
 
-      mockPrisma.booking.findUnique.mockRejectedValue(new Error('Resend error: 503 Service Unavailable timeout'));
+      mockPrisma.booking.findUnique.mockResolvedValue({
+        id: 'booking-uuid-3',
+        reference: 'AMC-789XYZ',
+        serviceSlug: 'branding',
+        meetingType: 'ONLINE',
+        clientName: 'Sarah Jenkins',
+        email: 'sarah@example.com',
+        locale: 'en',
+        timezone: 'Africa/Cairo',
+        startsAt: new Date('2026-11-12T10:00:00Z'),
+        endsAt: new Date('2026-11-12T11:00:00Z'),
+        tokenNonce: 'nonce-abc',
+        tokenVersion: 0,
+        calendar: {}
+      });
 
       const result = await service.drain();
 

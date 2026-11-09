@@ -1,3 +1,4 @@
+import {serviceDescription} from './discipline-content';
 ﻿import {services} from '@amc/shared';
 type Brief={summary:string;areas:readonly string[]};
 const en:readonly Brief[]=[
@@ -26,4 +27,4 @@ const ar:readonly Brief[]=[
  {summary:'متجر إلكتروني ينطلق من طريقة تسوق عملائك. نربط اكتشاف المنتجات والدفع والعمليات في تجربة متجاوبة ذات بنية واضحة.',areas:['بنية المتجر وكتالوج المنتجات','تجربة السلة وإتمام الطلب','متطلبات الدفع والشحن','أداء الهاتف وتهيئة محركات البحث']},
  {summary:'حوّل علامتك إلى تجربة رقمية مفيدة. تربط مواقع الشركات وصفحات الهبوط بين الرسالة الواضحة والتصميم المتجاوب ومسار تواصل هادف.',areas:['بنية المعلومات والمحتوى','تصميم المواقع وصفحات الهبوط','رحلات الاستفسار والتواصل','الأداء والتهيئة التقنية والقياس']}
 ];
-export function briefFor(slug:string,locale:'en'|'ar'):Brief {const index=services.findIndex(s=>s.slug===slug);return (locale==='ar'?ar:en)[index]!;}
+export function briefFor(slug:string,locale:'en'|'ar'):Brief {const index=services.findIndex(s=>s.slug===slug);const existing=(locale==='ar'?ar:en)[index]!;return {...existing,summary:serviceDescription(slug,locale)??existing.summary};}

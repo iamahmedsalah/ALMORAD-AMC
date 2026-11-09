@@ -5,7 +5,7 @@ import {contactSubmissionSchema} from '@amc/shared';
 import {PrismaService} from '../../prisma/prisma.service.js';
 import {NotificationsService} from '../notifications/notifications.service.js';
 import {renderContactOwnerEmail, renderContactVisitorEmail} from './contact-emails.js';
-import {HubSpotClient} from './hubspot.client.js';
+import {HubSpotClient, HubSpotRateLimitError} from './hubspot.client.js';
 
 const MAX_ATTEMPTS = 5;
 const open = ['PENDING', 'FAILED'];
@@ -61,7 +61,7 @@ export class ContactService {
     const row = await this.prisma.contactInquiry.findUnique({where: {id}});
     if (!row) return;
     const errors: string[] = [];
-    const patch: Record<string, string | null> = {};
+    const patch: Record<string, string | Date | null> = {};
     const mail = {locale: row.locale, name: row.name, email: row.email, message: row.message};
 
     if (open.includes(row.ownerEmailStatus)) {
@@ -74,7 +74,10 @@ export class ContactService {
           const email = renderContactOwnerEmail({...mail, id: row.id});
           await notifications.sendEmail({to: inbox, subject: email.subject, text: email.text, html: email.html, replyTo: row.email, idempotencyKey: `contact-${row.id}-owner`});
           patch.ownerEmailStatus = 'SENT';
-        } catch (error) { patch.ownerEmailStatus = 'FAILED'; errors.push(`owner: ${this.safe(error, row.email)}`); }
+        } catch (error) {
+          patch.ownerEmailStatus = 'FAILED';
+          errors.push(`owner: ${this.safe(error, row.email)}`);
+        }
       }
     }
 
@@ -83,7 +86,10 @@ export class ContactService {
         const email = renderContactVisitorEmail(mail);
         await notifications.sendEmail({to: row.email, subject: email.subject, text: email.text, html: email.html, idempotencyKey: `contact-${row.id}-visitor`});
         patch.visitorEmailStatus = 'SENT';
-      } catch (error) { patch.visitorEmailStatus = 'FAILED'; errors.push(`visitor: ${this.safe(error, row.email)}`); }
+      } catch (error) {
+        patch.visitorEmailStatus = 'FAILED';
+        errors.push(`visitor: ${this.safe(error, row.email)}`);
+      }
     }
 
     if (open.includes(row.hubspotStatus)) {
@@ -92,8 +98,20 @@ export class ContactService {
         try {
           patch.hubspotContactId = (await this.hubspot.upsertContact(mail)) || null;
           patch.hubspotStatus = 'SENT';
-        } catch (error) { patch.hubspotStatus = 'FAILED'; errors.push(`hubspot: ${this.safe(error, row.email)}`); }
+        } catch (error) {
+          patch.hubspotStatus = 'FAILED';
+          if (error instanceof HubSpotRateLimitError) {
+            patch.nextRetryAt = new Date(Date.now() + error.retryAfterSeconds * 1000);
+          }
+          errors.push(`hubspot: ${this.safe(error, row.email)}`);
+        }
       }
+    }
+
+    if (errors.length > 0 && !patch.nextRetryAt) {
+      // Exponential backoff: ~5s, 10s, 20s, 40s...
+      const delay = Math.min(900, Math.round(5 * Math.pow(2, row.attempts)));
+      patch.nextRetryAt = new Date(Date.now() + delay * 1000);
     }
 
     await this.prisma.contactInquiry.update({
@@ -105,18 +123,37 @@ export class ContactService {
   /** Retries inquiries with a pending or failed step. Called by the scheduled drain endpoint. */
   async drain(batchSize = 10): Promise<{processed: number}> {
     if (!this.notifications) return {processed: 0};
-    const rows = await this.prisma.contactInquiry.findMany({
-      where: {
-        attempts: {lt: MAX_ATTEMPTS},
-        updatedAt: {lt: new Date(Date.now() - 60_000)},
-        OR: [{ownerEmailStatus: {in: open}}, {visitorEmailStatus: {in: open}}, {hubspotStatus: {in: open}}]
-      },
-      orderBy: {createdAt: 'asc'},
-      take: batchSize,
-      select: {id: true}
-    });
-    for (const row of rows) await this.deliver(row.id).catch(error => this.logger.error(`Contact retry failed for ${row.id}: ${this.safe(error)}`));
-    return {processed: rows.length};
+    
+    // Atomic batch lease using PostgreSQL SKIP LOCKED to prevent races across concurrent cron triggers
+    const claimedRows = await this.prisma.$queryRaw<{id: string}[]>`
+      WITH claimable AS (
+        SELECT "id" FROM "ContactInquiry"
+        WHERE "attempts" < ${MAX_ATTEMPTS}
+          AND ("nextRetryAt" IS NULL OR "nextRetryAt" <= NOW())
+          AND "updatedAt" < NOW() - INTERVAL '30 seconds'
+          AND (
+            "ownerEmailStatus" IN ('PENDING', 'FAILED')
+            OR "visitorEmailStatus" IN ('PENDING', 'FAILED')
+            OR "hubspotStatus" IN ('PENDING', 'FAILED')
+          )
+        ORDER BY "createdAt" ASC
+        LIMIT ${batchSize}
+        FOR UPDATE SKIP LOCKED
+      )
+      UPDATE "ContactInquiry"
+      SET "attempts" = "attempts" + 1, "updatedAt" = NOW()
+      WHERE "id" IN (SELECT "id" FROM claimable)
+      RETURNING "id";
+    `;
+
+    if (!claimedRows || claimedRows.length === 0) {
+      return {processed: 0};
+    }
+
+    for (const row of claimedRows) {
+      await this.deliver(row.id).catch(error => this.logger.error(`Contact retry failed for ${row.id}: ${this.safe(error)}`));
+    }
+    return {processed: claimedRows.length};
   }
 
   private safe(error: unknown, email?: string): string {

@@ -21,6 +21,7 @@ model ContactInquiry {
   visitorEmailStatus String @default("PENDING") @db.VarChar(20)
   hubspotStatus String @default("PENDING") @db.VarChar(20)
   hubspotContactId String? @db.VarChar(40)
+  nextRetryAt DateTime? @db.Timestamptz(3)
   attempts Int @default(0)
   lastError String? @db.VarChar(1000)
   updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
@@ -154,6 +155,8 @@ model Booking {
  tokenExpiresAt DateTime @db.Timestamptz(3)
  idempotencyKey String @unique @db.Uuid
  requestHash String @db.Char(64)
+ hubspotContactId String? @db.VarChar(64)
+ hubspotMeetingId String? @db.VarChar(64)
  isDemo Boolean @default(false)
  createdAt DateTime @default(now()) @db.Timestamptz(3)
  updatedAt DateTime @updatedAt @db.Timestamptz(3)
@@ -206,7 +209,7 @@ model BookingOutbox {
   id String @id @default(uuid()) @db.Uuid
   bookingId String @db.Uuid
   booking Booking @relation(fields:[bookingId],references:[id],onDelete:Cascade)
-  eventId String @unique @db.Uuid
+  eventId String @db.Uuid
   kind String @db.VarChar(64)
   status String @default("UNCONFIGURED") @db.VarChar(30)
   attempts Int @default(0)
@@ -215,6 +218,7 @@ model BookingOutbox {
   nextRetryAt DateTime? @db.Timestamptz(3)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+  @@unique([eventId, kind])
   @@index([status,createdAt])
   @@index([status,nextRetryAt])
   @@index([bookingId])

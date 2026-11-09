@@ -4,6 +4,8 @@ import {Resend} from 'resend';
 import {PrismaService} from '../../prisma/prisma.service.js';
 import {generateIcs} from '@amc/shared';
 import {renderBookingConfirmationEmail} from './templates/booking-confirmation.template.js';
+import {renderBookingRescheduledEmail} from './templates/booking-rescheduled.template.js';
+import {renderBookingCancelledEmail} from './templates/booking-cancelled.template.js';
 
 export interface DrainResult {
   processed: number;
@@ -15,6 +17,7 @@ interface ClaimedOutboxRow {
   id: string;
   bookingId: string;
   eventId: string;
+  kind: string;
   attempts: number;
 }
 
@@ -23,6 +26,7 @@ export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
   private readonly resend: Resend | null = null;
   private readonly fromEmail: string;
+  private readonly replyTo: string;
   private readonly webOrigin: string;
   private readonly tokenSecret: string;
 
@@ -34,7 +38,8 @@ export class NotificationsService {
     const vercelOrigin = (process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL)
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL}`
       : undefined;
-    this.fromEmail = process.env.RESEND_FROM_EMAIL || 'bookings@almorad-amc.com';
+    this.fromEmail = process.env.RESEND_FROM_EMAIL || 'ALMORAD AMC <onboarding@resend.dev>';
+    this.replyTo = process.env.REPLY_TO_EMAIL || 'hello@almorad-amc.com';
     this.webOrigin = process.env.WEB_ORIGIN || vercelOrigin || 'http://localhost:3000';
     this.tokenSecret = process.env.BOOKING_TOKEN_SECRET || randomBytes(32).toString('hex');
   }
@@ -67,11 +72,11 @@ export class NotificationsService {
    */
   async sendEmail(message: {to: string; subject: string; text: string; html: string; idempotencyKey: string; replyTo?: string; from?: string}): Promise<string> {
     if (!this.resend) {
-      this.logger.log(`[MOCK_DISPATCH] Email "${message.subject.slice(0, 60)}" not sent: RESEND_API_KEY is not configured`);
+      this.logger.warn(`[MOCK_DISPATCH] Email "${message.subject.slice(0, 60)}" not sent: RESEND_API_KEY is not configured`);
       return 'mock-resend-id';
     }
     const response = await this.resend.emails.send(
-      {from: message.from || this.fromEmail, to: message.to, subject: message.subject, text: message.text, html: message.html, replyTo: message.replyTo},
+      {from: message.from || this.fromEmail, to: message.to, subject: message.subject, text: message.text, html: message.html, replyTo: message.replyTo || this.replyTo},
       {headers: {'Idempotency-Key': message.idempotencyKey}}
     );
     if (response.error) throw new Error(`Resend error: ${response.error.name} - ${response.error.message}`);
@@ -79,7 +84,7 @@ export class NotificationsService {
   }
 
   /**
-   * Claims and processes a batch of pending outbox entries atomically using PostgreSQL SKIP LOCKED.
+   * Claims and processes a batch of pending email outbox entries atomically using PostgreSQL SKIP LOCKED.
    */
   async drain(batchSize = 10): Promise<DrainResult> {
     const claimedRows = await this.prisma.$queryRaw<ClaimedOutboxRow[]>`
@@ -90,7 +95,7 @@ export class NotificationsService {
           OR ("status" = 'PROCESSING' AND "updatedAt" < NOW() - INTERVAL '5 minutes')
         )
         AND ("nextRetryAt" IS NULL OR "nextRetryAt" <= NOW())
-        AND "kind" = 'BOOKING_CREATED'
+        AND ("kind" = 'BOOKING_CREATED' OR "kind" LIKE '%:EMAIL' OR "kind" IN ('BOOKING_RESCHEDULED', 'BOOKING_CANCELLED'))
         ORDER BY "createdAt" ASC
         LIMIT ${batchSize}
         FOR UPDATE SKIP LOCKED
@@ -98,7 +103,7 @@ export class NotificationsService {
       UPDATE "BookingOutbox"
       SET "status" = 'PROCESSING', "attempts" = "attempts" + 1, "updatedAt" = NOW()
       WHERE "id" IN (SELECT "id" FROM claimable)
-      RETURNING "id", "bookingId", "eventId", "attempts";
+      RETURNING "id", "bookingId", "eventId", "kind", "attempts";
     `;
 
     if (!claimedRows || claimedRows.length === 0) {
@@ -125,69 +130,110 @@ export class NotificationsService {
           continue;
         }
 
+        // If Resend is not configured, do NOT falsely commit 'DELIVERED'
+        if (!this.resend) {
+          this.logger.warn(`Email not sent for ${booking.reference}: RESEND_API_KEY is not configured`);
+          await this.prisma.bookingOutbox.update({
+            where: {id: item.id},
+            data: {status: 'UNCONFIGURED', lastError: 'RESEND_API_KEY is not configured'}
+          });
+          failed++;
+          continue;
+        }
+
         // Generate deterministic management link
         const token = this.deriveManagementToken(booking);
         const managementUrl = `${this.webOrigin}/${booking.locale}/booking/manage#id=${booking.id}&token=${token}`;
 
-        // Generate .ics attachment
-        const icsContent = generateIcs({
-          id: booking.id,
-          reference: booking.reference,
-          startsAt: booking.startsAt,
-          endsAt: booking.endsAt,
-          summary: `ALMORAD AMC - ${booking.reference}`,
-          description: `Booking reference: ${booking.reference}\nManage: ${managementUrl}`,
-          location: booking.meetingType === 'IN_PERSON'
-            ? (booking.calendar.officeAddressEn || 'ALMORAD AMC Agency')
-            : 'Online Meeting'
-        });
+        const isCancelled = item.kind.includes('CANCEL');
+        const isRescheduled = item.kind.includes('RESCHEDULE');
 
-        // Render localized email body
-        const emailContent = renderBookingConfirmationEmail({
-          reference: booking.reference,
-          clientName: booking.clientName,
-          serviceTitle: booking.serviceSlug,
-          locale: booking.locale,
-          meetingType: booking.meetingType,
-          startsAt: booking.startsAt,
-          endsAt: booking.endsAt,
-          timezone: booking.timezone,
-          managementUrl,
-          officeAddress: booking.locale === 'ar' ? booking.calendar.officeAddressAr : booking.calendar.officeAddressEn,
-          directionsUrl: booking.calendar.directionsUrl || null
-        });
+        let emailContent: {subject: string; text: string; html: string};
+        let attachments: {filename: string; content: Buffer}[] | undefined;
 
-        // Transmit email via Resend (or mock simulation)
-        let resendId = 'mock-resend-id';
-        if (this.resend) {
-          const resendResponse = await this.resend.emails.send(
-            {
-              from: this.fromEmail,
-              to: booking.email,
-              subject: emailContent.subject,
-              text: emailContent.text,
-              html: emailContent.html,
-              attachments: [
-                {
-                  filename: `${booking.reference}.ics`,
-                  content: Buffer.from(icsContent, 'utf-8')
-                }
-              ]
-            },
-            {
-              headers: {
-                'Idempotency-Key': item.eventId
-              }
-            }
-          );
-
-          if (resendResponse.error) {
-            throw new Error(`Resend error: ${resendResponse.error.name} - ${resendResponse.error.message}`);
-          }
-          resendId = resendResponse.data?.id || resendId;
+        if (isCancelled) {
+          emailContent = renderBookingCancelledEmail({
+            reference: booking.reference,
+            clientName: booking.clientName,
+            serviceTitle: booking.serviceSlug,
+            locale: booking.locale,
+            cancelledAt: new Date(),
+            timezone: booking.timezone
+          });
         } else {
-          this.logger.log(`[MOCK_DISPATCH] Confirmation email sent to ${booking.email} (ref: ${booking.reference})`);
+          // Generate .ics attachment for confirmations and reschedules
+          const icsContent = generateIcs({
+            id: booking.id,
+            reference: booking.reference,
+            startsAt: booking.startsAt,
+            endsAt: booking.endsAt,
+            summary: `ALMORAD AMC - ${booking.reference}`,
+            description: `Booking reference: ${booking.reference}\nManage: ${managementUrl}`,
+            location: booking.meetingType === 'IN_PERSON'
+              ? (booking.calendar.officeAddressEn || 'ALMORAD AMC Agency')
+              : 'Online Meeting'
+          });
+
+          attachments = [
+            {
+              filename: `${booking.reference}.ics`,
+              content: Buffer.from(icsContent, 'utf-8')
+            }
+          ];
+
+          if (isRescheduled) {
+            emailContent = renderBookingRescheduledEmail({
+              reference: booking.reference,
+              clientName: booking.clientName,
+              serviceTitle: booking.serviceSlug,
+              locale: booking.locale,
+              meetingType: booking.meetingType,
+              startsAt: booking.startsAt,
+              endsAt: booking.endsAt,
+              timezone: booking.timezone,
+              managementUrl,
+              officeAddress: booking.locale === 'ar' ? booking.calendar.officeAddressAr : booking.calendar.officeAddressEn,
+              directionsUrl: booking.calendar.directionsUrl || null
+            });
+          } else {
+            emailContent = renderBookingConfirmationEmail({
+              reference: booking.reference,
+              clientName: booking.clientName,
+              serviceTitle: booking.serviceSlug,
+              locale: booking.locale,
+              meetingType: booking.meetingType,
+              startsAt: booking.startsAt,
+              endsAt: booking.endsAt,
+              timezone: booking.timezone,
+              managementUrl,
+              officeAddress: booking.locale === 'ar' ? booking.calendar.officeAddressAr : booking.calendar.officeAddressEn,
+              directionsUrl: booking.calendar.directionsUrl || null
+            });
+          }
         }
+
+        // Transmit email via Resend
+        const resendResponse = await this.resend.emails.send(
+          {
+            from: this.fromEmail,
+            to: booking.email,
+            subject: emailContent.subject,
+            text: emailContent.text,
+            html: emailContent.html,
+            replyTo: this.replyTo,
+            attachments
+          },
+          {
+            headers: {
+              'Idempotency-Key': `${item.id}-resend`
+            }
+          }
+        );
+
+        if (resendResponse.error) {
+          throw new Error(`Resend error: ${resendResponse.error.name} - ${resendResponse.error.message}`);
+        }
+        const resendId = resendResponse.data?.id || '';
 
         // Commit success atomically
         await this.prisma.$transaction([
@@ -202,7 +248,7 @@ export class NotificationsService {
           this.prisma.bookingEvent.create({
             data: {
               bookingId: booking.id,
-              kind: 'EMAIL_DELIVERED',
+              kind: isCancelled ? 'EMAIL_CANCELLED_DELIVERED' : isRescheduled ? 'EMAIL_RESCHEDULED_DELIVERED' : 'EMAIL_DELIVERED',
               details: {
                 outboxId: item.id,
                 resendId,

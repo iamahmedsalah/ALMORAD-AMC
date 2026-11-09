@@ -34,7 +34,10 @@ export function SocialDisclosure({ profiles, locale, variant = 'footer' }: { pro
     if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
   }}>
     <button ref={trigger} type="button" className="social-trigger" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
-      {variant === 'sidebar' && <svg className="social-sidebar-symbol" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><circle cx="6" cy="12" r="3" /><circle cx="18" cy="5" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.5 10.5 7-4m-7 7 7 4" /></svg>}
+      {variant === 'sidebar' && <svg className="social-sidebar-symbol" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" focusable="false">
+        <g className="social-symbol-share"><circle cx="6" cy="12" r="3" /><circle cx="18" cy="5" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.5 10.5 7-4m-7 7 7 4" /></g>
+        <g className="social-symbol-close" strokeLinecap="round"><path d="m6 6 12 12M18 6 6 18" /></g>
+      </svg>}
       <span>{ar ? 'تابعنا' : 'Follow us'}</span><span className="social-toggle" aria-hidden="true">+</span>
     </button>
     <div id={id} className="social-tray" inert={!open} aria-hidden={!open}>

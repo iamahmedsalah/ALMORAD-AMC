@@ -4,6 +4,7 @@ import {PublicBookingController, BookingOriginGuard} from './bookings.controller
 import {BookingsService} from './bookings.service.js';
 import type {PrismaService} from '../../prisma/prisma.service.js';
 import type {ExecutionContext} from '@nestjs/common';
+import type {HubSpotClient} from '../contact/hubspot.client.js';
 
 describe('PublicBookingController unit tests', () => {
   it('delegates config retrieval to BookingsService', async () => {
@@ -103,5 +104,112 @@ describe('PublicBookingController unit tests', () => {
     } finally {
       vi.unstubAllEnvs();
     }
+  });
+
+  describe('drainCrm', () => {
+    it('returns zero when hubspot is not configured or disabled', async () => {
+      const dbMock = {$queryRaw: vi.fn()};
+      const hubspotMock = {enabled: false};
+      const service = new BookingsService(dbMock as unknown as PrismaService, hubspotMock as unknown as HubSpotClient);
+
+      const res = await service.drainCrm();
+      expect(res).toEqual({processed: 0, succeeded: 0, failed: 0});
+      expect(dbMock.$queryRaw).not.toHaveBeenCalled();
+    });
+
+    it('processes BOOKING_CREATED:HUBSPOT by creating contact and meeting in HubSpot', async () => {
+      const dbMock = {
+        $queryRaw: vi.fn().mockResolvedValue([
+          {id: 'outbox-1', bookingId: 'bk-1', kind: 'BOOKING_CREATED:HUBSPOT', attempts: 1}
+        ]),
+        booking: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'bk-1',
+            reference: 'AMC-TEST01',
+            clientName: 'Karim',
+            email: 'karim@example.com',
+            phone: '+2010000000',
+            company: 'Brand Co',
+            locale: 'ar',
+            startsAt: new Date('2026-11-20T10:00:00Z'),
+            endsAt: new Date('2026-11-20T10:30:00Z')
+          }),
+          update: vi.fn().mockResolvedValue({})
+        },
+        bookingOutbox: {
+          update: vi.fn().mockResolvedValue({})
+        }
+      };
+
+      const hubspotMock = {
+        enabled: true,
+        upsertBookingContact: vi.fn().mockResolvedValue('hs-contact-99'),
+        createMeeting: vi.fn().mockResolvedValue('hs-meeting-88')
+      };
+
+      const service = new BookingsService(dbMock as unknown as PrismaService, hubspotMock as unknown as HubSpotClient);
+      const res = await service.drainCrm();
+
+      expect(res).toEqual({processed: 1, succeeded: 1, failed: 0});
+      expect(hubspotMock.upsertBookingContact).toHaveBeenCalledWith({
+        email: 'karim@example.com',
+        name: 'Karim',
+        phone: '+2010000000',
+        company: 'Brand Co',
+        locale: 'ar'
+      });
+      expect(hubspotMock.createMeeting).toHaveBeenCalledWith({
+        contactId: 'hs-contact-99',
+        title: 'ALMORAD AMC Consultation - AMC-TEST01',
+        startsAt: expect.any(Date),
+        endsAt: expect.any(Date),
+        reference: 'AMC-TEST01'
+      });
+      expect(dbMock.booking.update).toHaveBeenCalledWith({
+        where: {id: 'bk-1'},
+        data: {hubspotContactId: 'hs-contact-99', hubspotMeetingId: 'hs-meeting-88'}
+      });
+      expect(dbMock.bookingOutbox.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {id: 'outbox-1'},
+          data: expect.objectContaining({status: 'DELIVERED'})
+        })
+      );
+    });
+
+    it('updates meeting outcome to CANCELED for BOOKING_CANCELLED:HUBSPOT', async () => {
+      const dbMock = {
+        $queryRaw: vi.fn().mockResolvedValue([
+          {id: 'outbox-2', bookingId: 'bk-2', kind: 'BOOKING_CANCELLED:HUBSPOT', attempts: 1}
+        ]),
+        booking: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'bk-2',
+            reference: 'AMC-CANCEL01',
+            hubspotMeetingId: 'hs-meeting-88'
+          })
+        },
+        bookingOutbox: {
+          update: vi.fn().mockResolvedValue({})
+        }
+      };
+
+      const hubspotMock = {
+        enabled: true,
+        updateMeeting: vi.fn().mockResolvedValue(undefined)
+      };
+
+      const service = new BookingsService(dbMock as unknown as PrismaService, hubspotMock as unknown as HubSpotClient);
+      const res = await service.drainCrm();
+
+      expect(res).toEqual({processed: 1, succeeded: 1, failed: 0});
+      expect(hubspotMock.updateMeeting).toHaveBeenCalledWith('hs-meeting-88', {outcome: 'CANCELED'});
+      expect(dbMock.bookingOutbox.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {id: 'outbox-2'},
+          data: expect.objectContaining({status: 'DELIVERED'})
+        })
+      );
+    });
   });
 });

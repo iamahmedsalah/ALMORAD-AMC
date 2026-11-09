@@ -7,6 +7,7 @@ import {tokenHash} from './modules/auth/security.js';
 import {PrismaService} from './prisma/prisma.service.js';
 import {NotificationsService} from './modules/notifications/notifications.service.js';
 import {ContactService} from './modules/contact/contact.service.js';
+import {BookingsService} from './modules/bookings/bookings.service.js';
 
 @ApiTags('Operations & Maintenance')
 @ApiBearerAuth()
@@ -16,7 +17,8 @@ export class OperationsController {
  constructor(
    @Inject(PrismaService) private readonly prisma: PrismaService,
    @Inject(NotificationsService) private readonly notifications: NotificationsService,
-    @Inject(ContactService) private readonly contacts: ContactService
+   @Inject(ContactService) private readonly contacts: ContactService,
+   @Inject(BookingsService) private readonly bookings: BookingsService
  ){}
 
  @ApiOperation({
@@ -41,8 +43,8 @@ export class OperationsController {
  }
 
  @ApiOperation({
-   summary: 'Drain pending booking notifications',
-   description: 'Atomically processes pending transactional outbox records and sends confirmation emails via Resend. Requires Bearer CRON_SECRET.'
+   summary: 'Drain pending booking notifications and CRM events',
+   description: 'Atomically processes pending transactional outbox records (email & HubSpot CRM) and contact inquiries. Requires Bearer CRON_SECRET.'
  })
  @ApiResponse({ status: 200, description: 'Batch processing summary' })
  @ApiResponse({ status: 401, description: 'Invalid or missing CRON_SECRET' })
@@ -56,6 +58,10 @@ export class OperationsController {
    if (!supplied || !timingSafeEqual(Buffer.from(tokenHash(secret), 'hex'), Buffer.from(tokenHash(supplied), 'hex'))) {
      throw new UnauthorizedException();
    }
-   return {...(await this.notifications.drain()), contacts: await this.contacts?.drain()};
+   return {
+     ...(await this.notifications.drain()),
+     crm: await this.bookings?.drainCrm(),
+     contacts: await this.contacts?.drain()
+   };
  }
 }
