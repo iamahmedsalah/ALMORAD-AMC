@@ -7,8 +7,6 @@ import { Container } from '@/components/layout/shell';
 import { SolarIcon } from '@/components/ui/solar-icon';
 import { LandingMotion } from '@/components/landing/motion';
 import { BrandArt, serviceArt } from '@/components/landing/brand-art';
-import { DisciplineCombiner } from '@/components/landing/discipline-combiner';
-import { TeamShowcase } from '@/components/landing/team-showcase';
 import { ArrowIcon, Lines } from '@/components/landing/primitives';
 import { StudioShowreel } from '@/components/landing/studio-media';
 import { AmcMarkContainer } from '@/components/three/amc-mark-container';
@@ -427,33 +425,6 @@ export function Landing({ locale }: { locale: Locale }) {
               </ol>
             </div>
 
-            {/* Section F: Advanced Features — Interactive Discipline Combiner */}
-            <div id="chapter-together" className="my-20" data-together>
-              <div className="mb-8" data-reveal>
-                <p className="eyebrow badge badge-accent rounded-squircle-md mb-4">
-                  <span className="badge-dot" aria-hidden="true" />
-                  <span>{lc.connected.label}</span>
-                </p>
-                <h2 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">
-                  {lc.connected.title}
-                </h2>
-                <p className="text-lg text-[var(--fg-muted)] max-w-2xl">
-                  {lc.connected.body}
-                </p>
-              </div>
-
-              <DisciplineCombiner
-                locale={locale}
-                copy={{
-                  legend: lc.connected.legend,
-                  result: lc.connected.result,
-                  empty: lc.connected.empty,
-                  cta: lc.connected.cta,
-                  centre: lc.connected.centre,
-                }}
-              />
-            </div>
-
             {/* Section G: Cross-Device Experience Showcase */}
             <div id="chapter-devices" className="lp-devices-grid my-20 glass-surface rounded-squircle-xl p-8 sm:p-12">
               <div data-reveal>
@@ -484,7 +455,6 @@ export function Landing({ locale }: { locale: Locale }) {
             </div>
 
             {/* Section H: Leadership & Studio Team Showcase (Replacing 06 — Engagement) */}
-            <TeamShowcase locale={locale} />
           </section>
 
           {/* Section I (Chapter 06): Final CTA & FAQ */}

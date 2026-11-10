@@ -8,8 +8,21 @@ import { AppModule } from './app.module.js';
 import { parseEnvironment } from './config/environment.js';
 import { createHttpLoggerMiddleware } from './http-logger.middleware.js';
 
+async function bootstrap() {
 const env = parseEnvironment(process.env);
-const app = await NestFactory.create(AppModule, { rawBody: true });
+const startup = (stage: string) => console.info(JSON.stringify({event: 'api_startup', stage}));
+// Report configuration validity without exposing values. A platform initialization
+// timeout otherwise hides provider-constructor failures before Nest begins listening.
+startup('configuration_validated');
+if (env.NODE_ENV === 'production') {
+  const invalid = ['STAFF_PROXY_SECRET', 'STAFF_CSRF_SECRET'].filter(key => (process.env[key]?.length ?? 0) < 64);
+  if (invalid.length) throw new Error(`Invalid API configuration: ${invalid.join(', ')}`);
+}
+const app = await NestFactory.create(AppModule, { rawBody: true, abortOnError: false }).catch((error: unknown) => {
+  console.error(JSON.stringify({event: 'api_startup_failed', stage: 'container_creation', error: error instanceof Error ? error.name : 'UnknownError'}));
+  throw new Error('API container initialization failed');
+});
+startup('container_created');
 
 app.use(helmet());
 app.useGlobalFilters(new SafeExceptionFilter());
@@ -58,7 +71,9 @@ SwaggerModule.setup('api/docs', app, document);
 const port = process.env.PORT ? Number(process.env.PORT) : env.API_PORT;
 const host = process.env.VERCEL ? '0.0.0.0' : env.API_HOST;
 
+startup('starting_listener');
 await app.listen(port, host);
+startup('listening');
 
 const displayHost = host === '0.0.0.0' ? 'localhost' : host;
 const baseUrl = `http://${displayHost}:${port}`;
@@ -81,4 +96,11 @@ printBanner({
     { label: 'Security', status: 'ready', value: 'RBAC + CSRF + Rate Limiter', icon: '🛡️' },
     { label: 'HTTP Telemetry', status: 'online', value: 'Structured JSON Request Logs', icon: '📡' },
   ],
+});
+
+}
+// Let the module finish evaluating while Vercel attaches its listener wrapper.
+void bootstrap().catch((error: unknown) => {
+  console.error(JSON.stringify({event: 'api_startup_failed', stage: 'bootstrap', error: error instanceof Error ? error.name : 'UnknownError'}));
+  process.exitCode = 1;
 });

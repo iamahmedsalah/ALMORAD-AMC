@@ -26,6 +26,9 @@ try{
   const result=spawnSync(process.execPath,['--input-type=module','-e',expression],{cwd:target,encoding:'utf8',env:{...process.env,NODE_PATH:''},timeout:30000});
   if(result.error||result.status!==0)throw new Error('Isolated compiled API import failed: '+(result.error?.message||result.stderr));
   console.log(`API isolated runtime import passed (${dependencies.length} direct dependencies, outside workspace).`);
+  const handshake=spawnSync(process.execPath,[fileURLToPath(new URL('./check-api-entrypoint.mjs',import.meta.url)),target],{cwd:target,encoding:'utf8',env:{...process.env,NODE_PATH:''},timeout:15000});
+  if(handshake.error||handshake.status!==0)throw new Error('API listener handshake failed: '+(handshake.error?.message||handshake.stderr));
+  console.log(handshake.stdout.trim());
 }finally{
   const absolute=resolve(target);
   if(!absolute.startsWith(tempRoot+sep)||!absolute.startsWith(join(tempRoot,'amc-api-check-')))throw new Error('Refusing cleanup outside generated temporary runtime');

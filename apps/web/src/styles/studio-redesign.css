@@ -2899,3 +2899,40 @@ html[lang="ar"] .finale-banner-title {
 .discipline-service-descriptions h3 {font-size:1.1rem;margin-block-end:8px;}
 .discipline-service-descriptions a {text-decoration:underline;text-underline-offset:4px;}
 @media(max-width:480px){.discipline-service-descriptions,.service-build-process {grid-template-columns:1fr;}}
+
+/* Compact laptop monitor and clear primary navigation. */
+.amc-landing .manifesto-tv-wrap {max-width:980px;margin-inline:auto;}
+.amc-landing .lp-tv-bezel.lp-showreel {padding:clamp(.75rem,1.5vw,1.25rem);margin-block:1.5rem;}
+.amc-landing .lp-tv-screen.lp-showreel-viewport {aspect-ratio:16/8;max-height:52svh;}
+.amc-landing .lp-showreel-topbar {gap:.6rem;margin-block-end:.75rem;}
+.amc-landing .lp-showreel-chapters {margin-block-start:.75rem;gap:.5rem;}
+.team-page {padding-block:clamp(2rem,5vw,5rem);}
+.team-page .lp-team-section {margin-block:0 4rem;}
+.team-page [data-reveal] {opacity:1;visibility:visible;transform:none;}
+.team-page .lp-team-header {align-items:start;}
+.team-page .lp-team-header h1 {font-size:clamp(2.25rem,4.5vw,4.5rem);line-height:1.12;}
+.team-page .lp-team-header p {max-width:60ch;}
+.team-page .lp-team-ceo {overflow:hidden;}
+.site-header .header-inner {gap:clamp(.5rem,1.25vw,1.25rem);}
+.site-header .header-booking {min-height:44px;white-space:nowrap;font-size:.85rem;padding:.65rem 1rem;}
+.site-header .desktop-nav {display:none;}
+@media(min-width:1180px){
+ .site-header .desktop-nav {display:flex!important;align-items:center;gap:clamp(.1rem,.6vw,.65rem);margin-inline-start:auto;}
+ .site-header .desktop-nav a {padding:.55rem .5rem;font-size:.88rem;white-space:nowrap;}
+ .site-header .header-booking {margin-inline-start:auto;}
+
+}
+@media(max-width:1179px){.site-header .header-booking{margin-inline-start:auto;}.site-header .burger-trigger{display:inline-flex;}.site-header .desktop-nav{display:none!important;}}
+@media(max-width:640px){
+ .site-header .header-booking{display:none;}
+ .site-header .controls{margin-inline-start:auto;}
+ .amc-landing .lp-tv-screen.lp-showreel-viewport{aspect-ratio:4/3;max-height:none;}
+ .amc-landing .lp-showreel-timecode{display:none;}
+ .team-page .lp-team-header{grid-template-columns:1fr;}
+}
+.service-detail-highlights {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-block:2rem 3rem;}
+.service-detail-highlights > div {padding:1.5rem;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);min-width:0;}
+.service-detail-highlights h3 {font-size:1rem;margin-block:0 .75rem;}
+.service-detail-highlights p {font-size:.95rem;line-height:1.75;margin:0;}
+.service-audience {max-width:65ch;font-size:1.15rem;line-height:1.8;}
+@media(max-width:760px){.service-detail-highlights {grid-template-columns:1fr;}}

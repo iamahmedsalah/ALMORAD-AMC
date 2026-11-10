@@ -2,6 +2,7 @@ import {Controller, Get, Inject, ServiceUnavailableException} from '@nestjs/comm
 import {SkipThrottle} from '@nestjs/throttler';
 import {ApiTags, ApiOperation, ApiResponse} from '@nestjs/swagger';
 import {PrismaService} from '../../prisma/prisma.service.js';
+import {databaseFailure} from '../../prisma/database-failure.js';
 
 @ApiTags('Health & Readiness')
 @Controller('health')
@@ -22,7 +23,8 @@ export class HealthController {
     try {
       await this.prisma.$queryRaw`SELECT u."passwordHash", b."hubspotContactId", b."hubspotMeetingId", ci."nextRetryAt", bo."nextRetryAt" FROM "StaffUser" u LEFT JOIN "StaffSession" s ON FALSE LEFT JOIN "StaffAuditEvent" a ON FALSE LEFT JOIN "RequestThrottle" r ON FALSE LEFT JOIN "BookingSettings" cfg ON FALSE LEFT JOIN "Booking" b ON FALSE LEFT JOIN "ContactInquiry" ci ON FALSE LEFT JOIN "BookingOutbox" bo ON FALSE WHERE FALSE`;
       return {status: 'ok', database: 'up'};
-    } catch {
+    } catch (error: unknown) {
+      console.error(JSON.stringify({event: 'database_readiness_failed', ...databaseFailure(error)}));
       throw new ServiceUnavailableException({status: 'unavailable', database: 'down'});
     }
   }

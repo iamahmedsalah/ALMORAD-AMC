@@ -4,11 +4,9 @@ export const CHAPTER_METADATA = [
   { id: 'chapter-identity', num: '03', en: 'Disciplines', ar: 'التخصصات', pose: 0.28 },
   { id: 'chapter-digital', num: '04', en: 'Creative gallery', ar: 'المعرض الإبداعي', pose: 0.5 },
   { id: 'chapter-scale', num: '05', en: 'Our approach', ar: 'منهجنا', pose: 0.68 },
-  { id: 'chapter-together', num: '06', en: 'Better together', ar: 'معاً أفضل', pose: 0.73 },
-  { id: 'chapter-devices', num: '07', en: 'Digital experiences', ar: 'التجارب الرقمية', pose: 0.78 },
-  { id: 'chapter-team', num: '08', en: 'Meet the team', ar: 'تعرّف على الفريق', pose: 0.82 },
-  { id: 'chapter-booking', num: '09', en: 'Let’s talk', ar: 'لنتحدث', pose: 0.85 },
-  { id: 'chapter-faq', num: '10', en: 'FAQs', ar: 'الأسئلة الشائعة', pose: 0.94 },
+  { id: 'chapter-devices', num: '06', en: 'Digital experiences', ar: 'التجارب الرقمية', pose: 0.78 },
+  { id: 'chapter-booking', num: '07', en: 'Let’s talk', ar: 'لنتحدث', pose: 0.85 },
+  { id: 'chapter-faq', num: '08', en: 'FAQs', ar: 'الأسئلة الشائعة', pose: 0.94 },
 ] as const;
 export const CHAPTER_IDS = CHAPTER_METADATA.map(chapter => chapter.id);
 // Semantic chapter starts map onto the supplied animation's key poses.

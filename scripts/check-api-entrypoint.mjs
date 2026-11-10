@@ -1,0 +1,20 @@
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
+import {Server} from 'node:http';
+const root=resolve(process.argv[2] || 'apps/api/dist/apps/api/src');
+// Exercise the platform listener handshake with DB lifecycle disabled.
+console.info=()=>{};console.log=()=>{};
+Object.assign(process.env,{NODE_ENV:'test',DATABASE_URL:'postgresql://test:test@127.0.0.1:1/startup_test',API_HOST:'127.0.0.1',PORT:'0'});
+delete process.env.VERCEL;delete process.env.RESEND_API_KEY;delete process.env.HUBSPOT_ACCESS_TOKEN;
+await import(pathToFileURL(resolve(root,'node_modules/reflect-metadata/Reflect.js')));
+const {Logger}=await import(pathToFileURL(resolve(root,'node_modules/@nestjs/common/index.js')));
+Logger.overrideLogger(false);
+const {PrismaService}=await import(pathToFileURL(resolve(root,'prisma/prisma.service.js')));
+PrismaService.prototype.onModuleInit=async()=>{};
+const original=Server.prototype.listen;
+let release;
+const moduleEvaluated=new Promise(done=>{release=done});
+const deadline=setTimeout(()=>{console.error('Entrypoint deadlocked while listener awaited module evaluation');process.exit(1)},5000);
+Server.prototype.listen=function(...args){moduleEvaluated.then(()=>{this.once('listening',()=>{process.stdout.write('API entrypoint/listener handshake passed (database lifecycle stubbed).\n');this.close(()=>{clearTimeout(deadline);process.exit(0)})});original.apply(this,args)});return this;};
+await import(pathToFileURL(resolve(root,'main.js')));
+release();

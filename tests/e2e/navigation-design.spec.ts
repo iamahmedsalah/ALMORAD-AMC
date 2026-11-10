@@ -9,7 +9,7 @@ for (const locale of ['en', 'ar']) for (const width of [390, 1440]) {
     if (width >= 1024) {
       await expect(page.locator('.burger-trigger')).toBeHidden();
       await expect(page.locator('.desktop-nav')).toBeVisible();
-      await expect(page.locator('.desktop-nav a')).toHaveCount(7);
+      await expect(page.locator('.desktop-nav a')).toHaveCount(5);
       return;
     }
     const drawer = page.locator('.side-drawer');
@@ -40,7 +40,7 @@ test('chapter rail exposes icons, focus labels and keyboard navigation', async (
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/en');
   const buttons = page.locator('.scroll-hud-rail button');
-  await expect(buttons.locator('svg')).toHaveCount(10);
+  await expect(buttons.locator('svg')).toHaveCount(8);
   await buttons.first().focus();
   await expect(buttons.first().locator('.scroll-hud-tooltip')).toHaveCSS('opacity', '1');
   await page.keyboard.press('ArrowDown');

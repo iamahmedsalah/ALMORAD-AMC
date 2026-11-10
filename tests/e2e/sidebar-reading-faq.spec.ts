@@ -41,7 +41,7 @@ for (const locale of ['en', 'ar']) for (const width of [320, 390, 768, 1440]) {
     await expect.poll(() => page.evaluate(origin => Math.abs(scrollY - Math.min(origin, Math.max(0, document.documentElement.scrollHeight - innerHeight))), saved)).toBeLessThanOrEqual(1);
     await expect(back).toHaveAttribute('data-return-available', 'false');
     await back.click(); await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
-    await page.locator('.desktop-nav a[href$="/faq"]').evaluate(el => (el as HTMLAnchorElement).click());
+    await page.getByRole('contentinfo').locator('a[href$="/faq"]').click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/faq$`));
     await expect(page.locator('.back-to-top')).toHaveAttribute('data-return-available', 'false');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

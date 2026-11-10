@@ -5,7 +5,7 @@
       "root": "apps/api",
       "framework": "nestjs",
       "installCommand": "pnpm install --frozen-lockfile",
-      "buildCommand": "pnpm --workspace-root exec turbo run build --filter=@amc/api",
+      "buildCommand": "node ../../scripts/ci/vercel-api-build.mjs",
       "outputDirectory": "dist/apps/api/src",
       "functions": {
         "dist/apps/api/src/main.js": {
@@ -57,5 +57,8 @@
       "path": "/ops/notifications/drain",
       "schedule": "0 4 * * *"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": false
+  }
 }

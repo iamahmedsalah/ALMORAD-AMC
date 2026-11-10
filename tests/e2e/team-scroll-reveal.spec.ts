@@ -4,7 +4,7 @@ for (const locale of ['en', 'ar']) for (const width of [390, 1366]) {
   test(`team entrance reverses ${locale} ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto(`/${locale}`);
+    await page.goto(`/${locale}/team`);
     const wrapper = page.locator('.lp-team-grid-2 .team-card-reveal').first();
     const card = wrapper.locator('.lp-team-portrait-card');
     await expect(wrapper).toHaveAttribute('data-card-in-view', 'false');

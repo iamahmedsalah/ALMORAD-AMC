@@ -1,0 +1,842 @@
+# Implementation status — 9 November 2026
+
+## Current authorized scope
+
+Latest instruction: Email domain configuration (testing DNS via `onboarding@resend.dev` and Google Workspace inbound/reply), outbox channel decoupling (`:EMAIL` and `:HUBSPOT`), branded responsive bilingual email templates with lifecycle support (booking confirmation, rescheduling, cancellation), and HubSpot CRM v3 integration (contact deduplication, meeting creation, and automated lifecycle outcome syncing on reschedule/cancellation) are fully implemented.
+
+### Earlier scope
+
+Earlier deferral/stopping records below are historical. See the latest booking increments, booking-and-demo.md, and the notification drain record below.
+
+## Outbox Decoupling & HubSpot CRM Lifecycle Increment — 9 November 2026
+
+* **Design**: [`docs/designs/design_draft.md`](docs/designs/design_draft.md) and [`docs/designs/concepts_brief.md`](docs/designs/concepts_brief.md) (converged via 2-round adversarial Goldfish review; drift report at `docs/reports/2026-11-09_DRIFT_REPORT.md`).
+* **Schema Extension**: `apps/api/prisma/schema.prisma`:
+  * `Booking`: added `hubspotContactId String? @db.VarChar(64)` and `hubspotMeetingId String? @db.VarChar(64)`.
+  * `ContactInquiry`: added `nextRetryAt DateTime? @db.Timestamptz(3)`.
+  * `BookingOutbox`: transitioned from `@unique` on `eventId` to composite index `@@unique([eventId, kind])`, enabling independent `:EMAIL` and `:HUBSPOT` delivery streams.
+* **Migration**: `apps/api/prisma/migrations/20261109120000_outbox_hubspot_lifecycle/migration.sql` (additive SQL with zero destructive drops or data loss).
+* **Email Templates**:
+  * Shared responsive email layout `renderEmailLayout` in `apps/api/src/modules/notifications/templates/email-layout.ts` (approved brand palette `#0B0A08`, `#14120E`, `#BE9D5B`, `#F5F1E7`, Arabic RTL / English LTR, Outlook-safe table layouts).
+  * `booking-confirmation.template.ts`, `booking-rescheduled.template.ts`, `booking-cancelled.template.ts`, and `contact-emails.ts` unified under `renderEmailLayout`.
+* **Outbox & Backend Services**:
+  * `NotificationsService`: dynamic template dispatch for booking creation, reschedule, and cancellation; `Reply-To: hello@almorad-amc.com`; default sender `ALMORAD AMC <onboarding@resend.dev>`; patched mock status leak (`UNCONFIGURED` when `RESEND_API_KEY` missing).
+  * `HubSpotClient`: Arabic compound name preservation (prevents splitting "عبد الله"), `upsertBookingContact()`, `createMeeting()` (with `associationTypeId: 200`), `updateMeeting()` (with `RESCHEDULED` and `CANCELED` outcomes), and rate-limit backoff handling (`Retry-After`).
+  * `ContactService`: atomic `$queryRaw` batch leasing with `FOR UPDATE SKIP LOCKED` and exponential backoff.
+  * `BookingsService`: decoupled outbox event emission (`:EMAIL` and `:HUBSPOT`), pending outbox status on reschedule/cancel lifecycle actions, and `drainCrm(batchSize)` with atomic row leasing.
+  * `OperationsController`: exposed CRM outbox drain at `/ops/notifications/drain` via `drainCrm()`.
+* **Verification Evidence**:
+  * Prisma Schema Validation: PASS (`The schema at apps\api\prisma\schema.prisma is valid`).
+  * Prisma Client Generation: PASS (Prisma Client 7.10.0 generated).
+  * TypeScript typecheck `@amc/api`: PASS (`tsc --noEmit -p apps/api/tsconfig.build.json`, zero errors).
+  * TypeScript typecheck `@amc/web`: PASS (`tsc --noEmit -p apps/web/tsconfig.json`, zero errors).
+  * Targeted Unit Test Suite (6 files / 32 tests): PASS
+    * `apps/api/src/modules/contact/hubspot.client.test.ts` (5 tests): PASS.
+    * `apps/api/src/modules/notifications/notifications.service.test.ts` (9 tests): PASS.
+    * `apps/api/src/modules/bookings/bookings.unit.test.ts` (8 tests): PASS.
+    * `apps/api/src/operations.test.ts` (2 tests): PASS.
+    * `packages/shared/src/calendar.test.ts` (1 test): PASS.
+    * `apps/api/src/modules/contact/contact-delivery.test.ts` (7 tests): PASS.
+
+---
+
+# Implementation status — 7 November 2026
+
+## Current authorized scope
+
+Latest instruction: booking transactional email notifications are now implemented using a serverless-native PostgreSQL outbox drain architecture per the approved EGM design specification `docs/designs/booking_confirmation_queue.md`.
+
+### Earlier scope
+
+Earlier deferral/stopping records below are historical. See the latest booking increment, booking-and-demo.md, and the notification drain record below.
+
+## Transactional Email Notification Outbox Increment — 7 November 2026
+
+* **Design**: [`docs/designs/booking_confirmation_queue.md`](docs/designs/booking_confirmation_queue.md) (Serverless-native transactional outbox drain via periodic cron).
+* **Schema Extension**: `apps/api/prisma/schema.prisma` extends `BookingOutbox` with `lastError`, `deliveredAt`, `nextRetryAt`, `updatedAt`, and indexes on `[status, nextRetryAt]` and `[bookingId]`.
+* **Migration**: `apps/api/prisma/migrations/20261107200000_booking_outbox_drain/migration.sql` (additive SQL with zero table locks or drops).
+* **Dependencies**: `resend` added to `@amc/api`.
+* **Shared Formatter**: `packages/shared/src/calendar.ts` exports `generateIcs` with RFC 5545 compliance.
+* **Notification Dispatcher**: `NotificationsService` implements atomic batch leasing (`FOR UPDATE SKIP LOCKED`), deterministic HMAC token derivation (`hmac_sha256(secret, bookingId:nonce:version)`), Resend API transmission with `Idempotency-Key`, and exponential backoff retry / PII error scrubbing.
+* **Operations Controller**: Added `@Post('notifications/drain')` in `OperationsController` protected by `Bearer CRON_SECRET` via constant-time `timingSafeEqual`.
+* **Booking Hook**: `BookingsService.create()` records outbox `status = 'PENDING'` for non-demo bookings when credentials exist, while keeping `UNCONFIGURED` for demo runs.
+* **Verification Evidence**:
+  * `pnpm.cmd db:generate`: PASS (Prisma Client 7.10.0 generated).
+  * `pnpm.cmd db:validate`: PASS (Schema valid).
+  * `pnpm.cmd --filter @amc/api build`: PASS (`tsc -p tsconfig.build.json`).
+  * `pnpm.cmd --filter @amc/api typecheck`: PASS (`tsc --noEmit`, zero errors).
+  * `pnpm.cmd vitest run`: PASS (19 test files / 50 tests passed, including `notifications.service.test.ts` with 8 tests and `calendar.test.ts`).
+
+---
+
+
+
+The user authorized the remaining implementation and requested Turborepo, Solar icons, the official GLB/SVG favicon, Three.js and GSAP, then explicitly asked to skip booking. This supersedes the source master prompt's initial Phase 1 stop. Source documents describe requirements; the results below describe inspected implementation. The original Phase 1 verification record is preserved in [validation/phase-1.md](validation/phase-1.md).
+
+## Implemented public experience
+
+- Bilingual editorial landing with studio introduction, four disciplines, eleven offering links, labelled abstract project possibilities, approach, Better Together visual, partnership, FAQ and contact CTA. Header/footer, Arabic RTL and English LTR, responsive light/dark/system themes.
+- Original GLB at public/3d/mc-logo.glb in a lazy Three.js/React Three Fiber island. Original geometry/materials preserved; presentation centres and scales the scene. RoomEnvironment lighting, bounded DPR, pointer response, offscreen/background pause and user pause control. Original SVG fallback on reduced motion/save-data/no WebGL/model failure. Original SVG favicon.
+- Scoped GSAP/ScrollTrigger with disposal and reduced-motion handling. Core headings, links and content remain server-rendered HTML.
+- Selected official Solar SVG paths generated from the installed Iconify package. Public Credits route and asset-notices.md retain attribution.
+- Four pillar hubs and eleven dedicated offering guides in both locales, plus About, Work, Contact and Credits. Per-offering summary, scope, process, FAQ and related links. No fabricated projects, client logos/results, team biographies or office details.
+- Localized titles/descriptions, canonical/reciprocal hreflang, Organization/Service/BreadcrumbList data, sitemap, robots and genuine 404s. Indexing requires BOTH a verified origin and explicit content approval. Work/Contact/Credits remain noindex; Work/Contact show honest pending-content states. Contact config validates email, phone and Google Maps host. No map iframe or analytics runs automatically.
+- Turborepo dependency ordering and local task caching for builds, package typechecks and Prisma generation. Lint and unit tests execute directly. Database operations/integration/browser tests are uncached. Remote caching is disabled. Public build configuration and root env file participate in task hashes.
+- Read-only GitHub validation workflow with disposable PostgreSQL and browser/audit checks. Standalone, nonroot web Dockerfile with pinned base digest; local loopback preview Compose with healthcheck, resource/log limits and dropped capabilities. Release, content/intent map and asset documentation.
+
+## Publication and provider work still pending
+
+The latest authorized increment implements booking, staff-reviewed changes, receptionist operations and CEO booking analytics locally. External notification/reminder/Calendar providers and actual publication remain pending. Earlier deferral records below are historical.
+
+Publication still needs approved bilingual copy, verified domain/contact/office facts, permitted case/team material, legal/privacy text and licensed Redaction 100 if required. Work-detail/team/legal pages are not fabricated. Redaction uses Georgia fallback; Cairo/IBM Plex Sans use next/font. No external Google/Slack/Resend/analytics account, production migration, deployment, commit or push has been performed. Live TLS, monitoring, staged rollout and production backup/restore remain launch work requiring real infrastructure. Local consistent backup/restore rehearsal is implemented and verified.
+
+## Verification evidence
+
+The preceding implementation run passed 19 unit/API tests, all-workspace lint/typecheck/build and 24 Playwright checks. Browser coverage includes EN/AR × light/dark × 320/390/768/1440, axe scans, no-JavaScript offering content, navigation, metadata, keyboard controls and 3D success/failure/reduced-motion behavior. A repeated unchanged build restored all four tasks from Turbo cache in 529 ms. These measurements are local checks, not field Core Web Vitals or accessibility certification.
+
+Dependency audit initially identified deepmerge-ts and mysql2 advisories through Prisma tooling. Targeted workspace overrides pin deepmerge-ts 8.0.0 and mysql2 3.23.1. Resumed frozen installation and production audit on 6 November pass; audit reports no known vulnerabilities. Prisma generation and schema validation passed with the overrides in the preceding run; final resumed checks are being recorded below.
+
+Windows pnpm native Turborepo download was repaired from the official registry tarball after SHA-512 verification against the lockfile. No registry, dependency integrity or product database safeguards were disabled. The first browser attempt was disrupted by concurrent restoration of build output; a subsequent stable-build run passed all 24 tests. Build and browser runs must remain sequential.
+
+## Final resumed results
+
+| Check | Observed result on 6 November 2026 |
+|---|---|
+| Frozen pnpm install | PASS, already up to date |
+| Prisma generation / validation | PASS with the targeted dependency overrides |
+| Production dependency audit | PASS, no known vulnerabilities reported |
+| Lint | PASS; existing nonblocking monorepo React-detection/pages-directory notices |
+| API/web direct TypeScript checks | PASS; API typecheck and build rerun after the final guard-wiring fix |
+| pnpm typecheck | PASS after final API fix: 5 tasks, 3 cache hits, 7.651 seconds; prior unchanged run restored all 5 in 1.093 seconds |
+| pnpm test | PASS: 8 files / 20 tests, 3.06 seconds with maxWorkers set to 2; includes final full-module startup/rate-limit regression |
+| Isolated local PostgreSQL integrity test | PASS: 1 test; existing amc_test only, no reset/new migration |
+| pnpm build | PASS: web production compilation/static generation plus shared/API builds |
+| Repeated pnpm build | PASS: 4/4 tasks restored from cache in 572 ms |
+| Production-container browser suite | PASS: all 24 tests in 46.5 seconds, including 3D render/pause/failure/reduced motion and stable scene dimensions |
+| Docker preview build | PASS: pinned-base Linux standalone web image built, no external publication |
+| Local container runtime | PASS: node user, healthy, loopback port 3100; root .env absent from runtime |
+
+The final web image manifest-list digest is sha256:15cd247a1a123e19c0e1734e0c7cce2ad8cc2d11e497343ad1a110545a878152. Local preview: http://127.0.0.1:3100/en and /ar. The normal development process is restored separately on port 3000. GitHub Actions has been prepared but not run remotely; this workspace has no Git repository, and nothing was committed/pushed/deployed.
+
+Windows repository-level Turbo lint/test tasks stalled while package build/typecheck tasks worked. Final root scripts execute lint and unit tests directly; the test script prepares shared output through Turbo. This keeps successful local build/typecheck caching without the root-task stall. One parallel Vitest run lost a worker during concurrent builds; limiting the small suite to two workers produced a clean full run without suppressing tests.
+
+Representative English dark 3D desktop and Arabic light mobile screenshots were visually reviewed. Full screenshot matrix and HTML report are generated under test-results/ and playwright-report/. No layout overflow or selected axe violations were observed in the tested matrix; human assistive-technology review, field performance and launch acceptance remain separate.
+
+Local public-site implementation and release preparation are verified. Booking-dependent phases remain deferred, and actual publication still depends on the business content/infrastructure inputs listed above.
+
+Final development startup exposed a ThrottlerGuard Reflector injection failure. AppModule now provides Reflector explicitly and constructs the third-party guard with explicit options/storage/Reflector tokens. The new full-AppModule HTTP regression test starts the real guards, preserves unauthenticated staff denial, checks readiness and verifies request 61 receives 429. All 20 tests pass; the API then starts successfully under the normal tsx watch development command.
+
+Final live smoke: preview EN/AR, SVG favicon and GLB return 200; API liveness/readiness return 200; unauthenticated staff identity returns 401. Development web/API were restarted successfully. The preview container remains healthy on loopback port 3100.
+
+## Staff security and Vercel preparation - current increment
+
+The selected production target is separate Vercel web/API projects with Prisma Postgres and Prisma ORM. App-level Vercel configurations, Node 24, pooled runtime connections, direct controlled migration configuration and a provider-specific runbook are prepared. The original VPS requirements document is retained; Docker is local-only validation infrastructure. No AMC Vercel project, Prisma hosted database, domain, email account or deployment has been created. Read-only provider inspection is not deployment verification.
+
+Localized staff login/account pages now support secure cookie sessions, session revocation, password changes and manager/CEO security counts/audit pagination. API permissions, salted scrypt passwords, hashed opaque tokens, origin/CSRF validation and signed web-to-API requests protect access. The production API rejects unsigned proxy calls. PostgreSQL atomic throttle state works across API instances; authenticated maintenance removes expired sessions/buckets. No default credentials or real staff accounts were created.
+
+Additive migrations 20261106020000_staff_access and 20261106040000_serverless_throttling were applied only to local amc_dev/amc_test after backup/restore rehearsal. The latter first failed on a Windows UTF-8 BOM before any table creation. Its BOM was removed, the failed local migration marked rolled back, and corrected SQL reapplied successfully; no reset or data deletion was used.
+
+Current observed checks:
+
+- Lint PASS with existing nonblocking React/pages notices; generated staff browser report is now excluded.
+- Typecheck PASS: 5 tasks, 2m42.555s.
+- Unit/API PASS: 12 files / 27 tests, 6.02s.
+- Isolated PostgreSQL PASS: 3 files / 4 tests, including independent storage instances under concurrent requests and credential/session races.
+- Prisma generation/schema validation PASS.
+- Local consistent backup/restore PASS on dev and test: schema/constraints and every public table count matched (4 tables before shared-throttle migration).
+- Production dependency audit PASS: no known vulnerabilities. pnpm upgraded to 11.11.0 for GHSA-vx52-2968-3vc6; targeted dependency overrides retained.
+- Both Vercel config field names and framework identifiers match the official schema. No actual Vercel build/deployment has been run.
+
+Final production build, renewed browser runs and source scanning are being completed and will be recorded below. Prior successful browser checks are historical, not evidence for untested later edits.
+
+Local API container scanning found 34 high/critical Debian findings and 16 Node/tooling findings in the earlier full-workspace image. That image is not approved for production; Vercel is the chosen runtime. Container scanning remains a manual CI job that fails on high/critical findings. No CodeQL/GitHub workflow success or production security certification is claimed.
+
+See vercel-deployment.md, domain-and-email.md and staff-and-operations.md for provider setup, exact runtime-variable responsibilities and remaining release inputs.
+
+Further final checks: source Gitleaks scan PASS (redacted, 2.61 MB scanned, no leaks). Post-migration dev backup/restore PASS with all 5 public table counts matching; Prisma migrate diff reports no difference.
+
+Final build PASS: 4/4 Turbo tasks, 7m59.973s; localized static public routes and dynamic private staff/proxy routes compiled. Final lint rerun PASS with only the existing nonblocking notices. Local Docker engine stopped after database tests, was restarted, and the existing dev PostgreSQL container was started for browser verification.
+
+The user selected almorad-amc.com and six email users/addresses. Domain/email runbook now proposes apex web, www redirect, api subdomain and licensed individual inboxes plus shared Groups/aliases. No ownership, DNS or mailbox configuration is implied.
+
+Staff browser validation: the development watcher timed out at startup; the test runner now starts the compiled API. The compiled run passed Arabic receptionist authorization/revocation and password-change checks, but the first manager sign-in stayed on the login page. Inspection found the client form was enabled before hydration and lacked an explicit POST fallback. Inputs/submit now stay disabled until hydration and the form explicitly posts to the allowlisted proxy endpoint, preventing native credential submission in a GET URL. Rebuild and full browser reruns follow; the partial run is not counted as a pass.
+
+## User-requested stopping point
+
+The user requested stopping and a status report. No further implementation is being pursued. Client booking/scheduling, staff appointment calendars, change requests and booking-derived analytics are NOT implemented. Independent staff login/account/session/password/security audit views are implemented.
+
+The final login hydration/POST fix passed lint and production compilation; final full build/browser verification after that fix was not completed before stopping. The prior full build, 27 unit tests, 4 database tests, schema drift/restore and source/dependency scans passed as recorded above. The latest partial staff browser run had 2 passes and 1 failed first sign-in, which prompted this fix; do not report the final staff suite as passed. Vercel/Prisma/domain/email setup remains prepared documentation/configuration only, with no deployment or external account/DNS/mailbox changes.
+
+## Booking increment - authorized after the stopping point
+
+Implemented bilingual client booking/manage routes, receptionist calendar/details/actions and CEO/Manager settings/analytics. Reasons and staff review protect both cancellation/rescheduling. Cairo DST-aware slots, buffers and one shared capacity-one calendar are enforced transactionally; a PostgreSQL exclusion constraint rejects concurrent overlapping bookings. HMAC-derived expiring/rotating management tokens, request idempotency, role/CSRF/proxy guards, transition events/audit and durable UNCONFIGURED notification intents are implemented. Unexpected errors are sanitized before logging.
+
+Mock receptionist and CEO accounts plus six synthetic appointments/two change tickets were created only in amc_demo. Passwords/secrets are generated in ignored .env.demo. Demo is labelled throughout; no fabricated sample is presented as live business evidence. Working hours/duration/notice/cutoff values are demo fixtures, not verified business policy.
+
+Migration 20261106060000_booking_operations was reviewed and applied to local amc_test, amc_dev and amc_demo after consistent backup/restore rehearsals. No reset or external database operation occurred. Post-seed demo restore PASS: all 12 table counts match and constraints/schema restored. Prisma schema validation and drift check PASS, no difference detected. Production dependency audit PASS, no known vulnerabilities.
+
+Observed intermediate checks: lint/typechecks PASS; 31 unit/API tests PASS; 12 isolated database tests PASS (8 new booking tests plus 4 existing). A production build with the new web routes PASS in 53.755s; API rebuilt after detailed event/safe-error changes. Initial six-test browser run had 3 passes and 3 timeouts locating exact select labels; selects now receive explicit localized accessible names. Final build/browser rerun is pending and will be recorded below. No final browser success is claimed at this point.
+
+Actual Vercel/Prisma deployment, domain/email setup, production policy approval, office verification and notification/calendar provider connections remain pending.
+
+## Developer experience, Swagger API, terminal banners and container structure increment
+
+- Added comprehensive OpenAPI / Swagger documentation (`@nestjs/swagger`) across all NestJS API controllers (`HealthController`, `AuthController`, `SecurityController`, `StaffController`, `PublicBookingController`, `StaffBookingsController`, `BookingSettingsController`, `BookingAnalyticsController`, and `OperationsController`) with Swagger UI exposed at both `/docs` and `/api/docs`.
+- Implemented formatted, stylized terminal & console banners matching reference for `@amc/api`, `@amc/web` (Next.js server instrumentation), and exported a reusable banner utility in `@amc/shared` (`printBanner`, `formatBanner`, and DevTools-formatted `getBrowserConsoleBanner` with brand tokens `#BE9D5B` and `#0B0A08`). Added client-side `<ConsoleBanner />` component to web layout.
+- Added root-level Dockerfiles and Compose configurations (`Dockerfile.api`, `Dockerfile.web`, `docker-compose.yml`, `docker-compose.prod.yml`, `docker-compose.test.yml`) matching local container workflow.
+- Added comprehensive unit tests for banner formatting (`packages/shared/src/banner.test.ts`), public booking controller/origin validation (`bookings.unit.test.ts`), and staff controller endpoints (`staff.controller.unit.test.ts`). All typechecks pass with 0 errors.
+
+
+## Final booking validation
+
+- Lint PASS; existing nonblocking monorepo notices retained.
+- Strict workspace typechecks PASS; final web and API production builds PASS. The final complete web build took 37.113s; API was rebuilt after audit metadata changes.
+- Unit/API PASS: 14 files / 31 tests, including Cairo DST/notice/blackout rules and safe exception logging.
+- Isolated PostgreSQL PASS: 4 files / 12 tests. Final reruns also verify acknowledgement source/version and complete alternative-proposal audit times.
+- Authenticated/client browser PASS: 6 tests in 18.1s, including staff approval, CEO settings saving, EN/AR booking/change requests, receptionist RBAC, password/session security and no-JavaScript safe login.
+- Public production browser regression PASS: 24 tests in 36.5s, including locales/themes/viewports, SSR navigation, metadata and 3D fallback/motion behavior.
+- Prisma generation/schema validation/drift PASS; no difference detected.
+- Populated local demo backup/restore PASS: all 12 table counts match and schema/constraints restore successfully.
+- Production dependency audit PASS, no known vulnerabilities.
+- Source Gitleaks PASS: redacted scan of approximately 2.77 MB, no leaks found.
+
+Desktop calendar and Arabic mobile client-management screenshots were visually reviewed. A final focused browser rerun passed after explicit select names, restrained dashboard heading size and separator corrections. Generated QA images are preserved in ignored .tmp/final-booking-qa. These are local checks, not field accessibility/performance certification or a production deployment.
+
+The local demo preview uses http://127.0.0.1:4400/en (also /ar), booking routes and localized staff routes. Generated credentials are in ignored .env.demo. Six demo appointments and two change requests exist only in amc_demo. No hosted resource, real company account, DNS record, external email/Slack message, Google calendar/video link, commit or push was created.
+
+Final running-demo smoke PASS: generated RECEPTIONIST and CEO accounts each signed in, opened their authorized calendar/analytics workspace and signed out successfully against port 4400. Passwords were not printed. The final source scan also PASS (approximately 2.77 MB, no leaks). Demo web/API remain running on loopback 4400/4401.
+
+---
+
+## Design System Migration & 3D Interactive Landing Experience Increment — 8 November 2026
+
+* **Design Specification:** [`docs/designs/design_system_and_3d_landing.md`](designs/design_system_and_3d_landing.md) (Approved V1 Design Specification).
+* **EGM Review Report:** [`docs/reviews/design_system_and_3d_landing_review.md`](reviews/design_system_and_3d_landing_review.md) (Complete 5-Persona Goldfish Review Audit).
+* **Color Tokens & Tailwind v4 Theme:**
+  * Updated [`apps/web/src/styles/tokens.css`](../apps/web/src/styles/tokens.css) with official Navy (`#0B1F44`), Brand Orange (`#F7761E`), Cream (`#FBF1E6`), and Deep Burnt Orange (`#B84A05`).
+  * Enforced dual theme selectors (`:root, [data-theme="light"]` and `.dark, [data-theme="dark"]`).
+  * Implemented Tailwind CSS v4 `@theme inline` with full brand color scales and legacy compatibility shims (`--background`, `--foreground`, `--primary`, `--primary-foreground`, `--muted`, `--muted-foreground`, `--border`, `--brand-accent`, `--ring`).
+  * Enforced WCAG AA contrast compliance: Brand Orange buttons with dark Navy text achieve 5.67:1 contrast ratio; Deep Burnt Orange on Cream achieves 4.98:1.
+* **Brand Artwork & Multi-Resolution Favicons:**
+  * Deployed official vector marks to `apps/web/public/brand/`: `amc-mark.svg`, `amc-mark.glb`, `footer-logo-on-dark.svg`, `footer-logo-on-light.svg`, and `footer-logo-card.svg`.
+  * Deployed multi-resolution favicons to `apps/web/public/`: `favicon.ico`, `favicon.svg`, `favicon-dark.svg`, `favicon-light.svg`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`.
+  * Updated Header and Footer in `apps/web/src/components/layout/shell.tsx` with official mark and theme-aware footer logos (`dark:hidden` / `hidden dark:block`).
+  * Updated `apps/web/src/app/[locale]/page.tsx` schema.org logo metadata.
+* **Interactive 3D Scene & Fallback:**
+  * Created `apps/web/src/hooks/use-scroll-timeline.ts`: Continuous normalized timeline progress with mobile viewport query (`< 768px`) and `prefers-reduced-motion` detection.
+  * Created `apps/web/src/components/three/amc-mark-scene.tsx`: Three.js procedural extrusion of the 5-mesh mark with dirty-flag scheduling, clamped DPR (1.5), and recursive VRAM disposal.
+  * Created `apps/web/src/components/three/amc-mark-vector-fallback.tsx`: Zero-overhead hardware-accelerated SVG transform fallback for mobile screens and reduced motion.
+  * Created `apps/web/src/components/three/amc-mark-container.tsx`: Responsive container dynamically switching between 3D scene and vector fallback.
+  * Co-located procedural animation code and strict TypeScript definitions in `apps/web/src/components/three/amc-mark-anim.js` and `amc-mark-anim.d.ts`.
+* **Bilingual Landing Page Modernization:**
+  * Updated `apps/web/src/features/marketing/landing.tsx`: Redesigned layout with 55/45 reading corridors on desktop viewports and responsive card collapse on mobile screens across all 6 chapters (`chapter-hero`, `chapter-strategy`, `chapter-identity`, `chapter-digital`, `chapter-scale`, `chapter-booking`).
+  * Preserved strict Arabic RTL and English LTR parity without inventing unapproved case studies, addresses, or client outcomes.
+* **Verification Evidence:**
+  * `tsc -p tsconfig.json --noEmit` on `@amc/web`: PASS (0 errors).
+  * `pnpm.cmd exec vitest run apps/web/src/lib/seo/palette.test.ts`: PASS (2/2 tests passed, verifying all design swatches and AA contrast).
+  * `@amc/shared` build: PASS (`dist/` compiled with strict TypeScript types).
+  * Webpack client & server compilation: PASS (7.6s compilation time).
+
+---
+
+## UI/UX Polish, Squircle Radii, Premotio-Style GSAP Choreography, Preloader, Glass Navigation & API Telemetry Increment — 8 November 2026
+
+* **Brainstorm & Architecture Brief:** [`docs/designs/concepts_brief.md`](designs/concepts_brief.md) (4-Agent EGM Brainstorm Synthesis: Zoom-Out, Design Critic, Implementation Readiness, Inventive Catalyst).
+* **Squircle Radii & Design Tokens (`tokens.css` & `globals.css`):**
+  * Added official radius tokens (`--radius-sm: 8px`, `--radius-md: 12px`, `--radius-lg: 20px`, `--radius-xl: 28px`, `--radius-pill: 999px`, `--radius-squircle: 22%`) and exposed them in Tailwind CSS v4 `@theme inline`.
+  * Added `.rounded-squircle`, `.rounded-squircle-sm`, `.rounded-squircle-md`, `.rounded-squircle-lg`, `.rounded-squircle-xl` (with `@supports (corner-shape: squircle)` progressive enhancement), `.badge`, `.badge-accent`, and `.glass-surface` utilities across buttons, badges, cards, pillar symbols, and controls.
+* **Custom Light & Dark Theme Scrollbars:**
+  * Styled `html` (`scrollbar-width: thin; scrollbar-color: var(--amc-orange-500) var(--surface-2)`) and WebKit scrollbars (`::-webkit-scrollbar`, `::-webkit-scrollbar-track`, `::-webkit-scrollbar-thumb`) to adapt automatically between Cream/Orange in Light mode and Navy-950/Navy-800/Orange in Dark mode.
+* **Icon Theme Switcher, Dual Theme Attributes & 3D Logo Preloader:**
+  * Updated [`apps/web/src/components/layout/providers.tsx`](../apps/web/src/components/layout/providers.tsx) to set `attribute={['class', 'data-theme']}` so both `.dark` and `[data-theme="dark" | "light"]` rules stay synchronized.
+  * Upgraded [`apps/web/src/components/layout/controls.tsx`](../apps/web/src/components/layout/controls.tsx) from a `<select>` dropdown to an accessible 3-icon squircle segmented control (`Light` Sun, `Dark` Moon, `System` Monitor) and a squircle locale switcher that triggers `amc:locale-switch`.
+  * Created [`apps/web/src/components/layout/preloader.tsx`](../apps/web/src/components/layout/preloader.tsx): Full-viewport 3D-layered 5-piece AMC Mark preloader overlay that plays on initial page load and when switching between English (`en`) and Arabic (`ar`).
+* **Favicon Dark/Light Synchronization & Brand Lockups:**
+  * Configured adaptive `/favicon.svg`, `/favicon-orange.svg` for `(prefers-color-scheme: light)`, and `/favicon-light.svg` (Cream tile with Navy mark for high contrast on dark tab bars) for `(prefers-color-scheme: dark)` in [`apps/web/src/app/[locale]/layout.tsx`](../apps/web/src/app/[locale]/layout.tsx), plus live client-side `<link rel="icon">` synchronization when toggling themes in `Controls`.
+  * Updated [`apps/web/src/components/layout/shell.tsx`](../apps/web/src/components/layout/shell.tsx) to render `amc-mark.svg` (light) and `amc-mark-white.svg` (dark) in the header brand squircle badge and enforce `data-theme="dark"` with `footer-logo-on-dark.svg` on the footer.
+* **Frosted Glass Sticky Header & Slide-Over Side Navbar Drawer:**
+  * Upgraded `.site-header` to frosted glassmorphism (`backdrop-filter: blur(18px) saturate(180%)`).
+  * Created [`apps/web/src/components/layout/side-navbar.tsx`](../apps/web/src/components/layout/side-navbar.tsx): RTL/LTR-aware slide-over side navigation drawer with frosted glass surface, numbered squircle navigation links, theme/locale controls, Escape key handler, and backdrop close.
+* **Fixed 3D Logo Scroll Animation & Premotio-Style GSAP + ScrollTrigger Choreography:**
+  * Resolved the stale `progress = 0` closure bug in [`apps/web/src/components/three/amc-mark-scene.tsx`](../apps/web/src/components/three/amc-mark-scene.tsx) by reading a mutable `scrollStateRef` scrubbed by **GSAP `ScrollTrigger`** (`scrub: 0.4`) inside the 60fps `requestAnimationFrame` loop with exponential damping (`1 - Math.pow(0.0015, dt)`), pointer parallax, and dynamic key/rim lighting (`rimB` + `rimO`) from `docs/assets/amc-mark-3d-package/amc-logo-scroll.html`.
+  * Added an interactive 6-chapter HUD rail (`.scroll-hud-rail`), top progress bar (`.scroll-hud-progress-bar`), and chapter pill (`.scroll-hud-chapter-pill`) in [`apps/web/src/components/three/amc-mark-container.tsx`](../apps/web/src/components/three/amc-mark-container.tsx).
+  * Upgraded [`apps/web/src/components/landing/motion.tsx`](../apps/web/src/components/landing/motion.tsx) and [`apps/web/src/features/marketing/landing.tsx`](../apps/web/src/features/marketing/landing.tsx) with Premotio-inspired scrubbed section show/hide timelines (`[data-chapter-panel]`), 3D perspective card scroll reveals (`[data-scroll-card]`), and sticky card depth compression (`[data-stack-card]`).
+* **Structured NestJS API HTTP Logging (`apps/api`):**
+  * Created [`apps/api/src/http-logger.middleware.ts`](../apps/api/src/http-logger.middleware.ts) and unit test [`apps/api/src/http-logger.middleware.test.ts`](../apps/api/src/http-logger.middleware.test.ts), wired into [`apps/api/src/main.ts`](../apps/api/src/main.ts), emitting structured JSON logs (`timestamp`, `level`, `event: 'http'`, `requestId`, `method`, `path` with query parameters stripped, `status`, `durationMs`) across both development and production.
+* **Verification Evidence:**
+  * `pnpm.cmd --filter @amc/api exec tsc -p tsconfig.json --noEmit`: PASS (0 errors).
+  * `pnpm.cmd --filter @amc/web exec tsc -p tsconfig.json --noEmit`: PASS (0 errors).
+  * `pnpm.cmd exec vitest run apps/api/src/http-logger.middleware.test.ts apps/web/src/lib/seo/palette.test.ts packages/shared/src/banner.test.ts`: PASS (3 test files / 7 tests passed in 1.64s).
+
+---
+
+## Premotio-Inspired 10-Section Landing Page, Studio BrandArt, Discipline Combiner & Device-Aware Preloader Increment — 8 November 2026
+
+* **Design & Implementation Plans:**
+  * [`docs/designs/branding_studio_3d_landing_plan.md`](designs/branding_studio_3d_landing_plan.md)
+  * [`docs/designs/premotio_landing_implementation.md`](designs/premotio_landing_implementation.md)
+* **Complete 10-Section Premotio-Inspired Landing Page (`apps/web/src/features/marketing/landing.tsx`):**
+  * **Section A — Navigation (`shell.tsx`, `side-navbar.tsx`, `controls.tsx`):** Frosted glass sticky header, animated 3-bar burger morph button (`.burger-trigger`), slide-over RTL/LTR drawer, 3-icon squircle theme switcher (`Light`, `Dark`, `System`), and persistent 6-chapter HUD rail (`AmcMarkContainer`).
+  * **Section B — Hero Section:** Masked typography, primary/secondary squircle CTAs, studio fact counters (`4` disciplines, `11` services, `EN / ع`), floating studio preview frames (`BrandArt` compositions with scroll parallax), and full-viewport 3D AMC Mark stage.
+  * **Section C — Product / Feature Showcase:** Asymmetric split-screen showcase of all 4 connected disciplines (`Marketing`, `Advertising`, `Consulting`, `Web Development`) with custom `BrandArt` visual demonstrations and direct service pills.
+  * **Section D — Categories / Curated Visual Gallery:** Horizontal snap-scrolling gallery rail (`[data-gallery-track]`) displaying all 11 services with varied editorial proportions (`tall`, `wide`, `square`) alongside the 3 project possibility compositions.
+  * **Section E — How It Works:** 4-step workflow (`Understand`, `Define`, `Create`, `Refine`) inside a glass process band with a scroll-scrubbed progress bar (`[data-process-progress]`).
+  * **Section F — Advanced Features (`discipline-combiner.tsx`):** Interactive client island allowing visitors to toggle any combination of the 4 disciplines, updating a live orbital SVG chord diagram and filtering the connected services from `@amc/shared`.
+  * **Section G — Cross-Device Experience:** Responsive device stage showcasing Desktop (`1440px`), Tablet (`768px`), and Mobile (`390px`) frames with scroll parallax (`[data-device-float]`).
+  * **Section H — Configurable Engagement / Pricing (`engagement.ts` & `engagement.test.ts`):** Three bilingual tiers (`Focused`, `Connected`, `Partnership`) and a 5-row feature comparison table backed by `engagementConfig` (defaults to `null` indicative pricing so no unapproved fees are invented).
+  * **Section I & J — Final CTA, FAQ & Dark Navy Footer:** Closing consultation CTA, squircle FAQ disclosures, and `data-theme="dark"` Navy footer with official `footer-logo-on-dark.svg`.
+* **Device-Aware Preloader & Theme Favicons (`preloader.tsx`, `layout.tsx`, `controls.tsx`):**
+  * Phone in Light mode displays the animated SVG pulse preloader (`data-variant="phone-light-pulse"`) with concentric pulsing squircle rings on warm Cream (`#FCF8F3`); Desktop/Tablet (and Dark mode) displays the 3D-extruded 5-piece AMC Mark preloader (`data-variant="studio-3d"`).
+  * Dark mode uses the Orange favicon (`/favicon-orange.svg`) and Light mode uses the Dark Navy favicon (`/favicon-dark.svg`), synchronized both via media queries and dynamically on theme toggle.
+* **Verification Evidence:**
+  * `pnpm.cmd --filter @amc/web exec tsc -p tsconfig.json --noEmit`: PASS (0 errors).
+  * `pnpm.cmd --filter @amc/api exec tsc -p tsconfig.json --noEmit`: PASS (0 errors).
+  * `pnpm.cmd exec vitest run apps/web/src/features/marketing/engagement.test.ts apps/web/src/lib/seo/metadata.test.ts apps/web/src/lib/seo/palette.test.ts apps/api/src/http-logger.middleware.test.ts packages/shared/src/banner.test.ts`: PASS (5 test files / 13 tests passed).
+
+
+
+
+
+
+
+## Liquid Glass and 3D Visibility Restoration - 8 November 2026
+
+User-authorized specification: [liquid_glass_and_3d_restoration.md](designs/liquid_glass_and_3d_restoration.md). Findings and visual evidence: [review](reviews/liquid_glass_and_3d_restoration_review.md).
+
+- Reproduced the missing desktop mark in both themes: full-size canvas, no page errors, invisible geometry. Fixed far-plane clipping (100 versus supplied camera distances >=640) with a scene-unit-appropriate frustum. Preserved the procedural five-piece geometry, official asset colors and supplied choreography; GLB remains a reference asset.
+- Reserved a lit desktop model corridor, moved hero previews below it, mirrored the corridor for Arabic and retained physical C focus. Added lazy scene loading after media resolution, SVG loading/mobile/reduced-motion/failure fallback, readiness attributes, context-loss handling and on-demand rendering with resource cleanup.
+- Replaced competing page-height progress writers with one section-measured timeline shared by scene/HUD; supports restored scroll, fonts, resizing and content changes.
+- Added scoped liquid-glass styling and backed radius tokens, opaque/reduced-transparency fallbacks, 20px desktop/12px mobile blur, reflected edges and the navy footer artwork panel. Current typography, content and navy/orange/cream identity retained. Staff/booking component styling and all backend contracts remain unchanged.
+- Centralized favicon ownership under the theme provider: dark uses favicon-orange.svg; light uses favicon-light.svg. Preserves dark default, saved/System choice, locale navigation and ICO/touch fallbacks. Removed obsolete hidden select mirror from theme controls.
+- Portaled the shared drawer to avoid glass containing-block and horizontal overflow bugs; closed state inert, keyboard focus trapped/restored when open. Corrected homepage showreel ARIA/contrast, comparison-table keyboard scrolling, hero accessibility and chapter hit targets. Showreel media tracks/animation frames clean up and respect live reduced motion.
+
+Observed validation:
+
+- pnpm.cmd typecheck: PASS (5 tasks; final web TypeScript also passes in the final build).
+- pnpm.cmd test: PASS (22 files / 57 tests, including 2 new semantic timeline tests; 18.93 seconds). Notification output came from mocked unit tests, not external delivery.
+- pnpm.cmd build: PASS (4 tasks, 3 cached; final build 40.507 seconds, all 60 static outputs generated).
+- Focused ESLint of changed implementation/hooks/browser tests: PASS, no errors. Existing monorepo pages-directory notice remains.
+- pnpm.cmd lint: FAIL on the last full run with 8 pre-existing errors in untouched auth imports, API test types, preloader effect, supplied animation-module unused argument and elephant-goldfish-model CommonJS imports. Existing font/image warnings remain; no unrelated API/tooling repairs included.
+- PLAYWRIGHT_BASE_URL=http://127.0.0.1:3300 pnpm.cmd test:e2e --workers=2: PASS, all 30 production browser tests in 1.5 minutes. Earlier runs exposed overflow/accessibility issues, a test locator selecting hidden drawer controls after locale navigation, and an oversized multi-page accessibility test exceeding 30 seconds. Implementation issues were fixed; tests now target visible header controls and split additional-page checks by locale/theme. No failing assertion was disabled.
+
+Visual captures under docs/reviews/liquid-glass-evidence include EN/AR in light/dark, actual desktop model, phone SVG, settled open drawers and footer. Additional 320px and 768px screenshots were visually inspected. Browser coverage checks 320/390/768/1440, public pages, keyboard access, automated axe, locale/theme persistence, model/chapter behavior, initialization failure, context loss and SPA cleanup.
+
+No database changes, database/staff-authenticated tests, deployment, external accounts, notifications, Git commit or push occurred. Local production marketing preview is http://127.0.0.1:3300/en and /ar; this does not establish backend/demo service availability.
+
+
+## Full UI Redesign, Restored Sidebar and Larger Foreground Mark - 8 November 2026
+
+Latest explicit user scope: restore the sliding menu and improve the chapter rail; redesign the public website, booking and staff screens. Applied the named engineering/UI skills while retaining the current approved navy/orange/cream identity and typography. Specification: [studio_public_redesign.md](designs/studio_public_redesign.md). Review: [studio_ui_redesign_review.md](reviews/studio_ui_redesign_review.md).
+
+Implemented:
+
+- Restored directional sidebar translation and staggered links, with a clipped portal viewport so the off-canvas panel does not widen the document. Closed content remains inert; open menus lock scroll, trap/return focus and make main content inert. Added consistent bundled Solar navigation/close/theme/locale/chapter icons and a compact single-row phone header with a morphing burger.
+- Redesigned the homepage into an open editorial hero, new typography rhythm, compact preview strip, revised service/gallery/process/engagement/FAQ surfaces, and matching public about/work/contact/services/detail/credits presentation. Original content, artwork and theme favicon mapping retained.
+- Increased model stage maximum width from 560px to 760px and brought the camera to 84% of its previous distance. Foreground scene sits above decoration while HTML controls/copy remain readable and interactive. Native semantic chapter timing, reduced motion, mobile SVG, loading/error/context-loss fallback and cleanup are preserved. Chapter rail now has icons, focus labels and arrow/Home/End keyboard focus.
+- Redesigned booking progress as four numbered cards, rounded forms/slots and confirmation/management panels. Staff login uses an official-brand card; calendar/analytics/settings/account use role-aware navigation, operational surfaces, metric/calendar cards and bounded keyboard-scrollable tables. Existing staff review, conflict/idempotency and API permission behavior is unchanged.
+- Rebuilt the capped preloader with official theme artwork, a short CSS depth entrance/progress line and locale-switch restart. Removed its synchronous effect-state lint error and an unused internal animation argument without changing choreography.
+- Fixed mobile minimum-width overflow in staff account grids and nested working-hours time controls. Narrow hours settings stack vertically. Inputs and CTA sizes remain usable at 320px.
+
+Observed validation:
+
+- pnpm.cmd typecheck: PASS (5 tasks, 4 cached; 5.756 seconds). Final production build also checks web TypeScript.
+- pnpm.cmd test: PASS (22 files / 57 unit/API tests, 29.01 seconds). Mock notification logs do not represent external deliveries.
+- pnpm.cmd build: PASS (4 tasks, 3 cached; final build 48.744 seconds, all 60 static outputs generated).
+- Focused ESLint of changed implementation and tests: PASS, no errors. Monorepo pages-directory notice and image/font advisories remain.
+- pnpm.cmd lint: FAIL with 6 existing errors in untouched auth imports, API test any types and elephant-goldfish-model CommonJS imports (15 warnings). Related preloader/animation errors from the earlier increment were fixed.
+- PLAYWRIGHT_BASE_URL=http://127.0.0.1:3300 pnpm.cmd test:e2e --workers=2: PASS, all 54 production browser tests in 2.5 minutes. Includes 30 public regression tests, 5 navigation/chapter-rail tests and 19 browser-mocked operational tests. The 16 operational layout cases cover all combinations of 320/390/768/1440, EN/AR and light/dark across booking, calendar, analytics, settings, account/security and login; additional tests exercise the booking/management flow and existing receptionist navigation limits.
+
+Local PostgreSQL connection: ECONNREFUSED. Docker Linux engine: not running. No real staff-authenticated/database suite was claimed. Operational browser tests use isolated, clearly labeled synthetic route fixtures without writing an account, appointment, schedule policy or other record. Their results establish presentation/client interactions, not live authentication or booking transaction correctness.
+
+No backend contracts, Prisma schema/migrations, business policy, external account, real email/Slack notification, deployment, commit or push changed. Local production frontend preview: http://127.0.0.1:3300/en and /ar. Backend/demo service availability is separate.
+
+Final redesign evidence: public screenshots under docs/reviews/studio-redesign-evidence and explicitly labeled synthetic operational screenshots under docs/reviews/studio-operations-evidence. No failing accessibility assertion was disabled.
+
+Final visual review completed for the enlarged rendered mark, phone header/menu, EN/AR sidebar, and synthetic booking, login, account, analytics, calendar and settings captures. The production frontend remains available locally on port 3300.
+
+## Design-System Corrections - 8 November 2026
+
+Latest user instructions supersede the earlier dark-default and small-radius choices: System is now the default, dark navigation is orange, dark UI shadows/scene halo are removed, and dark artwork uses cream/orange. Specification: [design_system_correction.md](designs/design_system_correction.md). Findings and evidence: [review](reviews/design_system_correction_review.md).
+
+- Replaced three theme controls with one accessible System -> Light -> Dark cycle. Saved preferences, OS changes, locale navigation and centralized favicon mapping remain supported. Removed the desktop menu trigger while retaining the phone sliding menu.
+- Replaced the small mark and manual navbar text with full official theme-aware SVG lockups. Rebuilt the footer into brand/services/booking columns and a compact secondary row.
+- Corrected invalid font stacks and self-hosted official Fira Sans, Cairo and Rock Salt WOFF2 assets with their original licenses. Verified actual loaded English/Arabic fonts; no runtime Google Fonts requests remain. Updated credits to the fonts actually served.
+- Preserved the five-piece 3D model/choreography while updating its instance-local materials in place for cream/orange dark and navy/orange light. Added a matching dark SVG fallback without modifying original artwork.
+- Rebuilt homepage discipline/service/photo/process/engagement/FAQ grids with responsive columns, readable surfaces and explicit 16px control, 28px card and 40px feature-panel squircle corners. Restored visible content opacity during scroll. Dark CSS box/text shadows are removed; keyboard focus outlines remain.
+
+Observed validation for this increment:
+
+- `pnpm.cmd typecheck`: PASS, 5 tasks, 5.178 seconds. Final production build also checks web TypeScript.
+- `pnpm.cmd test --maxWorkers=1`: PASS, 22 files / 57 tests, 13.99 seconds. The initial concurrent run hit an existing auth-test setup timeout (53 passed / 4 skipped); the serial rerun passed without changing assertions or timeouts. Mock notification output does not represent delivery.
+- `pnpm.cmd build`: PASS, 4 tasks, 3 cached, 1 minute 36.561 seconds; all 60 static outputs generated.
+- Focused ESLint of changed implementation and browser tests: PASS. Existing monorepo pages-directory notice remains.
+- `pnpm.cmd lint`: FAIL, 6 pre-existing errors in untouched auth imports, API test any types and elephant-goldfish CommonJS imports, plus 15 warnings. No unrelated repair is included.
+- `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3302 pnpm.cmd test:e2e --workers=2`: final complete run PASS, 56/56 tests in 2.3 minutes. Initial complete run: 55/56 passed; one 30-second timeout in the six-screen EN/dark/320 mocked operations case while capture work was also running. That exact case passed independently in 5.1 seconds (runner total 7.9 seconds), then again in the full run, without any assertion or timeout change.
+
+Final evidence is under `docs/reviews/design-system-evidence/`: EN/AR, both themes, rendered model, mobile SVG, settled mobile drawer/footer and separate discipline/service/process/FAQ grids. Visual inspection confirmed the model itself, full-size logo lockups, orange navbar, Cairo Arabic, footer layout and rounded panels. Browser coverage includes 320/390/768/1440 layouts, keyboard access, axe contrast/accessibility, theme persistence/System changes, locale navigation, model poses/fallbacks and navigation cleanup.
+
+No database, API contract, booking policy, migration, account, notification, deployment, commit or push changed. Operational browser checks use labeled synthetic fixtures; live database/authentication success is not claimed. The user's localhost:3000 dev server was left running. A separate production preview is available at http://127.0.0.1:3302/en and /ar. Port 3300 was already occupied by an older preview; an aborted run there was discarded before the correct port 3302 run.
+
+## Restored Card Stack, Localized Identity, FAQ and Social Footer - 8 November 2026
+
+Specification: [stack_faq_social.md](designs/stack_faq_social.md). Review: [stack_faq_social_review.md](reviews/stack_faq_social_review.md).
+
+- Restored the four service-pillar cards as a GSAP/native-sticky overlap sequence with gentle depth scaling, desktop artwork/copy composition and compact phone cards. Enabled only when cards fit; reduced motion and short screens retain normal document flow. Font readiness precedes measurement; navigation/media cleanup reverts transforms and sticky state. Focused cards rise above overlapping siblings.
+- Restored an original SVG mark plus real localized almorad | AMC / المراد | AMC wording in header/drawer. Dark orange navbar uses navy type and the supplied all-navy SVG mark for contrast. Existing System theme control and desktop/mobile menu behavior remain intact.
+- Added bilingual, server-rendered /faq routes with four approved questions, native keyboard disclosures, metadata/alternates and sitemap membership. Added FAQ links to shared navigation, footer and homepage.
+- Reduced footer to a compact brand/action row and lower navigation/copyright. Added a five-icon animated social disclosure, inert closed links, reduced-motion behavior, Escape/focus/outside close and safe external navigation. Uses user-supplied LinkedIn/Facebook/TikTok URLs. Instagram/YouTube are explicitly labeled demo links to platform homepages at the user's request, not claimed company profiles. Optional server SOCIAL_*_URL settings replace defaults.
+
+Observed validation:
+
+- `pnpm.cmd typecheck`: PASS, 5 tasks / 4 cached, 31.978 seconds. Initial sandboxed attempt could not access SWC native binding cache; rerun with native-cache access passed. Final production build also checks web TypeScript.
+- `pnpm.cmd test --maxWorkers=1`: PASS, 22 files / 57 tests, 28.39 seconds. Notification logs were mocked; no delivery occurred.
+- `pnpm.cmd build`: final PASS, 4 tasks / 2 cached, 1 minute 21.111 seconds, all 62 static outputs generated including EN/AR FAQ. Earlier builds also passed before the compact FAQ label, supplied monochrome navbar SVG and final stack/scene paint-layer corrections.
+- Focused ESLint covering changed components, FAQ route, social configuration, sitemap and browser tests: PASS with the existing monorepo pages-directory notice.
+- `pnpm.cmd lint`: FAIL with 6 pre-existing errors in untouched auth/API test/CommonJS tooling files and 13 warnings. No new error in this increment.
+- Initial dev browser checks: 18/20 passed. All four actual overlapping-card/navigation cases passed; two EN dark tablet/desktop FAQ cases found low-contrast inherited navbar subtitle color. Corrected the subtitle to navy; assertions were retained. Complete production run on port 3303: `pnpm.cmd test:e2e --workers=2`, PASS 76/76 tests in 3.2 minutes. After the supplied all-navy navbar SVG correction, the focused 22-test UI suite also passed in 49.6 seconds. Visual review then caught the isolated card stack painting below the 3D stage; raising the stack container to layer 25 above scene layer 20 fixes the obscured copy. A layer-order browser assertion was added and affected UI/3D checks are rerun against the final build below.
+
+Production frontend preview: http://127.0.0.1:3303/en and /ar; FAQ: /en/faq and /ar/faq. Existing localhost:3000 dev server was left running. No deployment, database/schema/API change, real booking/account write, live staff-authentication verification, external account connection, notification, commit or push occurred. Existing operational browser tests use labeled synthetic fixtures and do not establish database availability or transaction correctness.
+
+Final affected browser verification after the stack paint-layer correction: `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3303 pnpm.cmd test:e2e tests/e2e/design-system.spec.ts tests/e2e/stack-faq-social.spec.ts tests/e2e/public-experience.spec.ts --workers=2 --output=test-results-final-ui --reporter=list`: PASS 33/33 in 1.5 minutes. Includes the new layer-order assertion, actual overlapping cards/cleanup, FAQ/social accessibility and all existing 3D rendering/pose/fallback/context-loss/theme regressions. The earlier complete 76-test result remains in the HTML report; final scoped output is separate.
+
+Final visual evidence: `docs/reviews/stack-faq-social-evidence/`, covering both locales/themes, desktop and 390px phone header, actual overlapping cards, FAQ, compact footer and expanded five-icon social tray. Reviewed the card copy after the layering fix; the model no longer covers it. Original 3D hero remains visible and the phone uses the official SVG fallback. Supplied all-navy small mark stays complete against the orange navbar.
+
+## Reference Glass, Service Motion and Mobile/Calendar Completion — 8 November 2026
+
+Specs: [reference glass/booking/services](designs/reference_glass_booking_services.md), [mobile/calendar completion](designs/mobile_glass_calendar_completion.md). Findings, exact boundaries and remaining gates: [review](reviews/reference_glass_mobile_calendar_review.md).
+
+Implemented shared reference-style glass panels; content-above-scene layering; viewport-safe model framing; interleaved eleven-service scroll stack with alternating side/rotation motion; shadcn/Radix booking dropdowns; configured/unavailable onsite UI and optional approved map; restored mobile SVG/drawer identity and glass controls; social strip above navbar; back-to-top; FAQ rotation defect fix and simple answer transition; local themed calendar dialog composed with existing shadcn Button.
+
+The standard shadcn React DayPicker/Radix Popover packages were **not installed**: registry requests failed EACCES and installation was stopped. The local calendar is an interim implementation, not the requested standard package composition. Verified office address/Google Maps link also remain pending; running API inspection found onsite disabled and all office/map fields null. No live policy/database change was made.
+
+Actual results:
+
+- Earlier `pnpm.cmd typecheck`: PASS, 5 tasks, 44.754 seconds. Final web `pnpm.cmd --filter @amc/web exec tsc --noEmit`: PASS. Final direct TypeScript command `node node_modules/typescript/bin/tsc --noEmit -p apps/web/tsconfig.json`: PASS, repeated after final source edits.
+- Focused ESLint: PASS across new/changed select, office, booking, motion, controls, calendar, scene and browser checks; existing pages-directory notice only.
+- Final `node node_modules/vitest/vitest.mjs run --maxWorkers=1`: PASS, 22 files / 58 tests, 23.28 seconds. Earlier pnpm unit run: 58 passed in 17.98 seconds. Notification logs were mocked.
+- Full lint during this increment: FAIL with the same 6 pre-existing unrelated errors and 13 warnings.
+- Initial onsite UI browser cases: 8/8 passed EN/AR × 390/1440 × configured/unconfigured synthetic fixtures. Service cases exposed clipping, scroll measurement and missing-blur issues; source fixes followed. No final browser PASS is claimed. Newly added 6-case mobile/calendar/FAQ checks have not run.
+- Final production build attempt: BLOCKED before compilation by inaccessible SWC native cache (ERR_SWC_NATIVE_CACHE). Do not reuse earlier build results as validation for this increment.
+- Elevated browser diagnostic: automatic approval review could not complete because its usage limit was reached (tool showed 4:14 PM reset). This was explicitly a review-system failure, not a safety determination. No bypass attempted. Fresh visual QA/screenshots and final public/operational browser checks remain outstanding.
+
+Source implementation is saved, but final visual/production validation and the exact standard shadcn calendar dependency integration are incomplete. Existing localhost:3000 dev server remains untouched. Port 3303 serves an older production build, not this increment. No API/schema/database policy mutation, deployment, external-account connection, real booking/account write, notification, commit or push occurred.
+
+## Sidebar Social Links, Return to Reading and FAQ Refinement — 8 November 2026
+
+Latest authorized scope: distinct sidebar social button with six supplied official profiles including X, reversible scroll-to-top action, and an improved FAQ presentation/animation. Specification: [sidebar_social_reading_faq.md](designs/sidebar_social_reading_faq.md). Review/evidence: [sidebar_social_reading_faq_review.md](reviews/sidebar_social_reading_faq_review.md).
+
+- Removed the above-navbar social strip. Added a floating vertical social tab with named links and a compact two-column phone popup; footer keeps its separate six-icon tray. Replaced all defaults with the exact supplied Facebook, LinkedIn-company, Instagram, X, TikTok and YouTube URLs. No default demo links remain. Optional platform-host-validated configuration includes SOCIAL_X_URL.
+- Moved the reading control away from the chapter label. It saves the offset before going up, stays visible at top with downward arrow/Return to reading position, then restores the saved offset. Resets per route/new manual reading path and clamps to current page bounds. Smooth and reduced-motion behavior are covered.
+- Replaced the FAQ grid on home and /faq with shared numbered rows, readable opaque theme surfaces, upright text, chevrons and cancelable height/opacity animation. Native details/summary and server-rendered answers preserve no-JavaScript access. Added a noscript preloader-hide fallback after a browser test found the overlay blocking content without scripts.
+- Broader checks closed earlier reference/mobile defects: compiled glass filters now retain standard CSS after WebKit prefixes; tablet/mobile dark language labels use readable foregrounds; calendar opening and arrow navigation commit focus synchronously, including across month rendering. No standard calendar packages were added; the previous local-calendar versus standard shadcn dependency distinction remains.
+
+Actual validation:
+
+- `pnpm.cmd typecheck`: PASS, 5 tasks / 4 cached, 10.681 seconds. Final web direct TypeScript also passed, and final production build checks web TypeScript.
+- `node node_modules/vitest/vitest.mjs run --maxWorkers=1`: PASS, 22 files / 58 tests, 28.72 seconds. Notification output is mocked, not external delivery.
+- Final `pnpm.cmd build`: PASS, 4 tasks / 3 cached, 47.941 seconds; 62 static outputs generated. Earlier builds in this increment also passed before regression-driven fixes.
+- Focused ESLint of implementation and updated browser tests: PASS; existing monorepo pages-directory notice only. Full ESLint: FAIL with 6 pre-existing unrelated errors and 13 warnings.
+- Initial dev acceptance run: 5/10 passed. Four Arabic tests were intercepted by Next.js's development toolbar at the lower-left reading button; production verification avoids that dev-only overlay. The no-JavaScript test found the real preloader issue, now fixed.
+- First complete production run: 89/104 passed, including all 10 new acceptance cases. Failures exposed earlier tablet contrast, calendar focus and missing standard blur. Second complete run: 100/105 passed, including all 11 sidebar/reading/FAQ cases, all 3D/fallback/navigation cleanup, service blur/motion and tablet contrast cases. Four phone-calendar cases still needed synchronous arrow focus; one Arabic dark desktop footer case timed out with the preloader intercepting clicks. Final affected acceptance run follows below; no assertions or timeouts were weakened.
+
+Approved browser/build access resumed after the earlier approval-review limit reset. Existing localhost:3000 dev server was not terminated. Final production frontend preview is http://127.0.0.1:3304/en and /ar (FAQ: /en/faq and /ar/faq). Screenshots under docs/reviews/sidebar-reading-faq-evidence cover EN/AR, light/dark, desktop/390px phone, expanded sidebar/FAQ and return control.
+
+No database/schema/API policy change, real appointment/account write, external-account connection, notification delivery, deployment, commit or push occurred. Operational browser tests use isolated labeled fixtures. Live onsite activation still depends on verified office details and existing staff-reviewed configuration; UI fixture results do not establish real booking/database availability.
+
+Final affected acceptance run on the exact final build: PASS, 20/20 in 45.8 seconds. Command: `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3304 node node_modules/@playwright/test/cli.js test tests/e2e/mobile-calendar-faq.spec.ts tests/e2e/sidebar-reading-faq.spec.ts tests/e2e/foundation.spec.ts tests/e2e/stack-faq-social.spec.ts --grep 'mobile identity|sidebar socials|FAQ answers|FAQ height|smooth scroll|dark 768px|FAQ, compact footer and social disclosure ar dark 1440' --workers=2 --output=test-results-final-acceptance --reporter=list`. Covers all 11 new acceptance cases and every previously failing phone-calendar/tablet/footer case. All six calendar cases pass after synchronous focus updates; isolated Arabic dark desktop footer passes in 2.3 seconds. Final targeted output is separate from the earlier complete-run HTML report. No claim is made of a clean complete 105-test run after the final calendar change; the unaffected tests passed in the preceding complete run.
+
+Final visual inspection completed for EN/AR light/dark desktop/phone captures: sidebar has named six-platform links, FAQ answers are upright and readable, phone popup fits viewport, and top action remains available with the return arrow. Screenshot evidence was refreshed against the final port 3304 build. The standard date-picker dependency and verified live-onsite-input limitations from the earlier increment remain documented; neither was silently represented as complete here.
+
+## Dark Artwork, Unified Squircles and Theme Stability — 8 November 2026
+
+Applied the user-named AMC UI/UX and CI/CD verification skills within the authorized UI scope. Spec: [theme_squircle_stability.md](designs/theme_squircle_stability.md). Findings/evidence: [theme_squircle_stability_review.md](reviews/theme_squircle_stability_review.md).
+
+- Removed the solid-navy dark-navbar image and now display the existing cream/orange mark, matching 3D/fallback artwork, on a small navy tile so both colors remain distinct against orange. Original artwork paths remain unchanged. Light/dark, phone/drawer and localized wording are retained.
+- Added shared --radius-control=20px and applied the sidebar curve to buttons, language/theme controls, badges, icon wells, chapter rail/buttons, return-to-reading action, social anchors, select triggers/items and slot labels across public/operational UI. Native squircle enhancement is progressive; card/panel hierarchy remains separate.
+- Hid social-tray scrollbar chrome in standard/WebKit CSS and clipped horizontal animation overflow. Repeated opening preserves native vertical scrolling on short screens, six links, focus behavior and document width.
+- Added a synchronous head theme initializer and a layout-effect paint guard under the existing provider. Initial browser sampling reproduced empty root theme classes on EN↔AR commits even with the head initializer alone; the guard restores theme attributes before the route paints. Disabled preference-change transitions and hid only the unresolved control icon until readiness. System default, saved preferences, live OS changes and singular favicon ownership remain supported.
+
+Actual validation:
+
+- Initial responsive dev cases: PASS 8/8 for EN/AR × 320/390/768/1440 artwork/shape/repeated-social-open/axe checks. Initial 4 frame-sampling cases failed and recorded the root-class flash. After adding the layout-effect guard, all 4 frame cases PASS in 26.8 seconds, with no assertion changes. Covers saved Dark against light OS, System-dark, locale changes and reloads at 390/1440.
+- `pnpm.cmd typecheck`: PASS, 5 tasks / 4 cached, 4.187 seconds. Final production build also checks web TypeScript.
+- `node node_modules/vitest/vitest.mjs run --maxWorkers=1`: PASS, 22 files / 58 tests, 19.98 seconds. Notification output was mocked, not actual delivery.
+- Focused ESLint of implementation and updated browser tests: PASS; existing monorepo pages-directory notice only. Full ESLint: FAIL with the same 6 unrelated existing errors and 13 warnings.
+- `pnpm.cmd build`: PASS, 4 tasks / 3 cached, 47.48 seconds; 62 static outputs generated.
+- Final complete production browser results follow below after the actual run. No prior complete-run PASS is substituted for this increment.
+
+Existing Node 24/pnpm 11.11.0 pins and validate/security workflow contracts were inspected. No dependency, workflow, API, schema, database settings, migration, real appointment/account, external notification, deployment, commit or push changed. No remote CI/security scan, live database integration or backup/restore success is claimed. Existing lint errors remain a release gate. Production frontend preview for this increment: http://127.0.0.1:3305/en and /ar; existing localhost:3000 dev server was left running.
+
+Final production browser outcome: `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3305 pnpm.cmd test:e2e --workers=2` completed with 116/117 PASS in 5.1 minutes. All 12 new theme/artwork/shape/social cases passed, including all frame-sampled locale/reload checks. One pre-existing six-screen operational fixture case (`mocked booking and operations UI ar light 768`) exceeded 30 seconds. Exact isolated rerun with unchanged assertions/timeout: `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3305 node node_modules/@playwright/test/cli.js test tests/e2e/operations-design.spec.ts --grep 'mocked booking and operations UI ar light 768' --workers=1 --output=test-results-theme-ops-recheck --reporter=list`: PASS 1/1, 7.3-second test / 8.8-second runner. The complete run remains recorded as 116/117 rather than a clean 117-test first pass; isolated output is separate from the HTML report.
+
+Final visual review: EN/AR light/dark at 1440 and 390, official cream/orange dark logo, shared control corners, mobile drawer and settled second social opening were captured and inspected under `docs/reviews/theme-squircle-evidence/`. The second-open social tray has no visible scrollbar; the fixed panel still keeps its links and keyboard access. Browser matrix additionally covers 320/768 and sampled root theme frames through locale navigation/reload. Readiness, System preference, persisted choice, favicon, 3D/fallback, service motion, calendar and fixture operational regressions passed except the documented isolated-timeout case that passed on rerun. No further source changes followed this production build.
+
+
+## Transparent Dark Logo, Route Consistency and Contact Form ? 8 November 2026
+
+Specification: [contact and route consistency](designs/contact_and_route_consistency.md). Findings/evidence: [review](reviews/contact_route_consistency_review.md).
+
+- Removed the added navy backing tile around the dark header mark at both breakpoints. Supplied cream/orange SVG paths and current navy/orange/cream website identity remain intact.
+- Extended shared 20px squircle controls to all form fields, native dialogs, dropdown surfaces, FAQ rows/toggles and reading labels. Shared 220ms disclosure motion applies to FAQ, drawer, socials and dropdown/dialogs; reduced motion and native focus/Escape behavior remain supported. Dialog closing uses progressive discrete CSS transitions where supported.
+- Added bilingual contact form with validation/focus, consent, pending, retryable errors/rate-limit messages, idempotent retry and explicit success/reset. Replaced contact placeholder copy with service/meeting guidance; real contact details remain configuration-driven.
+- Added shared strict submission schema, same-origin signed Next proxy and Nest contact endpoint, existing origin/proxy/rate-limit protection, honeypot and additive Prisma ContactInquiry storage with consent timestamp and unique key/hash. Database failure never produces an accepted acknowledgement; no emails/Slack or appointment actions were introduced.
+
+Actual validation:
+
+- Prisma generate/validate: PASS. Initial sandbox EPERM for generated client was resolved with normal approved generation. No migration applied to the existing application database.
+- Workspace typecheck: PASS, 5 tasks / 2 cached, 2m25.332s; sandboxed SWC cache failure preceded approved retry. Final build checks later frontend refinements too.
+- Unit/API tests: PASS, 23 files / 62 tests, 17.46s. New API tests use fake persistence with real Nest guards; existing notification logs are mocked.
+- Isolated PostgreSQL: PASS. Created fresh local `amc_contact_1794159716633_test`, applied exact contact SQL and verified real ContactService/Prisma storage, Arabic/consent timestamp, normalization, retries/concurrent duplicates, changed-payload conflict and honeypot discard. Two synthetic example.invalid records exist only in that test database. Reproducible checker saved under scripts/check-contact-storage.mts. Existing `amc_dev` was not migrated/reset.
+- Focused ESLint: PASS across changed components/API/contracts/tests, existing pages-directory notice only. Full lint retains 6 unrelated pre-existing errors and 13 warnings from its run before the touched proxy?s unused suppression was removed.
+- Final production build: PASS, 4 tasks / 3 cached, 1m12.313s, 63 outputs including the contact API proxy. Earlier production build also passed before final copy/motion refinements.
+- Initial new browser acceptance: PASS 16/16 in 1.6m. Added four dialog motion checks afterward. Final complete production browser result follows after the actual run.
+
+Preview: http://127.0.0.1:3306/en/contact and /ar/contact. Fresh EN/AR, both-theme phone/desktop contact/validation/header captures are under docs/reviews/contact-route-evidence/. Existing localhost:3000 dev server was left running. No deployment, real business inquiry/appointment write, external connection, notification, commit or push occurred.
+
+Activation boundary: migration `20261108190000_contact_inquiries` is written and tested in isolation; applying it to the existing application database remains outstanding. Real browser-to-database submission is not claimed. No operational inbox/retention workflow or notification delivery was added. No existing booking/staff policy was altered.
+
+
+Final complete production browser verification: `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3306 pnpm.cmd test:e2e --workers=2`: **PASS 137/137 in 4.9m**. Includes all 20 new route/contact/dialog checks, 232 route-sweep visits (29 paths ? two locales ? two themes ? two widths), existing 320/390/768/1440 accessibility/layout checks, real rendered 3D/poses/fallback/context-loss/navigation cleanup, FAQ rapid toggles, sidebar/reading return, shadcn dropdown/local calendar behavior, theme favicon/System/preferences and frame-sampled locale stability. All operational/booking and form-submit browser writes are synthetic fixtures. No assertions/timeouts were weakened; only the deliberately broad 29-page sweep has its own 120-second budget. No source changes followed the final production build; subsequent additions are the standalone isolated database checker and review/status records. Full browser report is preserved under playwright-report/.
+
+The existing application database remains unchanged: applying the tested additive contact migration to the intended application database is still necessary before real submissions can be accepted. Do not interpret the passing synthetic browser flow or isolated test database as a live browser-to-amc_dev confirmation.
+
+
+## Orange Navbar at Every Breakpoint and Phase 1 Launch Plan - 8 November 2026
+
+Review: [orange_navbar_phase_1_review.md](reviews/orange_navbar_phase_1_review.md). Plan: [phase_1_landing_contact_crm_launch.md](designs/phase_1_landing_contact_crm_launch.md).
+
+- Added a header-only cream/navy SVG variant: only the orange segment becomes #0B1F44. XML geometry/viewBox comparison PASS; original artwork remains intact. Header has an explicit onOrange prop, while drawer/static/3D assets retain original theme variants.
+- Corrected the dark header across every breakpoint to #F7761E, with navy text, divider, language/theme/burger controls. Updated existing logo tests and added navbar/icon palette assertions plus orange route checks.
+- Prepared a researched Phase 1 landing/contact launch plan: custom bilingual form, durable PostgreSQL, HubSpot contact sync and Resend notifications, scheduled retry recovery, staging/production separation, scope gating, performance/SEO/privacy, release approval and rollback. No service purchase or provider installation occurred.
+- Inspection discovered pre-existing draft contact delivery/HubSpot code and a contact-delivery migration beyond the preceding recorded status. Preserved them; the plan records release gaps instead of treating drafts as a verified live connection. In particular mock email acknowledgements must not become production SENT, dispatcher claims/retries and actual provider property/response checks need release verification, and the scheduled maintenance configuration does not currently invoke the POST delivery drain.
+
+Actual verification: focused ESLint PASS; unit suite PASS 24 files / 69 tests in 30.16s (notification providers mocked); final build PASS 4 tasks / 3 cached in 1m6.163s with frontend/backend TypeScript and 63 outputs. Earlier build passed before final mobile icon selector adjustment. This increment did not rerun full lint; its previously documented unrelated failures are not claimed fixed.
+
+
+Final affected browser run: `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3307 node node_modules/@playwright/test/cli.js test tests/e2e/theme-shape-stability.spec.ts tests/e2e/design-system.spec.ts tests/e2e/contact-route-consistency.spec.ts --workers=2 --reporter=list --output=test-results-orange-navbar`: PASS 34/34 in 1.4m. Includes both locales, 320/390/768/1440 dark navbar/axe, persisted/System theme and sampled locale flashes; complete 29-route phone/desktop light/dark sweeps; contact validation/retry fixtures; normal/reduced-motion dropdown/calendar behavior. No assertions/timeouts were weakened. No complete 137-test rerun is claimed for this increment.
+
+Final evidence: docs/reviews/orange-navbar-evidence/ contains eight EN/AR dark header screenshots at four widths plus two phone drawer captures. Visually inspected desktop English and phone Arabic: orange navbar, cream/navy header mark, navy readable controls and transparent logo backing. Drawer retains the cream/orange mark on navy glass. Production preview: http://127.0.0.1:3307/en and /ar. Existing localhost:3000 development server was not stopped.
+
+No production deployment, existing database migration, external account connection, CRM write or actual notification send was performed. The new Phase 1 plan is a proposal and release checklist, not evidence that the draft CRM/email integration is configured or launch-ready.
+
+
+## Landing UI/UX Overhaul (TV Monitor Showreel, 3D Multi-Animation Stage, Leadership & Team Showcase, Finale Grid & Smooth FAQ) — 8 November 2026
+
+Specification: [landing_ui_ux_overhaul_rfc.md](designs/landing_ui_ux_overhaul_rfc.md).
+
+- **Wider TV-Screen Broadcast Showreel (`studio-media.tsx` & `landing.tsx`)**: Stacked the Chapter 02 Manifesto header above the showreel (`manifesto-stacked`, `manifesto-header`, `manifesto-tv-wrap`) to prevent left-column headline clipping, added kinetic `Lines` text animation, and upgraded `StudioShowreel` into a 16:9 `1280x680` TV broadcast monitor (`lp-tv-unit`) with an SVG bezel/glare overlay (`lp-tv-svg-overlay`) and SVG pedestal stand (`lp-tv-pedestal`).
+- **3D Logo Multi-Animation Stage (`amc-mark-scene.tsx` & `discipline-combiner.tsx`)**: Added continuous 4-phase idle/autoplay animation cycling in `AmcMarkScene` when not scrolling, and upgraded `DisciplineCombiner` from a static 2D SVG diagram into a fixed-canvas 60FPS 3D extruded AMC logo + orbiting discipline node stage (`lp-combiner-3d-stage`) with 4 distinct auto-cycling 3D animations (`01 3D Orbit & Layer Depth`, `02 Exploded Architecture`, `03 Kinetic Signal Wave`, `04 360° Dimensional Turn`) and manual mode switcher controls.
+- **Re-Gridded Finale Banner & Smooth FAQ Transition (`landing.tsx` & `faq-accordion.tsx`)**: Re-organized the Chapter 06 finale banner into a balanced 2-column grid (`finale-banner-grid`), and enhanced `FaqAccordion` with smooth Web Animations API height/opacity/translateY transitions (`380ms cubic-bezier(0.16, 1, 0.3, 1)`), 180-degree chevron rotation, and gold active styling.
+- **Leadership & Studio Team Section Replacing `06 — Engagement` (`team-showcase.tsx` & `landing.tsx`)**: Replaced the homepage `06 — Engagement` pricing/comparison section with a bilingual `TeamShowcase` component featuring an executive spotlight card for **Ahmed Salah (Founder & CEO)** and 3 practice leads with custom luxury SVG portraits (`ExecutivePortraitSvg`).
+- **Production Zod Validation & Vercel Services Config**: Added root `vercel.json` multi-service routing, RFC 5322 email/phone Zod validation in `@amc/shared`, bilingual per-field contact form errors in `contact-form.tsx`, and brand-token email layout updates in `email-layout.ts`.
+
+Actual verification:
+- `pnpm.cmd typecheck`: PASS, 5/5 tasks successful (zero TypeScript errors).
+- `pnpm.cmd lint`: PASS, 0 errors (12 existing image/directive warnings).
+- `pnpm.cmd --filter @amc/web test`: PASS, exit code 0.
+
+## Compact Team Restoration, Logo Autoplay and Gallery Motion — 9 November 2026
+
+Latest user correction: restore the earlier team structure and simple creative scroll motion, controlling executive size and width. Design: [logo_team_gallery_motion.md](designs/logo_team_gallery_motion.md). Review: [logo_team_gallery_motion_review.md](reviews/logo_team_gallery_motion_review.md).
+
+- Restored existing scroll-card entrance, earlier team header wording and simple vertical executive cards. CEO card maximum 960px, portrait 260px desktop/tablet and 200px phone. Co-CEO/COO portraits capped at 220px tall. Five equal director cards use three/two/one columns. Section capped at 1120px. Existing edited profile names/content preserved; draft profiles and illustrations remain labeled placeholders.
+- Replaced deprecated SVGLoader.createShapes with path.toShapes. Integrated supplied timed ripple/C-ring/full-turn autoplay before first scroll, damped handoff, hidden-tab pause, settled-renderer stop, original artwork/theme/fallback/disposal behavior. Combiner canvas pauses offscreen and respects reduced motion. Added gallery card tilt/settle and clipped artwork parallax.
+- Added Meet the team to header/drawer, ten localized section targets and shared timeline metadata. Browser verification found combined root scroll padding/anchor margins made rail clicks land before the active boundary; corrected the explicit rail offset and anchor margin.
+
+Actual validation:
+
+- `pnpm.cmd typecheck`: PASS 5 tasks, 2m8.176s after sandbox native-cache failure and approved retry. Final build also checks frontend TypeScript after restoration.
+- Full lint: PASS, zero errors / 12 existing warnings. Focused final implementation and browser-test lint: PASS. No lint warning cleanup outside scope.
+- `pnpm.cmd run test`: PASS 24 files / 69 tests, 123.46s. Notification providers mocked.
+- Exact final `pnpm.cmd run build`: PASS 4 tasks / 3 cached, 42.82s, frontend TypeScript and 62 generated pages. No application source changes followed.
+- Initial affected browser suite: 27/33 PASS, revealing the real rail offset issue plus invalid screenshot equality for a transparent canvas. Final application suite on port 3311: 32/33 PASS in 1.9m; all team/layout/navigation/accessibility/WebGL/fallback regressions passed, remaining failure was transparent-canvas screenshot comparison.
+- Corrected renderer test counts WebGL clear calls: verifies active autoplay and zero additional renders after settling, preserving visual autoplay comparison and no deprecation/page-error checks. Indexed-draw-only instrumentation was discarded because it missed non-indexed geometry. Isolated corrected test PASS 1/1 in 15.0s.
+- Final team/logo acceptance: `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3311 node node_modules/@playwright/test/cli.js test tests/e2e/logo-team-gallery.spec.ts --workers=2 --reporter=list --output=test-results-team-acceptance-final`: PASS **17/17 in 1.1m**, using one worker because the file is sequential. EN/AR × light/dark × 320/390/768/1440, measured widths/heights/overflow, axe, header/drawer team navigation, all added rail targets, autoplay and idle rendering. Full repository E2E was not rerun; the earlier final 32/33 result is retained separately.
+
+Visual evidence under `docs/reviews/logo-team-gallery-evidence/`: inspected EN/AR both themes desktop and phone plus executive/director grids and normal-motion gallery. Local preview: http://127.0.0.1:3311/en#chapter-team and /ar#chapter-team. No database/API-policy changes, migrations, external account connections, deployment, commit or push were performed by this task.
+
+## Portrait Directors, Specialty Icons and Six-Mockup Removal — 9 November 2026
+
+Latest user instruction supersedes the horizontal director-card prototype. Design: [directors_scroll_reel.md](designs/directors_scroll_reel.md). Review: [directors_scroll_reel_review.md](reviews/directors_scroll_reel_review.md).
+
+- Removed only the six homepage mockup cards (identity system, outdoor campaign, digital flagship, strategy board, commerce experience and stage direction). Original SVG files remain intact. TV showreel, eleven-service gallery, possibility cards and other sections remain.
+- Retained compact CEO/Co-CEO/COO layout and existing scroll-card entrance. All eight profiles now have theme-colored decorative career icons from the existing Solar set. Executive icons move with section scroll; director accents turn/settle with their slide, including the first card. Existing content and placeholder disclosures are preserved.
+- Five directors now appear as upright portrait cards, one after another from the left with a dimensional flip/fade; Arabic reverses travel. Native scrolling drives a bounded sticky sequence with previous/next buttons, keyboard activation, current-card count and progress line. Heading is “Directors & discipline leads”, removing the incorrect five-agency-pillars wording. Reduced motion, short screens, oversized content or unavailable JS retain the complete readable grid. Scoped cleanup restores styles and observers. Body-size refresh fixes progressive-layout scroll boundary drift.
+
+Actual validation:
+
+- Focused ESLint: PASS for all changed implementation/tests; five existing img warnings in landing.tsx. Final slider/test lint PASS. `git diff --check` PASS with line-ending notices only.
+- Initial horizontal prototype: 1/9 browser cases passed, exposing stale scroll boundaries. Corrected with ResizeObserver refresh. Two subsequent viewport checks sampled mid-transition; polling the same strict viewport bounds after settling passed both affected EN cases. This was not a passing prototype acceptance run.
+- Portrait version: `pnpm.cmd run build` PASS, 4 tasks / 3 cached, 58.876s, frontend TypeScript and 62 generated pages. Browser acceptance on port 3314: **31/31 PASS in 1.4m**, covering director transitions/native scroll/keyboard/RTL/axe/icons/portrait proportions, phone 390×844 and desktop, reduced-motion/short-screen fallback, gallery absence, prior team/navigation/logo regression checks at 320/390/768/1440.
+- Exact final build after first-card icon refinement: `pnpm.cmd run build` PASS, 4 tasks / 3 cached, 58.319s, frontend TypeScript and 62 static pages. No application changes followed.
+- Final dedicated acceptance: `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3315 node node_modules/@playwright/test/cli.js test tests/e2e/directors-reel.spec.ts --workers=2 --reporter=list --output=test-results-directors-portrait-final`: **10/10 PASS in 48.9s** (one worker for sequential file). Includes all eight locale/theme/phone/desktop slide cases, all five cards, strict portrait/viewport bounds, previous/next, keyboard and native scroll, axe, live reduced-motion restoration, short screen, explicit 3D-matrix flip/left-entry check, first-icon movement, no horizontal overflow and route cleanup/remount.
+- No full workspace unit or complete repository E2E rerun for this UI-only increment; earlier unit results are historical and not substituted for new runs.
+
+Visually inspected final desktop dark and Arabic light phone plus the flip-transition capture under `docs/reviews/directors-reel-evidence/`. Final preview: http://127.0.0.1:3315/en#chapter-team and /ar#chapter-team. Earlier task preview servers stopped; existing user development server retained. No dependency, API policy, database migration, external-account action, deployment, commit or push performed.
+
+## Creamy Glass, Laptop Scroll and Executive Separation - 9 November 2026
+
+Latest user correction: ordinary desktop/laptop screens must retain the same scroll-driven director sequence as larger screens; co-executive content needs clear separation below the CEO card. Restored creamy glass and transparent surrounding stage preserve visibility of the unchanged original 3D logo. Removed background/side specialty layers per the user's latest instruction; inside-portrait accents remain.
+
+- Fixed the laptop fallback: instead of switching to a manual slider when the full portrait/card exceeded the viewport, measure the stage and adjust portrait height to the available space. Cards widen to 420px on shorter desktop viewports, reducing biography wrapping. Refit after layout/window resizing and clean up listener/size overrides. Keep the manual slider for screens below 740px tall, phone grid below 768px wide and reduced-motion HTML grid.
+- Added 64-96px before the co-executive heading so the existing CEO scroll entrance cannot cover it. Retained all profile copy, illustration disclosures, team anchors and approved artwork.
+- The previously authorized logging/performance changes are present: PostgreSQL connection URI removed from banner and defensively redacted in formatter; eager/high-priority header mark; opaque hero entrance; missing-orbit guard; showreel rendering paused offscreen/hidden, capped at 30fps, without invisible video mirroring. See reviews/browser_performance_logging_review.md for the small local performance sample and limits. The earlier 70-test unit result is historical, not a new unit run for this CSS/component correction.
+
+Actual validation for this correction:
+
+- pnpm.cmd run build: PASS, 4 tasks / 3 cached, 2m36.698s, frontend TypeScript and 62 generated pages. No application edits after this build.
+- Focused ESLint for reel implementation and director/performance checks: PASS (exit 0; existing monorepo pages-directory diagnostic). git diff --check passed with line-ending notices.
+- Production preview port 3324, directors-reel.spec.ts: PASS 28/28 in 3.1m. All five slides at 1280x768, 1366x768, 1440x900, 1536x864 and 1920x1080, English/Arabic and light/dark. Assertions require scroll mode on these viewports, settled card center within 2px, portrait proportions, card viewport fit, CEO-to-heading separation greater than 16px, keyboard/buttons/native scroll, axe, reduced-motion restoration, short-screen manual controls, centered phone grids at 320/390/430, flip and route cleanup.
+- Visually inspected current English light 1280 and Arabic light 1366 screenshots: single centered creamy card, visible original 3D mark, readable controls and complete card content. Evidence: reviews/directors-reel-evidence/.
+
+Local preview: http://127.0.0.1:3324/en#chapter-team and /ar#chapter-team. Full repository E2E/unit suite and field performance monitoring were not rerun for this UI correction. No dependency, API-policy, database, external-account, deployment, commit or push action.
+
+Final supplemental run on the same unchanged production build: PASS 5/5 in 30.5s, covering live Arabic desktop-to-laptop-to-phone resize and all four English/Arabic phone/desktop logo-priority/showreel regression cases. Offscreen/pause draw cessation, bounded visible frame rate, eager header SVG, reduced-motion behavior and absence of captured missing-target/LCP warnings passed. These are local browser checks, not field Core Web Vitals or a development-console audit. Total current affected checks: 33 passing across the two runs. No application changes followed validation.
+
+## Two-member slides and flat creamy glass - 9 November 2026
+
+Latest user requests supersede the earlier single-card and height-limited manual-carousel behavior. Directors now form three real HTML slide groups: 2 members, 2 members, 1 centered member. The final member is not duplicated. Scroll/flip transitions operate on the whole group; arrows/count/progress use the three groups. Phone and reduced-motion layouts retain all five visible cards. Creamy glass uses the existing tint/blur/border/shadow with background-image none. No moving side icons or gradient were added; original 3D artwork and the CEO/co-executive spacing remain.
+
+Removed the 740px height cutoff and manual-slider branch: motion-enabled desktop-width screens now use native vertical-scroll slides even on short laptop viewports. Portrait height and sticky-stage top fit the available viewport; ScrollTrigger uses the same measured start. Resize/layout observers and scoped cleanup remain.
+
+Actual checks so far: focused ESLint PASS (exit 0, existing monorepo pages-directory diagnostic); git diff --check PASS with line-ending notice. Exact final build PASS: 4 tasks / 3 cached, 1m42.087s, frontend TypeScript and 62 generated pages. No application changes followed this build. Short-laptop native-scroll acceptance PASS 5/5 in 26.3s on port 3326: 1366x640, 1366x720, 1536x640, 1536x720 and 768x640. All three groups, centered settling, complete laptop card viewport bounds, axe and no horizontal overflow. Final broader regression result follows below.
+
+Earlier paired prototype builds passed, but initial browser samples landed exactly on a page boundary and were moved inside the destination range. The next partial run was interrupted for the user's flat-glass/short-laptop correction. These interrupted runs are not reported as complete acceptance passes. Visually inspected final English light 1366 paired cards and Arabic light 1366x640 final singleton; plain glass, real 3D mark and centered content are visible.
+
+Local preview: http://127.0.0.1:3326/en#directors and /ar#directors. Previous task previews on 3324/3325 stopped; user development server retained. No profile copy/artwork/dependency/API/database/deployment/commit/push change. Full workspace unit/E2E and field performance were not rerun for this UI correction.
+
+Final paired/flat-glass regression on the unchanged production build: PASS 28/28 in 3.0m (test-results-directors-flat-glass-final). Includes English/Arabic, both themes, 1280/1366/1440/1536/1920 desktop/laptop widths, both cards fully in bounds, exact 2/2/1 visibility, centered final singleton, no background gradient, glass blur, previous/next and native scroll, axe, CEO separation, phone grids at 320/390/430, live resizing, reduced-motion cleanup and flip/remount. Together with the separate short-laptop run, 33/33 current affected browser checks passed. No application changes after final build or validation.
+
+## Specialists organization and staggered motion - 9 November 2026
+
+Refined the requested Directors & discipline leads section while retaining two-member slides (2/2/1), flat creamy glass, native laptop scrolling, phone grid, centered final singleton and original logo artwork. Added a short accent rule for THE SPECIALISTS, a compact navigation cluster and direct member-group range buttons (01-02, 03-04, 05), with localized accessible labels, current-step state and visible keyboard focus. Portrait/text dividers, balanced headings and consistent specialty-chip spacing clarify the profile hierarchy. Profile copy and placeholder disclosures remain unchanged.
+
+Motion now combines the existing scroll-selected page turn with a small per-member lateral/lift reveal, opposing tilt and 60ms stagger. Cards settle to zero transform and full opacity. Interrupted transitions reset nested card transforms; teardown clears all nested/page/portrait styles. No permanent loops, background icons or gradients were added. Existing editor formatting of studio-redesign.css was preserved.
+
+Actual validation so far: focused implementation/test lint PASS (exit 0, existing monorepo pages-directory diagnostic); whitespace check PASS. Production build PASS, 4 tasks / 3 cached, 3m33.491s, frontend TypeScript and 62 generated pages. Browser assertions verify the final 16px portrait/text spacing from the built CSS. No application edits after compilation/validation. Current browser acceptance results follow below. New preview port 3327; previous owned preview 3326 stopped and user development server retained. No dependency/API/database/deployment/commit/push change. Full repository unit/E2E and field performance monitoring were not rerun for this UI refinement.
+
+Final dedicated acceptance on production preview 3327: PASS 33/33 in 3.4m (test-results-specialists-editorial-motion). Covers all three 2/2/1 groups at 1280/1366/1440/1536/1920 in English/Arabic and both themes, direct group buttons with keyboard activation/current-step state, exact centering and full card bounds, flat glass/16px divider spacing, previous/next/native scroll, axe, short 640/720px laptop heights, 768x640, phone grids at 320/390/430, reduced-motion restoration, resize and flip/remount. Visually inspected current English light 1280 and Arabic dark 1440 pair captures: organized header/navigation, visible divider and profile hierarchy, centered cards and unchanged decorative mark. Evidence under reviews/directors-reel-evidence/. Current preview: http://127.0.0.1:3327/en#directors and /ar#directors. No application changes after browser validation.
+
+## Button-only specialists, clear portraits and matching co-leadership cards - 9 November 2026
+
+Latest user instructions replace scroll-selected specialist groups with group buttons only, remove arrows/duplicate count/progress, enlarge the portrait area and move icons outside it. DirectorsReel now uses React-selected 2/2/1 groups and a short CSS stagger, with no GSAP/ScrollTrigger import, sticky runway, height fitting, scroll selection or window-scroll navigation. Phones retain the readable grid; reduced-motion desktop retains functional instant group switching.
+
+Selected matching paired portrait cards for Co-CEO and COO, retaining CEO as the wider featured leader. All seven specialist/co-executive cards share flat creamy glass, clear 4:5 portrait wells up to 240x300px, badges below the image and a portrait/text divider. Co-executive scroll-card transforms are removed. Existing profiles, placeholder disclosures and original artwork remain unchanged.
+
+Added two more related icons: each specialist/co-executive portrait now has four distinct existing Solar symbols around its sides, with no overlap of the image. Roles use existing chart, compass, team, calendar, check, layer, idea, code, monitor and layout symbols as appropriate. One shared observer pauses each portrait's transform-only float offscreen; tab visibility pauses all, and reduced motion disables icon movement. CEO retains its existing featured layout/two accents. No new images or fabricated profile details.
+
+Actual validation so far: focused implementation/test ESLint PASS (exit 0, existing monorepo pages-directory diagnostic); git diff --check PASS. Exact final production build PASS, 4 tasks / 0 cached, 4m57.595s, shared/API/frontend TypeScript and 62 generated pages. No application edits after build. Final affected browser acceptance on port 3329 follows below. Earlier button-only runs were interrupted for the user's expanded icon/co-executive instruction; initial test-only corrections recognize equivalent identity matrices and wait for both staggered cards before contrast sampling. No interrupted run is reported as a final acceptance pass.
+
+Inspected final English light co-executive screenshot: matching clear portrait wells, four symbols outside each image, badge below and consistent typography/divider. Evidence under reviews/directors-reel-evidence/. Full workspace unit/E2E and field performance were not rerun for this UI change. No dependency installation, API behavior/policy, database migration/reset, external provider, deployment, commit or push action. Existing user development server retained; earlier owned previews stopped.
+
+Final affected acceptance on unchanged production build, port 3329: PASS 29/29 in 3.5m (test-results-team-four-icons-final). English/Arabic x light/dark at 1280x768, 1366x640, 1440x900, 1536x720 and 1920x1080. Verifies matching co-executive cards, four icons per specialist/co-executive with measured separation from portrait bounds, 280px+ desktop portrait height, flat glass, centered 2/2/1 groups, keyboard/current-step state, no group-button page-scroll jump, no selection change from wheel scrolling, static stage/no arrow cluster and full-team axe. Phone grids at 320/390/430, 28px phone icons, reduced-motion instant groups/disabled icon animation, resize, rapid switching, offscreen pause and route return passed. Inspected English and Arabic light co-executive captures and English specialist buttons capture; images are clear and icons remain around them. No final application changes after validation.
+
+Current preview: http://127.0.0.1:3329/en#chapter-team and /en#directors (Arabic equivalents available). Earlier owned preview 3328 stopped. Full repository unit/E2E and real-tab-background timing/field performance were not separately measured; browser checks verify offscreen pausing and reduced-motion behavior, while tab visibility is handled by the listener/CSS state.
+
+## Reversible team reveal and compact next-chapter handoff - 9 November 2026
+
+Latest user requests: show team cards as they enter while scrolling and reverse as they leave; retain group-button member selection. Remove extra space before YOUR NEXT CHAPTER so its original animation appears earlier. Design/review: designs/team_finale_handoff.md and reviews/team_finale_handoff_review.md.
+
+- Seven paired portrait cards use stationary observer wrappers, with CSS translate/rotate/scale entrance (24px lift, gentle X tilt, 98.5% to 100% scale), reversed on exit. Stationary wrappers avoid observer feedback from the moving card. The button-selected transition remains independent; scrolling does not change groups. Text stays fully opaque. Reduced motion disables the entrance; CEO's existing reveal remains.
+- Trimmed team/approach bottom spacing, set compact 24-48px booking top margin and 16px padding, and removed an inherited 40px margin on the CTA panel. The first spacing check exposed that inherited margin; it was fixed rather than relaxing the gap assertion. Existing CTA line/panel animation values, easing, timing and original logo chapter poses remain unchanged.
+- LandingMotion refreshes existing ScrollTrigger measurements on root layout-height changes via one coalesced frame and scoped observer cleanup, so group-height changes cannot leave following sections using stale positions.
+
+Actual validation: focused lint PASS (exit 0, existing React-version-detection/monorepo pages diagnostic); whitespace check PASS. Final production build PASS, 4 tasks / 3 cached, 1m53.523s, TypeScript and 62 generated pages. No application changes after this build. Initial handoff test also used a broad h2 selector that matched the nested FAQ; corrected to the specific CTA title. Interrupted/test-selector runs are not reported as acceptance passes.
+
+New motion/handoff acceptance on port 3331: PASS 14/14 in 1.4m. EN/AR, both themes, 1366x640/1440x900 handoff after all three group choices, measured compact card-to-banner gap, full visible heading lines, original chapter index 8, phone 390 reduced motion; EN/AR phone/desktop card entry, reverse, re-entry, independent group selection and reduced-motion restoration. Visually inspected English light laptop CTA: complete title at the earlier viewport position. Focused prior-card regression result follows below.
+
+Full workspace unit/E2E and field performance were not rerun for this UI-only increment. No dependency/API/database/deployment/commit/push changes. Existing user development server retained. Current preview: http://127.0.0.1:3331/en#chapter-team and /en#chapter-booking (Arabic equivalents available).
+
+Final focused card regression on the same unchanged build: PASS 17/17 in 1.6m (test-results-team-reveal-regression). EN/AR light/dark at 1366/1440, group-button keyboard/current-step behavior, four-icon portrait clearance, shared co-executive layout, centered final singleton, no scroll-driven member switching, full-team axe, phone grids at 320/390/430, reduced motion, offscreen pause and rapid navigation/route return. Together with the 14 new reveal/handoff cases, 31 affected browser checks passed. No application edits after validation. git diff --check PASS.
+
+## Follow-us icon open/close motion - 9 November 2026
+
+Sidebar share symbol now rotates/scales/fades into a close mark when the existing social panel opens, and reverses on close. Both groups remain inside one 22px SVG, avoiding the old display swap/layout change. Footer plus behavior and existing disclosure/focus/inert/link logic are unchanged. Reduced motion switches symbols immediately. Motion uses transform/opacity transitions only, with no loop.
+
+Actual validation: focused ESLint PASS (exit 0; existing monorepo pages-directory diagnostic); pnpm.cmd --filter @amc/web build PASS including TypeScript and 62 pages; git diff --check PASS. Local production preview 3332, docs/reviews/check-social-icon-motion.mjs: PASS 16/16 across EN/AR, 390/1440, light/dark, normal/reduced motion. Verified open/close visual states, Escape focus return, rapid re-toggle, constant button dimensions and zero transition duration for reduced motion. Inspected English light open-state screenshot. Full workspace unit/E2E not rerun for this small icon change. No API/database/dependency/external-provider/deployment/commit/push action. Existing user dev server retained; previous owned preview 3331 stopped. Preview: http://127.0.0.1:3332/en.
+
+## Supplied studio photography, channel 02 video and readable studio colors - 9 November 2026
+
+Latest authorized UI increment: replaced landing mock studio SVG image slots with the three user-supplied WebP references. Hero cards map lettering to Strategy, color studies to Identity and illuminated signs to Experience; pillar/device images reuse these supplied photos. The unmounted StudioPhotoShowcase also uses these three references with accurate bilingual captions. Official logo artwork is preserved.
+
+Converted the supplied video-1.avi to a 1280x720, 25fps, 10-second, fast-start MP4 by copying its original H.264 video track; silent/muted ambient playback and a WebP poster. Channel 02 opens selected. Existing monitor pause and channel controls operate native playback, with offscreen/tab-hidden/channel-change/reduced-motion pausing, localized media failure fallback and no hidden canvas drawing behind the pinned video. Studio-only semantic tokens use approved ivory/charcoal/gold, with readable badge, telemetry and selected-state contrast in light and dark. No global rebrand.
+
+Actual final validation:
+- pnpm.cmd --filter @amc/web build: PASS, including frontend TypeScript and all 62 generated pages. Initial sandbox attempt failed to read the installed SWC native cache; the build succeeded with tool-cache access. Final build includes all application changes; no application edits followed.
+- pnpm.cmd exec tsc --noEmit -p apps/web/tsconfig.json: PASS.
+- Focused ESLint for studio-media.tsx, landing.tsx and the adjusted browser-performance.spec.ts: PASS (0 errors, 6 existing img warnings and existing monorepo pages-directory diagnostic).
+- Changed-file git diff --check: PASS. Workspace-wide check still reports unrelated pre-existing trailing whitespace in apps/api/src/modules/contact/contact.service.ts; this increment did not edit that file.
+- docs/reviews/check-studio-media.mjs on local production preview 3333: PASS 8/8. EN/AR x light/dark x 390/1440. Checks supplied-photo loading, no landing studio SVG image sources, real decoded video dimensions/duration, playback, pause/resume, channel switching, offscreen pausing, reduced-motion pausing/disabled control, scoped axe and no horizontal overflow. Initial harness used browser.newPage, which axe rejected; corrected to an explicit browser context before the complete acceptance run.
+- Existing tests/e2e/browser-performance.spec.ts: PASS 4/4 in 36.6s. Explicitly selects a canvas channel before measuring its rendering now that channel 02 opens as video. Header logo priority, offscreen/paused draw cessation, <=31fps budget, scene changes, reduced motion and captured-warning checks passed across EN/AR phone/desktop.
+- Visually inspected English light phone monitor, Arabic dark desktop monitor, English light desktop photo cards and Arabic dark phone photo cards. Evidence under docs/reviews/studio-media-evidence/. Review/source mapping: docs/reviews/studio-media-update.md.
+
+Total affected browser acceptance: 12 passing cases. Full workspace lint/unit/E2E, database checks and field performance were not rerun for this UI-only increment. No API/database/deployment/commit/push/external-account action. Existing unrelated work retained. Local preview: http://127.0.0.1:3333/en and /ar.
+
+## Remove studio video, remap supplied images and restart - 9 November 2026
+
+Latest user instruction supersedes the preceding video increment: remove the lagging video and use the new topic-specific image uploads. Removed the native video element, video state/effect and generated MP4/poster outputs; the original supplied AVI remains untouched. Restored the existing 30fps-bounded canvas monitor with pause/channels/offscreen/tab-hidden/reduced-motion behavior and kept the refined studio colors.
+
+Image assignments: Strategy -> strategy.webp (supplied stratage.webp), Identity -> branding.webp, Experience and all web device previews -> web.webp. Pillars and service pages share a typed mapping: Marketing -> marketing.webp (supplied marekting.webp), Advertising -> analysis.webp, Consulting -> consulting.webp, Web Development -> web.webp. Branding detail uses branding.webp. Added responsive decorative service reference photos, including /en/services/advertising and Arabic equivalents. No client evidence or business details were invented. Review/source mapping: docs/reviews/studio-image-remap.md.
+
+Restarted the identified project Next dev server on 127.0.0.1:3000 and stopped the earlier owned preview on 3333. Observed a slow-filesystem warning and initial development route compilation delay; these are local observations, not a proven diagnosis of the original video lag. The video is removed regardless.
+
+Actual final validation:
+- pnpm.cmd --filter @amc/web build: PASS, frontend TypeScript and all 62 generated pages. No application edits after compilation.
+- Focused ESLint for the four changed/new TypeScript files: PASS, zero errors, seven img warnings (one newly added service reference image) and existing monorepo pages-directory diagnostic.
+- Changed-application-file git diff --check: PASS.
+- docs/reviews/check-studio-media.mjs on restarted development server 3000: PASS 8/8. EN/AR x 390/1440 x light/dark. Verifies no video elements or MP4/AVI requests, all hero/pillar/device mappings and loaded images, selectable channel 02, reduced-motion monitor behavior, scoped axe, no horizontal overflow, and matching loaded images on five service routes per case (marketing, advertising, consulting, web-development, branding).
+- Existing browser-performance.spec.ts: PASS 4/4 in 39.0s. EN/AR phone/desktop, logo priority, canvas rendering <=31fps, pause/offscreen cessation, channels, reduced motion and captured warning checks.
+- Visually inspected English light desktop hero cards and Arabic dark phone Advertising reference image after the existing preloader finished. Evidence: docs/reviews/studio-image-remap-evidence/.
+
+Total affected browser checks: 12 passing. Full workspace lint/unit/E2E, database tests and field performance not rerun for this UI increment. No API/database/provider-account/deployment/commit/push action. Current local site: http://localhost:3000/en and /ar.
+
+## Restore original mock SVG imagery - 9 November 2026
+
+User requested removing the supplied photographs and returning to the old mock SVGs. Restored the original hero (01/02/03), pillar (01/02/04/03), device (03/01/05) mappings and all six original mock showcase entries/captions. Removed the added service reference image, its CSS, the shared photo mapping helper and nine copied WebP assets from public/studio. Original uploaded files outside the workspace remain untouched. Video remains removed. Retained the already approved studio monitor color/contrast and accessible selected-state improvements; unrelated work and official artwork remain unchanged.
+
+Actual checks: changed-file whitespace PASS. docs/reviews/check-studio-mock-restore.mjs PASS 8/8 on the running localhost:3000 development server (EN/AR x light/dark x 390/1440). All original landing SVGs loaded with nonzero intrinsic width; no studio WebP/MP4 requests, no video element and no added Advertising service photo. TypeScript/focused lint result follows below. Full production build and repository-wide suites were not rerun for this asset rollback. No database, provider account, deployment, commit or push action.
+
+Final rollback checks: pnpm.cmd exec tsc --noEmit -p apps/web/tsconfig.json PASS; focused ESLint on studio-media, landing and service page PASS (0 errors, 6 existing img warnings plus existing pages-directory diagnostic). All 8 browser cases passed. Current site: http://localhost:3000/en and /ar.
+
+## Supplied services content, flat motion and device 3D integration - 9 November 2026
+
+User authorized implementation of docs/designs/services-motion-integration-plan.md after selecting flat motion for all four pillars, 3D devices only in Web Development, and preservation of the current navy/orange palette. Adapted both source packages under docs/assets without modifying the supplied originals. Full review: docs/reviews/services-motion-integration-review.md.
+
+Implemented reviewed EN/AR content in a typed, slug-keyed source, wired into the existing homepage service intro/taglines, services index, four pillar details and eleven summaries. Delivery timelines, numeric performance targets, unverified coverage/reporting promises and ranking guarantees were excluded. Existing scope lists and canonical routes remain. Added supplied process content and consultation-defined deliverable wording to pillar pages.
+
+Existing four pillar artwork wells now mount dependency-free typed shader scenes with the supplied graphic posters; chapter-devices mounts one typed layered-device scene through the already installed Three.js. No new dependency, old bundled three.min.js, stock photos, autoplay video, duplicate language switch or global font/palette migration. Device textures use the actual existing English font CSS token and Cairo (the installed site has Fira Sans/Cairo despite older specs). Original official mark and original studio SVGs remain.
+
+One shared activity slot, exposed/centered-card priority, 30fps/DPR1.5 caps, lazy engine imports, user pause, live reduced-motion, visibility handling, scoped cleanup, portable shader interpolation and static fallbacks are implemented. WebGL failures/context loss retain posters. Device textures use a disposed guard for deferred font redraw. Existing overlapping sticky cards and route/preloader transitions require exposure rechecks; the implementation handles them with event-driven updates and one bounded settled-layout timeout.
+
+Final source checks so far:
+- pnpm.cmd lint PASS: 0 errors / 9 warnings (img advisories and existing unused directives/monorepo diagnostics).
+- pnpm.cmd typecheck PASS after final build: 5 tasks / 4 cached, 3.773s. A prior concurrent build/typegen run failed on temporarily missing generated files; sequential rerun passed. No unresolved source type errors.
+- pnpm.cmd test PASS: 25 files / 80 tests in 25.66s. No extra unit rerun after camera/lifecycle refinements; those are covered by browser acceptance and final compilation.
+- Final pnpm.cmd build PASS: 4 tasks / 3 cached in 1m9.734s; frontend TypeScript and all 62 pages. No application changes after this build.
+- Changed-application-file whitespace check PASS.
+
+Dedicated browser prototypes were used to resolve sticky-card selection, preserved focus, layout changes after reduced-motion restoration and camera framing. A full development run passed 12/13 before context-loss test injection was corrected to wait for frames on the newly resumed canvas; corrected isolated case passed. These are development checks, not substituted for final production acceptance. Full 214-case production E2E is running on port 3334; final counts/results follow below.
+
+No API behavior/RBAC, database mutation/migration/reset, provider account, deployment, commit or push action. Existing unrelated backend/email/CRM work was retained. Existing Prisma generation tasks ran as part of workspace checks only. Local development site retained on localhost:3000; final production preview on 127.0.0.1:3334.
+
+Final production browser results on unchanged application build, port 3334:
+- Complete pnpm.cmd test:e2e run: 214 cases, 203 passed / 11 failed in 11.0m. All 13 new service-motion cases passed, including EN/AR x themes x phone/desktop; per-stage real rendering <=31fps, one selected scene, user pause/keyboard, offscreen release, live reduced-motion restoration, route return, blocked WebGL, forced flat/3D context loss, controlled document visibility, 320/768 widths, scoped axe, no captured page errors and server-rendered reviewed content across all 30 localized offering URLs.
+- All eleven initial failures were in existing test assumptions: eight contact cases used a singular alert locator that now matches four field errors plus the summary; three reading-return cases expected an offset above the current document maximum. Existing BackToTop already explicitly clamps this target. No contact/reading application code was changed.
+- Updated contact assertions to check #contact-error plus all four field errors. Updated the reading assertion to require the clamped origin within one browser pixel. Combined two-file rerun: 30/31 passed in 1.5m; the sole remaining Arabic reading failure was exactly one pixel. After adding the one-pixel browser rounding allowance, the complete reading file passed 11/11 in 34.6s. All 20 contact cases passed in the combined rerun. Therefore all 214 distinct cases have passing coverage across the full run plus affected reruns; this is not represented as one uninterrupted 214/214 green run.
+- Final focused test ESLint and changed-file whitespace results follow if still running. No application changes followed the final production build. Test assertion corrections do not require a new application build.
+
+Visually inspected final English desktop/Arabic phone Marketing artwork, Arabic desktop device rendering, English full Web Development chapter, and Arabic web pillar content. Evidence under docs/reviews/services-motion-evidence/. New scene controls are readable, devices fit, original artwork is unchanged and content remains real HTML. Device CSS font family uses the site's existing token; no font packages were added.
+
+Implementation is complete. Local development: http://localhost:3000/en and /ar. Production preview: http://127.0.0.1:3334/en#chapter-identity and /en#chapter-devices (Arabic equivalents available). No deployment/commit/push. See the integration review for local performance and visibility-test limitations; no field metrics or marketing performance guarantees are claimed.
+
+Final focused ESLint for all three affected browser test files: PASS (exit 0; existing React/pages-directory diagnostics). Final changed-file git diff --check: PASS. No checks remain running for this increment.
+
+## Production contact/booking 500 diagnosis and prepared runtime repair - 9 November 2026
+
+User reported a live contact POST 500 and nonworking booking after configuring HubSpot. Used full-stack and CI/CD skills, inspected code, the existing Vercel deployment/logs and public endpoints without writing real inquiries, bookings or CRM records. Report: docs/reviews/contact-booking-production-diagnosis.md.
+
+Confirmed live fault: production deployment dpl_HvCe6kJCjzntSFf729ARYqyfUyDb (git 776e95b) crashes with Cannot find module '@nestjs/throttler' (require stack /var/task/apps/api/package.json). The same startup failure appears on contact submission, booking/config and health. Frontend /en/booking returns 200 but /health, /health/ready and /api/booking/config return FUNCTION_INVOCATION_FAILED. This is runtime packaging, not a successful API deployment. The public endpoint is booking/config; booking/settings is intentionally not allowed.
+
+HubSpot: production environment metadata confirms the key exists. The existing local token passed private-token introspection (200, contacts.read/write and appointments.read/write) and contacts/meetings schema reads (200 each). No token value or CRM record data was printed. This is credential access validation, not proof of production delivery; local/production token values were not compared. The configured local remote database connection independently returns a Prisma upstream-database connection error, preventing booking-settings/schema verification. Production DB URL equality was not established, and no database changes were made.
+
+Prepared code:
+- Explicit compiled API outputDirectory dist/apps/api/src in root multiserver and app-level Vercel configuration; official installed adapter selects the emitted main.js.
+- Build materializes the two-package Prisma runtime tree into dist/node_modules and explicitly includes it in the serverless function. A normal trace exposed an omitted Prisma package link; the staged copied artifact then imported successfully with 2,049 traced files / 232 relocated package links.
+- API build resolves 17 direct dependencies and imports the emitted AppModule without opening DB/providers. Added staging/check scripts to Turbo cache inputs.
+- Added Turbo passthrough for HubSpot/Resend/inbox/production-origin env names that deployment build logs warned about. No provider secret values changed.
+- Public proxy preserves signed forwarding/JSON business failures and converts non-JSON or invalid-JSON invocation failures to sanitized JSON 503; malformed origins fail closed with 403.
+- Readiness zero-row query covers contact/booking CRM/retry columns. No migration applied or approval gate bypassed.
+
+Actual final checks: pnpm.cmd lint PASS (0 errors, 9 existing advisories); pnpm.cmd test PASS 27 files / 90 tests in 13.29s; pnpm.cmd build PASS 4 tasks / 1 cached in 54.535s, staged Prisma runtime/import checks and all 62 web pages; sequential pnpm.cmd typecheck PASS 5 tasks / 2 cached in 5.286s; changed-file whitespace PASS. No application edits followed the final build. Affected local production UI browser checks run on 3335 with mocked backend operations; result follows below. Full repository E2E and isolated database mutation tests were not run for this repair.
+
+Not deployed, committed or pushed. No external account connection, provider writes, live contact/booking submission, real email, CRM write, database reset/migration/settings change. Actual live recovery remains pending deployment authorization and successful post-deploy health/readiness/config probes; database-provider connectivity may remain a separate blocker.
+
+Final affected browser acceptance on local production preview 3335: PASS 39/39 in 2.1m (contact-route-consistency.spec.ts and operations-design.spec.ts). Covers EN/AR, light/dark, 320/390/768/1440, contact validation/retry/success/idempotency and mocked booking/staff flows. These are mocked UI regressions, not real production writes or proof of live database/provider delivery. No application changes after final build. Deployment approval remains the next action.
+
+## Authorized production repair rollout - 10 November 2026
+
+User explicitly approved the Vercel production deployment ("yes"). Used the existing linked almorad-amc project; no new external account was connected, no commit/push or database migration/reset was performed. Vercel CLI added .vercel to .gitignore.
+
+First deployment dpl_8jtdyxxwmKBtR7Tvt3aYRSA8YRMb built successfully but live probes exposed output-directory flattening: /var/task/main.js lacked its ESM package boundary. Second deployment dpl_DWziHhXhSzqktCRscRhgUk7scDg5 added the local type:module manifest, resolving that error; live logs then showed @nestjs/common missing from /var/task/safe-exception.filter.js because parent workspace dependency links do not survive the relocated output. Both are failed runtime verification attempts, not successful recovery.
+
+Revised the staging script to materialize all runtime dependencies inside the compiled entrypoint directory (161 packages), preserving nested conflicting versions and eliminating pnpm links. Explicitly include this directory and its ESM manifest in Vercel packaging. Strengthened the mandatory build check to copy the entire runtime outside the workspace, reject symbolic links, resolve all 17 direct dependencies and import AppModule with NODE_PATH cleared. It never starts Nest, connects the database or calls delivery providers. Generated temporary check folders are constrained to the OS temp directory before cleanup.
+
+Local standalone check PASS (11,087 files, 116 MiB; AppModule imported outside the workspace). Updated mandatory isolated check PASS. Focused script ESLint PASS (existing React/pages diagnostics); whitespace PASS. API TypeScript compilation passed before staging. The previously recorded complete unit/typecheck/web build remain applicable to unchanged application behavior; no new full unit/browser suite rerun for these packaging refinements. Third production deployment and live verification results follow.
+
+Third deployment dpl_GAYpnbYkdB5PVPnccNTSavirPGAH passed the cloud standalone runtime check and deployed. Live startup advanced past missing modules but exposed ERR_REQUIRE_ESM in @nestjs/throttler requiring the ESM @nestjs/common package. Reproduced this exact error locally with node --no-experimental-require-module. The same compiled import passes with --experimental-require-module. Vercel's official Advanced Node.js Usage documentation explicitly disables this feature by default and documents NODE_OPTIONS=--experimental-require-module as the opt-in. Added that nonsecret production environment setting (normalized without a trailing newline) as part of the authorized repair. Fourth deployment pending.
+
+An attempted private full production environment download was rejected by automatic approval review because it would copy credentials/API keys locally and was broader than necessary. No download executed; no indirect workaround attempted. Continued using public readiness and sanitized platform logs instead. Exact production credentials were not read or printed.
+
+Runtime documentation: https://vercel.com/docs/functions/runtimes/node-js/advanced-node-configuration#experimental-nodejs-require-of-es-module
+
+Fourth/current production deployment dpl_3dV2nJMQKyhbNb93w7J3t78QjnBy: READY, aliased to https://almorad-amc.vercel.app. Immutable URL https://almorad-i39jt4e0g-iamahmedsalahs-projects.vercel.app. Cloud build PASS: generated Prisma, staged 161 real runtime packages, isolated import of 17 direct dependencies, website TypeScript and 62 pages. Startup now progresses beyond dependency/module loading and stops on Error: Invalid API configuration: RESEND_FROM_EMAIL. This is the confirmed current blocker. Public booking/config returns sanitized JSON 503; EN/AR contact and booking pages return 200. Direct health probes did not obtain successful responses. No live form submissions were attempted.
+
+A narrowly scoped inspection of RESEND_FROM_EMAIL only (not a database credential/provider API key) returned metadata without a usable sender value. No raw sender or secrets were printed and the production sender was not changed. Asked the user to provide the verified Resend sender address (or Name <address>) so the invalid configuration can be corrected. Do not substitute an invented sender or loosen email validation. Production database connectivity/schema and booking enabled state are still unverified because startup stops before those checks; the prior local configured database error must not be represented as a newly confirmed production database failure.
+
+No rollback to the earlier deployments: all prior backend versions were already broken, while the current build resolves their packaging defects and improves frontend handling to JSON 503. This does not represent restored contact/booking service. Deployment approval was received and consumed; no repeat deployment authorization is needed for the same repair. Next required input is the verified sender value, then redeploy and repeat health/readiness/config checks. No database changes, real email, CRM write, commit or push.
+
+## Sender corrected; API startup timeout investigation - 10 November 2026
+
+User supplied ALMORAD AMC <onboarding@resend.dev>. Removed only the surrounding presentation quotes. Vercel CLI env update failed twice because it attempted to change the protected key of a Sensitive variable. A value-only PATCH to the existing RESEND_FROM_EMAIL variable succeeded, preserving its key/type and existing production+preview targets. No key/token was read or changed. The earlier deployment dpl_2g6hhdyW6vJy3kdKP852HWTRqYFi had started after the rejected CLI update, before the successful PATCH; it is not considered sender-fix verification. Deployed again after the successful update: dpl_BZJRPFy1cP81pFHrWHCUqLRXkWM8, https://almorad-enenqu6mf-iamahmedsalahs-projects.vercel.app, production alias READY.
+
+Live verification: sender-format validation error is gone, but Vercel reports Application initialization timed out at Nest startup (~10 seconds). /health and /health/ready return platform 500; public booking/config returns sanitized JSON 503. English/Arabic contact and booking HTML return 200. User's own contact submission also appears as 503 in platform logs; the agent did not submit any inquiry. No restored service claimed.
+
+Local diagnostic NestFactory.create with real compiled providers and dummy local-only database URL passed before database lifecycle, including production-mode secret requirements and VERCEL flag. No remote DB connection/provider write. Added safe startup stage logs, explicit existing minimum-length preflight for STAFF_PROXY_SECRET and STAFF_CSRF_SECRET, and abortOnError:false with a sanitized error-name-only catch so provider startup failures are diagnosable rather than hidden by a platform timeout. No security gate loosened. API TypeScript compile PASS, focused main.ts ESLint PASS (existing React/pages diagnostics), whitespace PASS. Production diagnostic deployment in progress; result follows.
+
+Resend's onboarding@resend.dev is a testing sender restricted to the Resend account email. It does not verify production visitor-email delivery; a verified sender domain will be required for other recipients. Official source https://resend.com/docs/knowledge-base/403-error-resend-dev-domain. No real emails or CRM records were sent/created. User's existing deployment approval continues to cover this repair. Repository HEAD changed externally to 25b9aab; user/other-process skill edit retained.
+
+## Listener bootstrap correction - 10 November 2026
+
+Diagnostic deployment dpl_9VbwCAWcFKdUidKetZcx4j4gMkJT passed build but retained 500 health/503 proxy behavior. Reading individual request log entries (rather than CLI's first-message summary) established: configuration validates; all modules instantiate; routes map; Nest reports application successfully started in <500ms; then Vercel times out initialization and SIGKILLs. This excludes the earlier inference that container construction itself was hanging. There was no database readiness result at this point.
+
+Corrected main.ts to invoke async bootstrap without a top-level await on app.listen. Vercel's listener wrapper must finish module evaluation before completing the listener handshake. This matches the official NestJS Vercel entrypoint pattern. Added scripts/check-api-entrypoint.mjs: defers listener attachment until module evaluation completes, stubs Prisma lifecycle (no DB connection), uses an ephemeral loopback port, and enforces a deadline. Mandatory isolated API runtime check now runs this handshake against the copied package; Turbo cache inputs include the new check script. Local handshake PASS; API compile PASS; focused ESLint/whitespace PASS. Initial parallel affected Vitest run had a worker exit (14 tests passed, 1 worker error), so it is not a clean pass; standalone module test passed and full affected sequential rerun PASS 4 files/15 tests in 5.63s. No full browser/unit rerun for this entrypoint-only fix. New cloud deployment in progress.
+
+Official runtime pattern: https://vercel.com/docs/frameworks/backend/nestjs#nestjs-entrypoint-detection. No real inquiry/booking/email/CRM write or DB/schema/settings change. Existing deployment approval retained. Complete log diagnostics were filtered to failed health/config/contact requests and redacted; no credentials were printed or downloaded.
+
+## Live API restored; production schema missing - 10 November 2026
+
+Bootstrap correction deployment dpl_8puUkMSJ2Q4DRk672fircxWPNYfj restored /health 200. /health/ready then returned 503 database down, and booking/config returned JSON 500 with Prisma P2010. Added a bounded database failure classifier and readiness-only internal diagnostic log; it emits allowed Prisma/SQL codes and fixed categories, never raw provider messages/credentials. Privacy/classification tests and readiness tests PASS 2 files/5 tests; API compile and focused lint/whitespace PASS.
+
+Current production deployment dpl_5sojnKQBvF94bbmD7Uz3cFvbQL4X, https://almorad-iapc2b5to-iamahmedsalahs-projects.vercel.app, READY and aliased to almorad-amc.vercel.app. Cloud API TypeScript/staging/isolated import/listener handshake and web TypeScript/62 pages PASS. Actual live probes: /health 200 {status:ok}; /health/ready 503 {status:unavailable,database:down}; /api/booking/config 500 sanitized JSON. Internal readiness diagnostic confirms P2010 / SQLSTATE 42P01 / schema_missing. Thus the production database responds but a required relation is absent; exact relation, intended DB/schema identity and migration history remain uninspected. Contact/booking are not restored and no successful persistence/provider delivery is claimed.
+
+Reviewed all eight existing migration SQL files and recorded hashes, material effects, risks and a conditional recovery plan in docs/reviews/production-schema-recovery-review.md. Schema validate PASS. Migrations include an old-inquiry delivery SKIPPED update and an outbox unique-index replacement, so they must not be described as no data changes. No reset/table drop/record deletion proposed. No production migration/settings/DB write performed. Docker is installed but daemon unavailable, so isolated migration rehearsal and backup/PITR readiness are not verified. Existing local backup script intentionally excludes production. Explicit approval for production database recovery (targeted connection access, read-only history/identity inspection, backup/rehearsal, pending migrations) is required separately from the previously authorized app deployment. No entire production environment download or API-key exposure is needed.
+
+No agent-created live contacts/bookings, real emails, CRM writes, database resets, commits or pushes. Existing user/other-process skill modification retained. Full details and next approval boundary are in the recovery review.
+
+## Vercel monorepo CI/CD and automatic migration releases - 10 November 2026
+
+User requested adapting D:/BIS/bhi47a-full-stack-web/.github/workflows/ci-cd.yml for this PostgreSQL/Prisma monorepo, linking the current Vercel project and automatically applying new pending migrations. This authorizes the reviewed automatic release path; no VPS was provisioned and no MongoDB/student-portal logic was copied. Full setup/activation/recovery instructions: docs/reviews/vercel-ci-cd-setup.md. User will configure GitHub environment secrets and requested setup instructions, which were provided.
+
+Implemented .github/workflows/ci-cd.yml orchestrating reusable validation/security workflows. PRs and main/staging/release branches validate; reviewed main changes release after validation/security, or manual main dispatch target vercel. Deployment-only production-vercel environment, serialized production runs, actual Vercel team/project IDs, pinned CLI, encrypted checkpoint, restore/migration rehearsal, unaliased production candidate, health/readiness/bilingual/config checks, promotion and post-promotion checks. Root git.deploymentEnabled=false prevents the Git-provider auto-deploy path from bypassing/racing Actions once these files are pushed. No remote Git configuration or account linkage was changed by the agent.
+
+Added scripts/ci: read-only migration inspection, immutable history/checksum/failure/baseline checks, canonical LF/CRLF and explicitly reviewed historical mixed-line-ending checksums, conservative risky SQL review gate, production database/manifest/commit/backup-reference gate, backup encryption/checksum/decryption/restore/rehearsal with existing-row-count preservation, immutable URL parsing and redacted release smoke. Production Vercel API build compiles first then runs migration inspection/deploy outside Turbo cache; previews/local skip migration writes. Existing applied migrations are not rewritten; pending-only Prisma deploy, never reset/db push. Host-independent database steps are reusable for a later VPS release. Release approval references are trusted CI context, not a separate credential/cryptographic authorization system.
+
+Local validation so far:
+- Workflow YAML parse PASS; actionlint 1.7.7 with ShellCheck PASS via read-only Docker source mount. One initial literal-backtick shell warning in summary formatting was corrected.
+- Official Vercel JSON schema validation PASS for root/services and API configurations (AJV with draft schema metadata validation disabled; supported configuration constraints evaluated).
+- New release safety tests PASS 7/7, including wrong targets, missing release context, history drift/failed/gapped baselines, SQL review checks and hostile/ambiguous deployment URLs.
+- All 8 migrations applied on dedicated local amc_test PostgreSQL 18; repeat release deploy applied zero migrations.
+- Database integration suite final PASS 4 files/12 tests in 10.13s. Initial failure was stale single-outbox assertion; updated to require exactly EMAIL+HUBSPOT intents for the same booking event and no duplicates on idempotent retry.
+- Backup/rehearsal PASS from a source *_test database with 6 historical migrations and one synthetic contact inquiry: encrypted artifact checksum/decryption, restore to another local *_test DB, two pending migrations, no pending afterwards, existing rows preserved, old-inquiry EMAIL/HUBSPOT statuses SKIPPED. No actual notification sent. Earlier plaintext-restore-only prototype passed before encrypted recovery was added; only the latter is represented as encrypted recovery validation.
+- Existing pnpm db:restore:check PASS: 13 restored table counts match; constraints restored and original test DB unchanged.
+- Complete pnpm lint PASS 0 errors/9 existing warnings; unit suite PASS 28 files/93 tests. Replaced a dummy nonce that triggered the unchanged Gitleaks rule; affected notification unit file rerun PASS 9/9.
+- Production build PASS 4 tasks/2 cached in 4m23.968s, 62 pages and mandatory isolated API dependency/listener checks. Initial sandboxed attempt failed only on Windows SWC cache permissions; normal-access rerun passed.
+- Sequential typecheck PASS 5 tasks/2 cached in 8.459s after the same SWC sandbox-cache issue was resolved by normal-access execution.
+- Secret scan PASS on exported reviewable source only (ignored local credentials/build artifacts excluded; no finding values printed). Production dependency audit PASS: no known vulnerabilities.
+- Staff/client production browser suite PASS 6/6 in 34.2s after replacing obsolete native-date-input selectors with real calendar keyboard/accessible-button interactions. Covers actual isolated DB booking persistence, unchanged confirmed time while cancellation/reschedule request remains staff-reviewed, EN/AR, RBAC/CSRF/session/password behavior and scoped accessibility. Full 214-case public browser suite was not rerun for this CI change; it remains configured in CI.
+
+Final isolation refinement removes local .env loading from staff browser API startup, supplies explicit isolated database URLs, disables HubSpot/inbox, and uses the existing disabled email-provider mock sentinel. An initial empty string RESEND_API_KEY was rejected by startup validation; corrected to mock. Final isolated-browser rerun result follows below. No application build change required for these test-only changes.
+
+No production DB backup/schema change, real inquiry/booking/email/CRM write, remote GitHub environment/secret creation, commit, push or new deployment was performed during this CI task. Existing Vercel deployment remains the earlier repaired API with missing production relation until the reviewed release actually runs. Local configured remote direct URL still reports upstream connection failure; it was not treated as proof of production URL equality. CI activation depends on owner configuration of VERCEL_TOKEN, matching PRODUCTION_DIRECT_URL and BACKUP_ENCRYPTION_KEY in production-vercel; optional Vercel automation bypass when protection applies. Never claim a live GitHub run passed without logs. User/other-process skill edit retained.
+
+Final isolation browser rerun PASS 6/6 in 32.2s with no .env loading, explicit local *_test URLs and email/CRM disabled. Final live read-only probes still show /health 200 and /health/ready 503; this CI code has not been pushed/activated and has not migrated production. Optional VPS image scans now require an explicit scan_containers input, so manually invoking the Vercel release does not implicitly start VPS validation. Final workflow/ShellCheck and temporary test-container cleanup results recorded below. User will configure environment secrets; activation still requires a reviewed commit/push (not performed). No further production migration approval is being requested for the authorized reviewed CI path.
+
+## Studio simplification, service content, local demo and CI activation ? 10 November 2026
+
+Implemented standalone EN/AR team pages (existing design-preview notice, noindex), removed team and Better together from landing/chapter rail (eight remaining chapters), compact laptop monitor, five primary desktop links with booking CTA and tablet/mobile drawer, and unique audience/process/FAQ content for all eleven bilingual service pages. Service booking CTAs preselect only services enabled by actual schedule. Current user-approved navy/orange and original artwork preserved.
+
+Local amc_demo PostgreSQL18 container created on loopback55440 with persistent demo-only volume. Eight migrations applied; idempotent seed completed with two synthetic staff accounts, six appointments and two change requests. Demo launcher creates ignored local credentials, applies migrations before seeding, and clears external provider access. Seed now checks an existing non-demo schedule before account mutations. Browser verified sample receptionist sign-in, calendar appointment visibility and Branding preselection. Local sample password is documented in docs/reviews/studio-update-and-demo.md; no production demo account created.
+
+Validation: pnpm lint PASS (zero errors/nine existing warnings); typecheck PASS five tasks; full build PASS four tasks including isolated API import and listener handshake (10m15.643s on Windows); final web rebuild PASS64 prerendered pages. Unit rerun PASS28 files/93 tests with maxWorkers1 after initial resource-contention hook timeouts and stale chapter assertions. Release tests PASS8/8, actionlint PASS, source-only Gitleaks including selected docs PASS. Focused studio/service browser tests PASS14/14; existing team/navigation/gallery checks PASS51. Full public run completed212 passed/16 failed in9.7m: all failures referenced removed landing team behavior or removed desktop FAQ link. Updated those tests for standalone team/booking navigation and visible footer FAQ; affected-file reruns PASS25/25. All observed failures resolved; do not describe the initial full run as clean. No database suite rerun this UI turn; prior CI turn DB12/12 and staff6/6 results remain recorded above.
+
+GitHub access via existing credential helper verified repository push permission. Required repository secret NAMES verified: VERCEL_TOKEN, PRODUCTION_DIRECT_URL, BACKUP_ENCRYPTION_KEY (values never read). Created production-vercel environment and main-only deployment policy (both HTTP200). Owner explicitly authorized commit/push after checks. Current immutable Vercel URL redirects to authentication302; added reviewed CI helper to create masked short-lived candidate automation access when no persistent bypass is configured, then revoke in always() cleanup. Network-stubbed lifecycle test passes. Production readiness remains503 before activation; no production migrations or delivery success claimed. Commit/push and first Actions outcome follow below.

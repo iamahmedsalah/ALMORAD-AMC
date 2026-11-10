@@ -6,6 +6,7 @@
     "eslint.config.mjs",
     ".env",
     "scripts/check-api-runtime.mjs",
+    "scripts/check-api-entrypoint.mjs",
     "scripts/stage-api-runtime.mjs"
   ],
   "globalEnv": [

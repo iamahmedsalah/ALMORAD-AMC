@@ -1,0 +1,129 @@
+name: CI/CD - Vercel monorepo
+on:
+  pull_request:
+    branches: [main, staging]
+  push:
+    branches: [main, staging, 'release/**']
+  workflow_dispatch:
+    inputs:
+      deployment_target:
+        description: Validate only or release this main-branch commit to Vercel
+        type: choice
+        default: validate
+        options: [validate, vercel]
+permissions:
+  contents: read
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+jobs:
+  validate:
+    uses: ./.github/workflows/validate.yml
+  security:
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/security.yml
+  release:
+    name: Back up, rehearse, deploy and promote Vercel
+    needs: [validate, security]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.deployment_target == 'vercel'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment:
+      name: production-vercel
+      url: https://almorad-amc.vercel.app
+    concurrency:
+      group: production-vercel
+      cancel-in-progress: false
+    env:
+      VERCEL_ORG_ID: team_9mwMW7QGs5HfZuTYgXeftexz
+      VERCEL_PROJECT_ID: prj_3OWasVxcZyRAJDWlt9pNqCW6EW3S
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      DIRECT_URL: ${{ secrets.PRODUCTION_DIRECT_URL }}
+      BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      REHEARSAL_DATABASE_URL: postgresql://amc_release:ci_only@127.0.0.1:5432/amc_release_test
+      NEXT_TELEMETRY_DISABLED: '1'
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: amc_release
+          POSTGRES_PASSWORD: ci_only
+          POSTGRES_DB: amc_release_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U amc_release -d amc_release_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.11.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - name: Verify deployment access is configured
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${VERCEL_TOKEN:?Set production-vercel secret VERCEL_TOKEN}"
+          : "${DIRECT_URL:?Set production-vercel secret PRODUCTION_DIRECT_URL}"
+          : "${BACKUP_ENCRYPTION_KEY:?Set production-vercel secret BACKUP_ENCRYPTION_KEY}"
+      - run: pnpm install --frozen-lockfile
+      - name: Install pinned deployment CLI
+        run: npm install --global vercel@65.11.0
+      - name: Verify reviewed migrations and back up production
+        run: node scripts/ci/database-release.mjs backup
+      - name: Retain encrypted recovery checkpoint before schema changes
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-db-backup-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/amc-database-release/database.dump.enc
+            ${{ runner.temp }}/amc-database-release/backup.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Restore backup and rehearse pending migrations in isolated PostgreSQL
+        run: node scripts/ci/database-release.mjs rehearse
+      - name: Prepare protected candidate verification
+        run: node scripts/ci/protection-bypass.mjs prepare
+      - name: Deploy production candidate without assigning production domain
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest="$RUNNER_TEMP/amc-database-release/manifest.json"
+          fingerprint=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1])).fingerprint)' "$manifest")
+          digest=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1])).digest)' "$manifest")
+          vercel deploy --prod --skip-domain --yes --token "$VERCEL_TOKEN" \
+            --build-env "AMC_RELEASE_MIGRATIONS=1" \
+            --build-env "AMC_RELEASE_SHA=$GITHUB_SHA" \
+            --build-env "AMC_RELEASE_DATABASE_FINGERPRINT=$fingerprint" \
+            --build-env "AMC_RELEASE_MIGRATION_DIGEST=$digest" \
+            --build-env "AMC_MIGRATION_BACKUP_REF=github:$GITHUB_REPOSITORY:$GITHUB_RUN_ID:$GITHUB_RUN_ATTEMPT" \
+            > "$RUNNER_TEMP/amc-vercel-deployment.txt"
+          node scripts/ci/deployment-url.mjs "$RUNNER_TEMP/amc-vercel-deployment.txt" >> "$GITHUB_ENV"
+      - name: Verify candidate health, schema and bilingual routes
+        run: node scripts/ci/release-smoke.mjs
+      - name: Promote verified deployment
+        shell: bash
+        run: vercel promote "$RELEASE_URL" --yes --token "$VERCEL_TOKEN"
+      - name: Verify production domain after promotion
+        run: node scripts/ci/release-smoke.mjs
+        env:
+          RELEASE_URL: https://almorad-amc.vercel.app
+      - name: Summarize release
+        shell: bash
+        run: |
+          printf 'Released commit %s to %s. Encrypted database checkpoint: production-db-backup-%s-%s.\n' \
+            "$GITHUB_SHA" "$RELEASE_URL" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_STEP_SUMMARY"
+      - name: Revoke temporary candidate verification access
+        if: always()
+        run: node scripts/ci/protection-bypass.mjs cleanup

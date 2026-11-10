@@ -35,6 +35,7 @@ function SideNavbarContent({
   ctaLabel,
   links,
 }: SideNavbarProps) {
+  const pathname = usePathname();
   const mounted = useSyncExternalStore(subscribeMount, () => true, () => false);
   const drawerRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -131,6 +132,7 @@ function SideNavbarContent({
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={pathname === item.href ? 'page' : undefined}
                 className="side-drawer-link rounded-squircle-md"
                 style={{ transitionDelay: open ? `${110 + idx * 45}ms` : '0ms' }}
                 onClick={() => setOpen(false)}

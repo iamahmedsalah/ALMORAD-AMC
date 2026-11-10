@@ -6,7 +6,7 @@ for (const locale of ['en', 'ar']) for (const theme of ['light', 'dark'] as cons
   test(`team and gallery layout ${locale} ${theme} ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto(`/${locale}`);
+    await page.goto(`/${locale}/team`);
     await chooseTheme(page, theme);
     const team = page.locator('#chapter-team');
     await expect(team.locator('article')).toHaveCount(8);
@@ -23,22 +23,7 @@ for (const locale of ['en', 'ar']) for (const theme of ['light', 'dark'] as cons
     }))).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect((await new AxeBuilder({ page }).include('#chapter-team').withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
-    if (width === 1440) {
-      const rail = page.locator('.scroll-hud-rail');
-      await expect(rail.locator('button')).toHaveCount(10);
-      for (const number of ['06', '07', '08', '09', '10']) {
-        await rail.locator(`button[aria-label^="${number} "]`).click();
-        await expect(page.locator('.amc-mark-stage')).toHaveAttribute('data-chapter', String(Number(number) - 1));
-      }
-      await page.locator('.desktop-nav a[href$="#chapter-team"]').click();
-      await expect(page).toHaveURL(new RegExp(`/${locale}#chapter-team$`));
-    } else if (width === 390) {
-      await page.locator('.burger-trigger').click();
-      await page.locator('.side-drawer-link[href$="#chapter-team"]').click();
-      await expect(page.locator('.side-drawer')).toBeHidden();
-      await expect(page).toHaveURL(new RegExp(`/${locale}#chapter-team$`));
-    }
-    await team.locator('h2').scrollIntoViewIfNeeded();
+    await team.locator('h1').scrollIntoViewIfNeeded();
     await page.screenshot({ path: `docs/reviews/logo-team-gallery-evidence/team-${locale}-${theme}-${width}.png` });
   });
 }
@@ -80,7 +65,8 @@ test('supplied logo autoplay hands off to scroll, settles and emits no deprecati
   const settled = await canvas.getAttribute('data-test-draw-count');
   await page.waitForTimeout(600);
   expect(await canvas.getAttribute('data-test-draw-count')).toBe(settled);
-  await page.locator('#chapter-team h2').scrollIntoViewIfNeeded();
+  await page.goto('/en/team');
+  await page.locator('#chapter-team h1').scrollIntoViewIfNeeded();
   await expect(page.locator('[data-team-card]').first()).toHaveCSS('opacity', '1');
   await page.screenshot({ path: 'docs/reviews/logo-team-gallery-evidence/team-normal-motion.png' });
   await page.locator('.lp-team-grid-2').screenshot({ path: 'docs/reviews/logo-team-gallery-evidence/executives-final.png' });

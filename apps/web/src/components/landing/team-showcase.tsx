@@ -311,7 +311,8 @@ function ExecutivePortraitSvg({ type, isFeatured }: { type: TeamMember['avatarTy
   );
 }
 
-export function TeamShowcase({ locale }: { locale: Locale }) {
+export function TeamShowcase({ locale, standalone = false }: { locale: Locale; standalone?: boolean }) {
+  const Heading = standalone ? 'h1' : 'h2';
   const isAr = locale === 'ar';
   const ceo = CEO_MEMBER;
   const teamRoot = useRef<HTMLElement>(null);
@@ -341,11 +342,11 @@ export function TeamShowcase({ locale }: { locale: Locale }) {
             <span className="badge-dot" aria-hidden="true" />
             <span>{isAr ? '٠٦ — القيادة وفريق الاستوديو' : '06 — LEADERSHIP & STUDIO TEAM'}</span>
           </p>
-          <h2 id="team-title" className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">
+          <Heading id="team-title" className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">
             {isAr
               ? 'رؤية يقودها المؤسسون. وتنفيذ بمعايير عالمية.'
               : 'Meet the minds shaping your next chapter.'}
-          </h2>
+          </Heading>
         </div>
         <div>
           <p className="text-lg text-[var(--fg-muted)] leading-relaxed mb-6">

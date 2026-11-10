@@ -5,7 +5,7 @@ import { chooseTheme } from './theme';
 for (const locale of ['en', 'ar']) for (const theme of ['light', 'dark'] as const) for (const [width, height] of [[1280, 768], [1366, 640], [1440, 900], [1536, 720], [1920, 1080]] as const) {
   test(`button groups ${locale} ${theme} ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
-    await page.goto(`/${locale}`);
+    await page.goto(`/${locale}/team`);
     await chooseTheme(page, theme);
     const reel = page.locator('#directors');
     await expect(reel).toHaveAttribute('data-reel-active', 'buttons');
@@ -81,7 +81,7 @@ for (const locale of ['en', 'ar']) for (const theme of ['light', 'dark'] as cons
 for (const locale of ['en', 'ar']) for (const width of [320, 390, 430]) {
   test(`phone grid ${locale} ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
-    await page.goto(`/${locale}#directors`);
+    await page.goto(`/${locale}/team#directors`);
     const reel = page.locator('#directors');
     await expect(reel).not.toHaveAttribute('data-reel-active');
     await expect(reel.locator('.team-career-icon').first()).toHaveCSS('width', '28px');
@@ -98,7 +98,7 @@ for (const locale of ['en', 'ar']) for (const width of [320, 390, 430]) {
 for (const locale of ['en', 'ar']) test(`reduced motion groups ${locale}`, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto(`/${locale}#directors`);
+  await page.goto(`/${locale}/team#directors`);
   const reel = page.locator('#directors');
   await expect(reel).toHaveAttribute('data-reel-active', 'buttons');
   await reel.locator('.director-page-button').nth(1).click();
@@ -112,7 +112,7 @@ for (const locale of ['en', 'ar']) test(`reduced motion groups ${locale}`, async
 
 test('portrait accents pause offscreen and navigation survives rapid group changes', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/en');
+  await page.goto('/en/team');
   const reel = page.locator('#directors');
   const icon = reel.locator('.team-career-icon').first();
   await expect(icon).toHaveCSS('animation-play-state', 'paused');

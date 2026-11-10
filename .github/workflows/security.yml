@@ -1,8 +1,16 @@
 name: Security gates
 on:
-  pull_request:
-  push:
+  workflow_call:
+    inputs:
+      scan_containers:
+        type: boolean
+        default: false
   workflow_dispatch:
+    inputs:
+      scan_containers:
+        description: Also validate future VPS container images
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -29,7 +37,7 @@ jobs:
       - uses: github/codeql-action/analyze@v4
   containers:
     # Docker is local-preview infrastructure; the production target is Vercel.
-    if: github.event_name == 'workflow_dispatch'
+    if: inputs.scan_containers == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:

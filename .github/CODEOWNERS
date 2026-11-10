@@ -1,0 +1,6 @@
+# Review release logic, database migrations and their checksum exceptions together.
+/.github/ @iamahmedsalah
+/scripts/ci/ @iamahmedsalah
+/apps/api/prisma/ @iamahmedsalah
+/vercel.json @iamahmedsalah
+/apps/api/vercel.json @iamahmedsalah

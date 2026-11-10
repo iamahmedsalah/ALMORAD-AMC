@@ -38,7 +38,7 @@ export async function Header() {
     { href: '/services', label: t('services') },
     { href: '/about', label: c.nav.about },
     { href: '/work', label: c.nav.work },
-    { href: '/#chapter-team', label: locale === 'ar' ? 'تعرّف على الفريق' : 'Meet the team' },
+    { href: '/team', label: locale === 'ar' ? 'تعرّف على الفريق' : 'Meet the team' },
     { href: '/contact', label: c.nav.contact },
     { href: '/faq', label: t('faq') },
     { href: '/booking', label: bCopy.title },
@@ -56,13 +56,14 @@ export async function Header() {
           </Link>
 
           <nav className="desktop-nav" aria-label={t('menu')}>
-            {links.map((item) => (
+            {links.filter(item => !['/faq', '/booking'].includes(item.href)).map((item) => (
               <Link key={item.href} href={item.href} className="rounded-squircle-md">
                 {item.label}
               </Link>
             ))}
           </nav>
 
+          <Link href="/booking" className="button button-primary header-booking">{locale === 'ar' ? 'احجز لقاءً' : 'Book a meeting'}</Link>
           <Controls />
 
           <SideNavbar
@@ -103,6 +104,7 @@ export async function Footer() {
           <nav aria-label={t('menu')}>
             <Link href="/about">{c.nav.about}</Link>
             <Link href="/work">{c.nav.work}</Link>
+            <Link href="/team">{locale === 'ar' ? 'الفريق' : 'Team'}</Link>
             <Link href="/contact">{c.nav.contact}</Link>
             <Link href="/faq">{t('faq')}</Link>
             <Link href="/credits">{c.nav.credits}</Link>

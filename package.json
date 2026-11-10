@@ -28,7 +28,10 @@
     "ops:smoke": "node scripts/health-smoke.mjs",
     "demo:setup": "node scripts/demo.mjs setup",
     "dev:demo": "node scripts/demo.mjs dev",
-    "preview:demo": "node scripts/demo.mjs preview"
+    "preview:demo": "node scripts/demo.mjs preview",
+    "ci:release:test": "node --test scripts/ci/*.test.mjs",
+    "db:release:inspect": "node scripts/ci/migrations.mjs inspect",
+    "db:release:deploy": "node scripts/ci/migrations.mjs deploy"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",

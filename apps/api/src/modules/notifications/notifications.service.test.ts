@@ -25,7 +25,7 @@ describe('NotificationsService', () => {
     it('produces a deterministic HMAC token matching booking identity', () => {
       const booking = {
         id: 'test-uuid-456',
-        tokenNonce: 'nonce-1234567890abcdef',
+        tokenNonce: 'fixture-nonce',
         tokenVersion: 0
       };
 

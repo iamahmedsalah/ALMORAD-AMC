@@ -1,7 +1,6 @@
 name: Validate workspace
 on:
-  pull_request:
-  push:
+  workflow_call:
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,13 +10,14 @@ concurrency:
 jobs:
   checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     env:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
       TURBO_TELEMETRY_DISABLED: '1'
       DATABASE_URL: postgresql://amc_ci:ci_ephemeral_only@127.0.0.1:5432/amc_test
       TEST_DATABASE_URL: postgresql://amc_ci:ci_ephemeral_only@127.0.0.1:5432/amc_test
+      DIRECT_URL: postgresql://amc_ci:ci_ephemeral_only@127.0.0.1:5432/amc_test
     services:
       postgres:
         image: postgres:17-alpine
@@ -32,6 +32,8 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
+      - name: Validate workflow syntax and shell steps
+        run: docker run --rm --volume "$PWD:/repo:ro" --workdir /repo rhysd/actionlint:1.7.7
       - uses: pnpm/action-setup@v4
         with:
           version: 11.11.0
@@ -40,15 +42,18 @@ jobs:
           node-version: '24'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Review migration policy
+        run: pnpm ci:release:test && node scripts/ci/migrations.mjs policy
       - run: pnpm icons:generate && git diff --exit-code -- apps/web/src/components/ui/solar-data.ts
       - run: pnpm db:generate && pnpm db:validate
-      - run: pnpm lint && pnpm typecheck && pnpm test
+      - run: pnpm lint && pnpm test
       # This service is disposable; this step never receives production credentials.
       - run: pnpm db:migrate && pnpm test:db
       - run: pnpm db:restore:check
         env:
           LOCAL_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
       - run: pnpm build
+      - run: pnpm typecheck
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - run: pnpm test:e2e:staff
