@@ -42,6 +42,7 @@ export function ContactForm({locale}: {locale: Locale}) {
     contactSubmissionSchema.shape[field].safeParse(values[field]).success ? 'valid' : 'invalid';
   const changeField = (field: ContactField, value: string) => {
     setValues(previous => ({...previous, [field]: value}));
+    setTouched(previous => ({...previous, [field]: true}));
     setFieldErrors(previous => {const next = {...previous}; delete next[field]; return next;});
     if (state === 'error') {setState('idle'); setError('');}
   };

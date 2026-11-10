@@ -14,6 +14,8 @@ for (const locale of ['en', 'ar'] as const) {
     await expect(email).toHaveAttribute('aria-invalid', 'true');
     await expect(page.locator('#contact-err-name')).toHaveAttribute('data-state', 'invalid');
     await expect(page.locator('#contact-err-email')).toHaveAttribute('data-state', 'invalid');
+    expect(await email.evaluate(element => getComputedStyle(element).borderTopColor))
+      .toBe(await page.locator('#contact-err-email').evaluate(element => getComputedStyle(element).color));
 
     await name.fill('Local browser fixture');
     await email.fill('fixture@example.invalid');
@@ -21,6 +23,8 @@ for (const locale of ['en', 'ar'] as const) {
     await expect(email).toHaveAttribute('data-valid', 'true');
     await expect(page.locator('#contact-err-name')).toHaveAttribute('data-state', 'valid');
     await expect(page.locator('#contact-err-email')).toHaveAttribute('data-state', 'valid');
+    expect(await email.evaluate(element => getComputedStyle(element).borderTopColor))
+      .toBe(await page.locator('#contact-err-email').evaluate(element => getComputedStyle(element).color));
   });
 
   test(`staff sign in validates email and presents failed login in ${locale}`, async ({page}) => {
@@ -32,12 +36,16 @@ for (const locale of ['en', 'ar'] as const) {
     await email.blur();
     await expect(email).toHaveAttribute('aria-invalid', 'true');
     await expect(page.locator('#staff-email-feedback')).toHaveAttribute('data-state', 'invalid');
+    expect(await email.evaluate(element => getComputedStyle(element).borderTopColor))
+      .toBe(await page.locator('#staff-email-feedback').evaluate(element => getComputedStyle(element).color));
     await form.locator('[type="submit"]').click();
     await expect(form.locator('[role="alert"]')).toBeVisible();
 
     await email.fill('fixture@example.invalid');
     await expect(email).toHaveAttribute('data-valid', 'true');
     await expect(page.locator('#staff-email-feedback')).toHaveAttribute('data-state', 'valid');
+    expect(await email.evaluate(element => getComputedStyle(element).borderTopColor))
+      .toBe(await page.locator('#staff-email-feedback').evaluate(element => getComputedStyle(element).color));
     await password.fill('synthetic-test-password');
     const show = form.getByRole('button', {name: locale === 'ar' ? 'إظهار كلمة المرور' : 'Show password'});
     await show.click();

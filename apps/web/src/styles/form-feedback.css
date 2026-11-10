@@ -16,16 +16,21 @@
   transform: translateY(0);
   overflow: hidden;
   transition: opacity .24s ease, transform .24s ease, max-height .28s ease,
-    padding .28s ease, border-width .28s ease;
+    padding .28s ease, border-width .28s ease, display .28s allow-discrete;
+  transition-behavior: allow-discrete;
 }
 .staff-login .staff-form .form-alert { background: color-mix(in srgb, var(--feedback-color) 9%, var(--surface)); border-inline-start-width: 4px; padding: 14px 16px; }
 .form-alert[data-state="closed"], .staff-login .staff-form .form-alert[data-state="closed"] {
+  display: none;
   max-height: 0;
   opacity: 0;
   transform: translateY(-8px);
   padding-block: 0;
   border-block-width: 0;
   pointer-events: none;
+}
+@starting-style {
+  .form-alert[data-state="open"] { max-height: 0; opacity: 0; transform: translateY(-8px); padding-block: 0; border-block-width: 0; }
 }
 .form-alert[data-state="open"] .form-alert-icon { animation: form-status-pop .46s cubic-bezier(.22, 1, .36, 1) both; }
 .form-alert-success { --feedback-color: var(--success); }
@@ -38,20 +43,20 @@
 .field-feedback[data-state="invalid"] { color: var(--destructive); }
 .field-feedback-symbol { display: grid; place-items: center; flex: 0 0 18px; width: 18px; height: 18px; border: 1px solid currentColor; border-radius: 50%; font-size: .68rem; font-weight: 800; }
 .contact-field :is(input, textarea)[aria-invalid="true"],
-.staff-login .staff-form input[aria-invalid="true"] { border-color: var(--destructive); outline: 1px solid var(--destructive); }
+.staff-login.staff-login .staff-form input[aria-invalid="true"] { border-color: var(--destructive); outline: 1px solid var(--destructive); }
 .contact-field :is(input, textarea)[data-valid="true"],
-.staff-login .staff-form input[data-valid="true"] { border-color: var(--success); }
+.staff-login.staff-login .staff-form input[data-valid="true"] { border-color: var(--success); }
 .contact-field :is(input, textarea)[data-valid="true"]:focus,
-.staff-login .staff-form input[data-valid="true"]:focus { outline: 2px solid var(--success); outline-offset: 2px; }
+.staff-login.staff-login .staff-form input[data-valid="true"]:focus { outline: 2px solid var(--success); outline-offset: 2px; }
 .contact-field :is(input, textarea)[aria-invalid="true"]:focus,
-.staff-login .staff-form input[aria-invalid="true"]:focus { outline: 2px solid var(--destructive); outline-offset: 2px; }
+.staff-login.staff-login .staff-form input[aria-invalid="true"]:focus { outline: 2px solid var(--destructive); outline-offset: 2px; }
 .contact-success { opacity: 1; transform: translateY(0); animation: form-status-arrive .35s ease-out both; transition: opacity .28s ease, transform .28s ease; }
 .contact-success[data-state="closed"] { opacity: 0; transform: translateY(-10px); pointer-events: none; }
 .staff-password-field { display: grid; gap: .5rem; }
 .staff-password-wrap { position: relative; display: block; }
-.staff-login .staff-form .staff-password-wrap input { padding-inline-end: 58px; }
+.staff-login .staff-form .staff-password-wrap input { padding-right: 58px; }
 .staff-login .staff-form .staff-password-wrap .staff-password-toggle {
-  position: absolute; inset-inline-end: 4px; top: 50%; transform: translateY(-50%);
+  position: absolute; right: 4px; left: auto; top: 50%; transform: translateY(-50%);
   display: grid; place-items: center; width: 44px; min-height: 44px; padding: 0;
   border: 0; border-radius: var(--radius-sm); background: transparent;
   color: var(--fg-muted); cursor: pointer;
