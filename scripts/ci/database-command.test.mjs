@@ -21,8 +21,6 @@ test('native PostgreSQL clients use decoded environment credentials and retain r
 
 test('release diagnostics distinguish actionable restore failures without raw output',()=>{
   const cases=[
-    ['Cannot connect to the Docker daemon','docker_unavailable'],
-    ['failed to resolve reference postgres:fixture','container_image_unavailable'],
     ['connection to server at fixture failed: Connection refused','database_connection'],
     ['FATAL: password authentication failed for user fixture','database_authentication'],
     ['ERROR: extension fixture is not available','extension_unavailable'],

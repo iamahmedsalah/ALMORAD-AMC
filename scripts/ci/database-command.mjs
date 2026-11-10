@@ -17,8 +17,6 @@ export function databaseCommandFailure(stage,result){
   if(result.error?.code==='ENOENT')category='command_unavailable';
   else if(result.error?.code==='ETIMEDOUT')category='command_timeout';
   else if(result.error?.code==='ENOBUFS')category='output_limit';
-  else if(/cannot connect to the docker daemon|failed to connect to the docker api|is the docker daemon running/.test(output))category='docker_unavailable';
-  else if(/pull access denied|manifest unknown|error pulling image|failed to resolve reference/.test(output))category='container_image_unavailable';
   else if(/password authentication failed|no pg_hba.conf entry/.test(output))category='database_authentication';
   else if(/connection refused|could not connect to server|connection to server .* failed|could not translate host name|network is unreachable/.test(output))category='database_connection';
   else if(/extension .* is not available|could not open extension control file|could not access file .*no such file/.test(output))category='extension_unavailable';

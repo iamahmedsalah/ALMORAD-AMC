@@ -1,8 +1,8 @@
 name: Native isolated PostgreSQL 18
-description: Start a runner-owned test cluster without containers
+description: Start an isolated native PostgreSQL cluster for CI tests and release rehearsal
 inputs:
   database:
-    description: Isolated amc_*_test database
+    description: Isolated amc_test or amc_*_test database
     required: true
   user:
     description: Ephemeral local database owner
@@ -33,18 +33,4 @@ runs:
         PGSSLMODE: disable
         PGOPTIONS: ''
         PGSERVICE: ''
-      run: |
-        set -euo pipefail
-        [[ "$PGUSER" =~ ^amc_[a-z0-9_]+$ ]] || exit 1
-        [[ "$PGDATABASE" =~ ^amc_[a-z0-9_]+_test$ ]] || exit 1
-        umask 077
-        task_pg_dir="$RUNNER_TEMP/amc-ci-postgres"
-        mkdir "$task_pg_dir"
-        printf '%s\n' "$PGPASSWORD" > "$task_pg_dir/password"
-        trap 'rm -f "$task_pg_dir/password"' EXIT
-        initdb --pgdata="$task_pg_dir/data" --username="$PGUSER" \
-          --auth-local=trust --auth-host=scram-sha-256 --pwfile="$task_pg_dir/password" \
-          > "$task_pg_dir/init.log" 2>&1
-        pg_ctl --pgdata="$task_pg_dir/data" --log="$task_pg_dir/server.log" \
-          --options="-h 127.0.0.1 -p 55432 -c unix_socket_directories=''" --wait start
-        createdb --maintenance-db=postgres --no-password --owner="$PGUSER" "$PGDATABASE"
+      run: bash "$GITHUB_ACTION_PATH/start.sh"

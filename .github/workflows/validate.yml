@@ -46,8 +46,6 @@ jobs:
       # This native cluster is disposable and never receives production credentials.
       - run: pnpm db:migrate && pnpm test:db
       - run: pnpm db:restore:check
-        env:
-          LOCAL_POSTGRES_MODE: native
       - run: pnpm build
       - run: pnpm typecheck
       - name: Package the public browser build once for all shards
