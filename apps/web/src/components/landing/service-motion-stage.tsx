@@ -1,6 +1,7 @@
 'use client';
 
 import {useEffect,useRef,useState,useSyncExternalStore} from 'react';
+import Image from 'next/image';
 import type {Locale} from '@amc/shared';
 import type {DisciplineId} from '@/features/services/discipline-content';
 import type {SceneEngine} from './service-scene-types';
@@ -18,6 +19,7 @@ export function ServiceMotionStage({scene,locale,label,fallback='/studio/studio-
   const [selected,setSelected]=useState(false);
   const [hidden,setHidden]=useState(false);
   const [failed,setFailed]=useState(false);
+  const [failedPoster,setFailedPoster]=useState<string|null>(null);
   const reduced=useSyncExternalStore(subscribeMotion,snapshot,()=>true);
   const eligible=visible&&!hidden&&!paused&&!reduced&&!failed;
   const [ready,setReady]=useState(false);
@@ -90,8 +92,9 @@ export function ServiceMotionStage({scene,locale,label,fallback='/studio/studio-
   },[selected,eligible,scene,locale]);
   const running=selected&&eligible&&ready;
   const poster=scene==='devices'?fallback:`/studio/services/${scene}.webp`;
+  const posterSource=failedPoster===poster?fallback:poster;
   return <div ref={ref} className={`service-motion-stage ${scene==='devices'?'service-device-scene':''}`} data-scene={scene} data-active={running?'true':'false'} data-failed={failed?'true':'false'}>
-    <img className="service-motion-poster" src={poster} width={1000} height={800} alt="" loading="lazy" decoding="async" onError={event=>{if(event.currentTarget.getAttribute('src')!==fallback)event.currentTarget.src=fallback;}}/>
+    <Image className="service-motion-poster" src={posterSource} width={1000} height={800} sizes="(max-width: 767px) 100vw, 50vw" unoptimized={posterSource.endsWith('.svg')} alt="" loading="lazy" decoding="async" onError={()=>{if(posterSource!==fallback)setFailedPoster(poster);}}/>
     <canvas key={`${scene}-${selected}-${eligible}`} ref={canvasRef} className="service-motion-canvas" aria-hidden="true" style={{opacity:running?1:0}}/>
     <button type="button" className="service-motion-toggle" aria-label={`${locale==='ar'?(paused?'تشغيل الحركة':'إيقاف الحركة'):(paused?'Play motion':'Pause motion')}: ${label}`} aria-pressed={paused||reduced} disabled={reduced||failed} onClick={()=>setPaused(value=>!value)}>
       {locale==='ar'?(reduced||failed?'معاينة ثابتة':paused?'تشغيل الحركة':'إيقاف الحركة'):(reduced||failed?'Still preview':paused?'Play motion':'Pause motion')}

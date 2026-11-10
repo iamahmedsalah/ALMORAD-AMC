@@ -2,6 +2,20 @@ import {chooseTheme} from './theme';
 import {test,expect} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import {pillars,services} from '../../packages/shared/src/index';
+for (const locale of ['en','ar']) test(`responsive service posters load and retain their SVG fallback ${locale}`, async ({page}) => {
+ await page.setViewportSize({width:locale==='en'?1440:390,height:1000});
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.goto(`/${locale}`);
+ const poster=page.locator('.service-motion-poster').first();
+ await poster.scrollIntoViewIfNeeded();
+ await expect(poster).toHaveAttribute('srcset', /\/_next\/image\?/);
+ await expect.poll(()=>poster.evaluate(image=>(image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+ await page.route('**/_next/image?**',route=>route.abort());
+ await page.reload();
+ await poster.scrollIntoViewIfNeeded();
+ await expect(poster).toHaveAttribute('src', /\.svg$/);
+ await expect.poll(()=>poster.evaluate(image=>(image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+});
 test('all offering pages contain localised HTML and valid navigation without JavaScript',async({browser,request})=>{
  const context=await browser.newContext({javaScriptEnabled:false,baseURL:test.info().project.use.baseURL});const page=await context.newPage();
  for(const locale of ['en','ar'] as const)for(const item of [...pillars,...services]){const slug='slug' in item?item.slug:item.id;const response=await page.goto(`/${locale}/services/${slug}`);expect(response?.status()).toBe(200);await expect(page.locator('h1')).toHaveText(item[locale]);await expect(page.locator('main')).toContainText(item[locale]);expect(await page.title()).toContain(item[locale]);}

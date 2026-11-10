@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import {ServiceMotionStage} from '@/components/landing/service-motion-stage';
 import {disciplineCopy,disciplineFor} from '@/features/services/discipline-content';
 import { FaqAccordion } from '@/components/ui/faq-accordion';
@@ -94,7 +95,9 @@ export function Landing({ locale }: { locale: Locale }) {
                     className="lp-hero-frame rounded-squircle-lg"
                   >
                     <div className="lp-hero-frame-art rounded-squircle-md">
-                      <img
+                      <Image
+                        unoptimized
+                        loading="eager"
                         src={heroFramePhotos[idx] ?? '/studio/studio-01.svg'}
                         alt=""
                         width={480}

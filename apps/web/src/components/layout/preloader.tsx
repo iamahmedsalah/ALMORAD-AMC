@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
+import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
 import type { Locale } from '@amc/shared';
@@ -42,8 +43,8 @@ function PreloaderCycle() {
       aria-hidden={hidden} role="status" aria-live="polite">
       <div className="amc-preloader-inner" key={cycle}>
         <div className="studio-loader-mark" aria-hidden="true">
-          <img src="/brand/amc-mark.svg" className="brand-mark-light" width="160" height="73" alt="" />
-          <img src="/brand/amc-mark-white.svg" className="brand-mark-dark" width="160" height="73" alt="" />
+          <Image unoptimized src="/brand/amc-mark.svg" className="brand-mark-light" width={160} height={73} alt="" loading="eager" />
+          <Image unoptimized src="/brand/amc-mark-white.svg" className="brand-mark-dark" width={160} height={73} alt="" loading="eager" />
         </div>
         <div className="studio-loader-track" aria-hidden="true"><span /></div>
         <div className="amc-preloader-label"><strong>ALMORAD AMC</strong><small>{t('tagline')}</small></div>

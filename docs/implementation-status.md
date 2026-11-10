@@ -1,3 +1,24 @@
+# Database release rehearsal diagnostics — 10 November 2026
+
+The supplied `database-release.mjs rehearse` log hides the restore command's underlying error. The workflow already defines PostgreSQL 18 and matching `amc_release_test` credentials. The empty Vercel bypass secret is used later for candidate verification and is not read by rehearsal. Backup/decryption progressed to the restore Docker invocation in the original script; the underlying restore cause remains unknown from this log.
+
+Added `database-command.mjs` with fixed stage/category diagnostics and bounded exit codes. It distinguishes Docker/image availability, database connection/authentication, permissions, missing roles/extensions, existing objects, archive/server compatibility and decryption failures without emitting captured output, SQL, object names, credentials or URLs. Unknown failures remain blocking. Added a read-only SELECT 1 preflight through the restore's Docker network/PG environment, after the loopback *_test guard and before decryption. Plaintext dump cleanup now runs on failure as well as success; cleanup errors also block release.
+
+Encrypted checkpoints, checksum/decryption, exit-on-error restore, migration-history comparison, pending migrations and existing-row preservation remain required. No reset, schema deletion, migration rewrite or deployment bypass. Validation: release tests PASS 12/12, including sensitive-output/category cases and subprocess rejection of an unsafe target with plaintext cleanup; focused ESLint PASS; Node syntax PASS; actionlint PASS; whitespace PASS. Live Docker restore was not run because the local daemon is unavailable. No production connection/migration, Vercel setting change, commit, push or deployment performed.
+
+Next steps: publish the reviewed changes through the owner's normal commit/push flow, then start CI using that new revision (rerunning an old commit still uses the old script). If it fails, inspect the safe `database_release_command_failed` JSON. Connection/authentication categories identify the disposable service/URL/network; restore conflicts need freshness/backup-definition inspection; extension, role, permission or compatibility categories require matching the rehearsal environment to the backup. Fix only the reported cause. Do not disable restore errors, reset a database, downgrade PostgreSQL or rotate secrets based on the generic message. Only that safe JSON is needed for follow-up, not raw stderr or plaintext data.
+
+# CI annotation cleanup and image delivery — 10 November 2026
+
+Authorized scope: fix the supplied Actions runtime/runner notices and image lint warnings, and explain the Vercel Node override. No external settings, dependencies, database, deployment, commit or push changed.
+
+- All four workflows use `ubuntu-24.04` rather than the moving `ubuntu-latest` label. Updated checkout/setup-node/upload-artifact to v6, download-artifact to v7, and pnpm/action-setup to v5. The selected action manifests were checked against their official repositories for `runs.using: node24`; action major numbers alone do not establish runtime support (download-artifact v6 still declares Node 20). Existing pnpm 11.11.0, application Node 24, gates, backup/migration sequencing and permissions remain.
+- Migrated the seven flagged native image elements to `next/image`. Official logos and SVG illustrations stay unoptimized so the original artwork is served unchanged, with explicit eager loading retained for above-fold artwork. Service WebP posters use responsive `sizes` and generated image variants; failed optimized requests switch through React state to the supplied SVG fallback. No new external image host or dependency.
+- Removed two unused console-rule suppression comments. ESLint now resolves the Next app root and actual installed React version from the web workspace; the full lint run no longer produces the monorepo root discovery notices.
+- Vercel explanation: root engines require Node >=24 and <25, and both apps specify `24.x`; CI also uses Node 24. Vercel's package.json engines override the dashboard selection by design. Keep that code declaration so CI and deployment use the same major; setting the dashboard to 24.x aligns the UI as well. No dashboard value was inspected or changed. [Vercel version precedence](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions#version-overrides-in-packagejson).
+
+Final verification: `pnpm.cmd lint` and complete direct ESLint PASS with zero errors/zero warnings; workflow YAML/runtime-reference checks and native actionlint PASS; release-safety suite PASS 8/8; web production build PASS including TypeScript and 64 prerendered pages; git diff --check PASS. Focused browser run PASS 31/31 in 2.0 minutes, zero skipped/flaky cases: all 12 earlier performance/contact regressions, 16 EN/AR light/dark accessibility/responsive checks at 320/390/768/1440px, the official static-logo check, and two new optimized-poster/error-fallback cases. English mobile dark and Arabic desktop light screenshots visually inspected: artwork, proportions and layouts intact. JSON evidence is in `.tmp/warnings-and-e2e-results.json`; standard screenshots are in ignored `test-results/`. The earlier repeated run was interrupted before its final summary; the fresh 31-case run covers those failures. Full public/staff/database suites, container scans and remote CI were not rerun for this increment.
+
 # Public E2E offscreen and contact focus corrections — 10 November 2026
 
 The supplied four-way CI shard log had 55 passes and two failures: an extra offscreen showreel draw in Arabic desktop, and the English desktop contact success panel not receiving focus.
@@ -10,7 +31,7 @@ Local verification:
 - Strengthened Arabic 1440px regression against the preserved previous production build: failed as expected, with exactly one offscreen callback repaint (expected zero). The temporary old-build server was stopped afterward.
 - Fresh `pnpm.cmd --filter @amc/web build`: PASS, including TypeScript and all 64 prerendered pages.
 - Changed-file ESLint: PASS, zero errors/one existing native-image warning. Whitespace check PASS.
-- Repeated affected browser cases are running against the fresh build; final results follow.
+- First 12 affected cases passed before the repeated run was interrupted by follow-up work. No final 36/36 result is claimed. The later warning-cleanup run above includes fresh checks of both failures.
 
 No live contact/booking submitted: browser contact requests are mocked with synthetic fixtures. No database migration, deployment, commit or push. The separately reported production Prisma P2010 issue is not fixed by these client changes.
 

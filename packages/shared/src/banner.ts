@@ -91,7 +91,6 @@ export function formatBanner(options: BannerOptions): string {
 }
 
 export function printBanner(options: BannerOptions): void {
-  // eslint-disable-next-line no-console
   console.log(formatBanner(options));
 }
 

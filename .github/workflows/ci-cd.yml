@@ -28,7 +28,7 @@ jobs:
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' ||
       (github.event_name == 'workflow_dispatch' && inputs.deployment_target == 'vercel'))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     environment:
       name: production-vercel
@@ -57,13 +57,13 @@ jobs:
           --health-cmd "pg_isready -U amc_release -d amc_release_test"
           --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
         with:
           version: 11.11.0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: pnpm
@@ -80,7 +80,7 @@ jobs:
       - name: Verify reviewed migrations and back up production
         run: node scripts/ci/database-release.mjs backup
       - name: Retain encrypted recovery checkpoint before schema changes
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: production-db-backup-${{ github.run_id }}-${{ github.run_attempt }}
           path: |

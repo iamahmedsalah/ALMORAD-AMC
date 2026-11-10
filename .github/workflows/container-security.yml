@@ -6,13 +6,13 @@ permissions:
 jobs:
   containers:
     # Vercel does not deploy these images. Run manually when validating Docker.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       matrix:
         service: [web, api]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: docker build -f Dockerfile.${{ matrix.service }} -t amc-${{ matrix.service }}:ci .
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -25,7 +25,7 @@ jobs:
           image-ref: amc-${{ matrix.service }}:ci
           format: cyclonedx
           output: sbom-${{ matrix.service }}.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: sbom-${{ matrix.service }}
           path: sbom-${{ matrix.service }}.json

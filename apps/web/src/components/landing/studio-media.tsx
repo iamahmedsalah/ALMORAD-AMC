@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import Image from 'next/image';
 import type { Locale } from '@amc/shared';
 
 interface StudioShowreelProps {
@@ -405,7 +406,8 @@ export function StudioPhotoShowcase({ locale }: { locale: Locale }) {
           className={`lp-photo-card lp-photo-${photo.span} glass-surface rounded-squircle-lg`}
         >
           <div className="lp-photo-img-wrap rounded-squircle-md">
-            <img
+            <Image
+              unoptimized
               src={photo.src}
               alt={isAr ? photo.titleAr : photo.titleEn}
               width={600}
