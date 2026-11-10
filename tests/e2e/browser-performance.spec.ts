@@ -20,7 +20,17 @@ for (const locale of ['en', 'ar']) for (const width of [390, 1440]) {
             }
             const timer = window.setTimeout(() => {
               pending.delete(timer);
+              const canvases = entries.filter(entry => entry.target.classList.contains('lp-showreel-canvas'));
+              const before = canvases.map(entry => Number((entry.target as HTMLCanvasElement).dataset.testFrames ?? 0));
               callback(entries, observer);
+              canvases.forEach((entry, index) => {
+                const canvas = entry.target as HTMLCanvasElement;
+                if (!entry.isIntersecting) {
+                  const extra = Number(canvas.dataset.testFrames ?? 0) - before[index]!;
+                  canvas.dataset.testOffscreenRedraws = String(Number(canvas.dataset.testOffscreenRedraws ?? 0) + extra);
+                }
+                canvas.dataset.testVisibility = String(entry.isIntersecting);
+              });
             }, 350);
             pending.add(timer);
           }, options);
@@ -47,7 +57,8 @@ for (const locale of ['en', 'ar']) for (const width of [390, 1440]) {
     const canvas = page.locator('.lp-showreel-canvas');
     const frames = async () => Number(await canvas.getAttribute('data-test-frames'));
     await expect.poll(frames).toBeGreaterThan(0);
-    await page.waitForTimeout(400);
+    await expect(canvas).toHaveAttribute('data-test-visibility', 'false');
+    await expect(canvas).toHaveAttribute('data-test-offscreen-redraws', '0');
     const offscreen = await frames();
     await page.waitForTimeout(500);
     expect(await frames()).toBe(offscreen);
@@ -78,7 +89,8 @@ for (const locale of ['en', 'ar']) for (const width of [390, 1440]) {
     await expect.poll(frames).toBeGreaterThan(resumed + 2);
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
     await expect(page.locator('.hero-copy')).toBeInViewport();
-    await page.waitForTimeout(800);
+    await expect(canvas).toHaveAttribute('data-test-visibility', 'false');
+    await expect(canvas).toHaveAttribute('data-test-offscreen-redraws', '0');
     const hidden = await frames();
     await page.waitForTimeout(500);
     expect(await frames()).toBe(hidden);

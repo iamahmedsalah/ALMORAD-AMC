@@ -275,7 +275,10 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
       visible = entry?.isIntersecting ?? false;
       // The effect already paints a still frame. Observer delivery is asynchronous
       // and must not repaint a paused canvas after that frame has settled.
-      if (!paused) wake();
+      if (!visible) {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      } else if (!paused) wake();
     });
     observer.observe(canvas);
     document.addEventListener('visibilitychange', wake);

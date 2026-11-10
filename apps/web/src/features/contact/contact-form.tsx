@@ -1,5 +1,5 @@
 'use client';
-import {useRef, useState, type FormEvent} from 'react';
+import {useEffect, useRef, useState, type FormEvent} from 'react';
 import {contactSubmissionSchema, type Locale} from '@amc/shared';
 import {Button} from '@/components/ui/button';
 
@@ -26,6 +26,9 @@ export function ContactForm({locale}: {locale: Locale}) {
   const attempt = useRef<{fingerprint: string; key: string} | null>(null);
   const busy = useRef(false);
   const status = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (state === 'success') status.current?.focus();
+  }, [state]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy.current) return;
@@ -69,7 +72,6 @@ export function ContactForm({locale}: {locale: Locale}) {
       const result: unknown = await response.json();
       if (!result || typeof result !== 'object' || !('accepted' in result) || result.accepted !== true) throw new Error('Invalid acknowledgement');
       form.reset(); attempt.current = null; setState('success');
-      requestAnimationFrame(() => status.current?.focus());
     } catch { setError(c.failed); setState('error'); }
     finally { busy.current = false; }
   }

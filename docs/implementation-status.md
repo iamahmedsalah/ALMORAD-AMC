@@ -1,3 +1,27 @@
+# Public E2E offscreen and contact focus corrections — 10 November 2026
+
+The supplied four-way CI shard log had 55 passes and two failures: an extra offscreen showreel draw in Arabic desktop, and the English desktop contact success panel not receiving focus.
+
+- `studio-media.tsx`: a non-intersecting observer notification now cancels the pending animation frame without calling `wake()` or repainting the canvas. Paused frames and manual scene selection retain the previous behavior; visible playback still resumes normally.
+- `contact-form.tsx`: success-panel focus now runs in a React effect after the success DOM has committed, replacing a requestAnimationFrame scheduled immediately after `setState`. Validation, failed-attempt field retention, retry idempotency and success acknowledgement are unchanged.
+- `browser-performance.spec.ts`: delayed observer instrumentation counts paints performed inside offscreen callbacks. The test explicitly waits for delivered visibility and requires zero offscreen callback redraws, while retaining stable-frame, frame-budget, pause/chapter/resume and reduced-motion assertions. This replaces fixed startup/offscreen settling waits with observable conditions; no retries or assertion relaxation added.
+
+Local verification:
+- Strengthened Arabic 1440px regression against the preserved previous production build: failed as expected, with exactly one offscreen callback repaint (expected zero). The temporary old-build server was stopped afterward.
+- Fresh `pnpm.cmd --filter @amc/web build`: PASS, including TypeScript and all 64 prerendered pages.
+- Changed-file ESLint: PASS, zero errors/one existing native-image warning. Whitespace check PASS.
+- Repeated affected browser cases are running against the fresh build; final results follow.
+
+No live contact/booking submitted: browser contact requests are mocked with synthetic fixtures. No database migration, deployment, commit or push. The separately reported production Prisma P2010 issue is not fixed by these client changes.
+
+# CodeQL removal — 10 November 2026
+
+The owner explicitly requested removal because CodeQL is unavailable for this private repository's plan. Removed the CodeQL job and SARIF artifact step from `security.yml`, plus the caller's unused `actions: read` and `security-events: write` permissions in `ci-cd.yml`. The default `contents: read` permission remains. Earlier instructions below to enable CodeQL are historical and superseded by this request.
+
+The release still depends on validation and the security workflow (Gitleaks secret scanning). Production dependency audit, unit/database/staff tests and four public E2E shards remain required. Removing CodeQL removes this specific release blocker; it does not guarantee release success or override main-branch/event conditions. No replacement SAST coverage is claimed. No commit, push, remote migration or deployment performed. The separately reported Vercel Prisma P2010 failures remain unresolved by this workflow change.
+
+Validation: native actionlint PASS; all four workflow YAML files parsed; assertions verified CodeQL/security-events removal, unchanged release dependencies, retained public E2E matrix and dependency audit; git diff --check PASS. No application tests rerun for this workflow-only deletion.
+
 # CI browser sharding and security workflow cleanup — 10 November 2026
 
 Authorized scope: shorten CI validation, explain the newer CodeQL failure, and remove irrelevant skipped containers from the Vercel pipeline. No commit, push, deployment, remote database operation, paid feature activation or repository setting change.
