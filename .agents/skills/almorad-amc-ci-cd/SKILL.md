@@ -1,5 +1,5 @@
 ---
-name: almorad-amc-ci-cd-verifier
+name: almorad-amc-ci-cd
 description: Production release engineering and CI/CD verification for the ALMORAD AMC bilingual Next.js 16/NestJS 12 monorepo with PostgreSQL/Prisma, Redis/BullMQ, Resend, Docker/VPS. Use for GitHub Actions workflows, deployment, Prisma migrations, secret scanning, tests, rollback, backup/restore, monitoring, performance and security release gates.
 ---
 

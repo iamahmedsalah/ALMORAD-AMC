@@ -6,6 +6,32 @@ for (const locale of ['en', 'ar']) for (const width of [390, 1440]) {
     page.on('console', message => { if (/GSAP target.*not found|Largest Contentful Paint|preloaded.*not used/i.test(message.text())) warnings.push(message.text()); });
     page.on('pageerror', error => warnings.push(error.message));
     await page.addInitScript(() => {
+      // Reproduce a busy runner delivering the newly registered observer after
+      // the pause's still frame. Pausing must not depend on callback timing.
+      const NativeObserver = window.IntersectionObserver;
+      window.IntersectionObserver = class extends NativeObserver {
+        private readonly pending: Set<number>;
+        constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+          const pending = new Set<number>();
+          super((entries, observer) => {
+            if (!entries.some(entry => entry.target.classList.contains('lp-showreel-canvas'))) {
+              callback(entries, observer);
+              return;
+            }
+            const timer = window.setTimeout(() => {
+              pending.delete(timer);
+              callback(entries, observer);
+            }, 350);
+            pending.add(timer);
+          }, options);
+          this.pending = pending;
+        }
+        disconnect() {
+          for (const timer of this.pending) window.clearTimeout(timer);
+          this.pending.clear();
+          super.disconnect();
+        }
+      };
       const original = CanvasRenderingContext2D.prototype.createLinearGradient;
       CanvasRenderingContext2D.prototype.createLinearGradient = function (...args: Parameters<typeof original>) {
         if (this.canvas.classList.contains('lp-showreel-canvas') && args[0] === 0 && args[1] === 0 && args[2] === this.canvas.width) this.canvas.dataset.testFrames = String(Number(this.canvas.dataset.testFrames ?? 0) + 1);
@@ -41,6 +67,11 @@ for (const locale of ['en', 'ar']) for (const width of [390, 1440]) {
     expect(await frames()).toBe(paused);
     await page.locator('.lp-showreel-chapter').nth(2).click();
     await expect(page.locator('.lp-showreel-chapter').nth(2)).toHaveAttribute('data-active', 'true');
+    await expect(pause).toHaveAttribute('aria-pressed', 'true');
+    expect(await frames()).toBeGreaterThan(paused);
+    const chapterStill = await frames();
+    await page.waitForTimeout(500);
+    expect(await frames()).toBe(chapterStill);
     await pause.click();
     await expect(pause).toHaveAttribute('aria-pressed', 'false');
     const resumed = await frames();

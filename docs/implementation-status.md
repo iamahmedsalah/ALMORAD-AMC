@@ -1,3 +1,21 @@
+# CI permission and paused-showreel correction — 10 November 2026
+
+Scope: repair the supplied CodeQL analyze failure and the two public browser-performance failures. No migration, deployment, commit, push or external account change.
+
+- CodeQL finished extraction and queries but failed on `GET /repos/{owner}/{repo}/actions/runs/{run_id}`. Added job-scoped `actions: read` to both the `ci-cd.yml` reusable-workflow caller and `security.yml` CodeQL job. Existing `contents: read` and `security-events: write` remain. GitHub documents the read requirement for the [workflow-run endpoint](https://docs.github.com/en/rest/actions/workflow-runs#get-a-workflow-run) and the [caller permission ceiling](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows#nesting-reusable-workflows).
+- Pausing recreates the showreel effect and paints a still frame immediately; the newly registered IntersectionObserver previously called `wake()` again asynchronously. Paused observer notifications now update visibility without repainting. Manual chapter changes still paint their selected still frame.
+- Browser regression delays showreel observer delivery by 350ms to exercise late callbacks, checks zero ongoing draws after pausing and selecting a chapter, and retains resume/offscreen/reduced-motion checks in English/Arabic at 390/1440px.
+
+Actual local validation:
+- Workflow YAML parse: PASS, all three files; explicit caller/callee `actions: read` check: PASS.
+- `pnpm.cmd lint`: PASS, zero errors/nine existing warnings. Final affected-file lint: PASS, one existing native-image warning.
+- `pnpm.cmd ci:release:test`: PASS, 8/8. Direct Node invocation also passed 8/8.
+- `pnpm.cmd test -- --maxWorkers=1`: PASS, 28 files/93 tests (the existing Vitest configuration controls worker count).
+- `node node_modules/typescript/bin/tsc --noEmit -p apps/web/tsconfig.json`: PASS.
+- `pnpm.cmd --filter @amc/web build`: PASS, including TypeScript and 64 prerendered pages, after rerunning with user-cache access. Initial sandboxed build failed on Windows SWC native-cache permissions.
+- `pnpm.cmd exec playwright test tests/e2e/browser-performance.spec.ts --workers=1 --repeat-each=3`: PASS, 12/12 against the fresh local production build, including deliberately delayed observer callbacks. Full public/staff E2E and database suites were not rerun for this focused change.
+- Docker daemon unavailable, so actionlint's Docker-based check was not run locally. No local CodeQL scan or GitHub Actions rerun claimed.
+
 # Implementation status — 9 November 2026
 
 ## Current authorized scope

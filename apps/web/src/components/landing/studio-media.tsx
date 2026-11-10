@@ -273,7 +273,9 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
     };
     const observer = new IntersectionObserver(([entry]) => {
       visible = entry?.isIntersecting ?? false;
-      wake();
+      // The effect already paints a still frame. Observer delivery is asynchronous
+      // and must not repaint a paused canvas after that frame has settled.
+      if (!paused) wake();
     });
     observer.observe(canvas);
     document.addEventListener('visibilitychange', wake);
