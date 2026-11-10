@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --env-file=../../.env src/main.ts",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/stage-api-runtime.mjs && node ../../scripts/check-api-runtime.mjs",
     "start": "node --env-file=../../.env dist/apps/api/src/main.js",
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",

@@ -36,7 +36,9 @@ for (const locale of ['en', 'ar']) for (const width of [320, 390, 768, 1440]) {
     const back = page.locator('.back-to-top');
     await back.click(); await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
     await expect(back).toBeVisible(); await expect(back).toHaveAttribute('data-return-available', 'true');
-    await back.click(); await expect.poll(() => page.evaluate(() => scrollY)).toBe(saved);
+    await back.click();
+    // The existing control clamps an origin that exceeds the current document height.
+    await expect.poll(() => page.evaluate(origin => Math.abs(scrollY - Math.min(origin, Math.max(0, document.documentElement.scrollHeight - innerHeight))), saved)).toBeLessThanOrEqual(1);
     await expect(back).toHaveAttribute('data-return-available', 'false');
     await back.click(); await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
     await page.locator('.desktop-nav a[href$="/faq"]').evaluate(el => (el as HTMLAnchorElement).click());

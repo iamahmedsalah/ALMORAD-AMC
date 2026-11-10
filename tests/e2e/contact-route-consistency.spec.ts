@@ -34,7 +34,8 @@ for (const locale of ['en','ar']) for (const theme of ['light','dark']) for (con
     const form = page.locator('.contact-form-panel form');
     await form.locator('[type="submit"]').click();
     await expect(page.locator('#contact-name')).toBeFocused();
-    await expect(form.locator('[role="alert"]')).toBeVisible();
+    await expect(form.locator('#contact-error')).toBeVisible();
+    await expect(form.locator('.field-error')).toHaveCount(4);
     await page.locator('#contact-name').fill('Synthetic browser fixture');
     await page.locator('#contact-email').fill('fixture@example.invalid');
     await page.locator('#contact-message').fill('Synthetic contact inquiry for browser verification only.');
@@ -45,7 +46,7 @@ for (const locale of ['en','ar']) for (const theme of ['light','dark']) for (con
       await route.fulfill({status:bodies.length === 1 ? 503 : 201,contentType:'application/json',body:JSON.stringify(bodies.length === 1 ? {message:'Synthetic unavailable'} : {accepted:true})});
     });
     await form.locator('[type="submit"]').click();
-    await expect(form.locator('[role="alert"]')).toBeVisible();
+    await expect(form.locator('#contact-error')).toBeVisible();
     await expect(page.locator('#contact-message')).toHaveValue('Synthetic contact inquiry for browser verification only.');
     await form.locator('[type="submit"]').click();
     await expect(page.locator('.contact-success')).toBeFocused();

@@ -4,7 +4,9 @@
   "globalDependencies": [
     "tsconfig.base.json",
     "eslint.config.mjs",
-    ".env"
+    ".env",
+    "scripts/check-api-runtime.mjs",
+    "scripts/stage-api-runtime.mjs"
   ],
   "globalEnv": [
     "NODE_ENV",
@@ -39,7 +41,12 @@
     "API_HOST",
     "PORT",
     "BOOKING_TOKEN_SECRET",
-    "BOOKING_APPROVED"
+    "BOOKING_APPROVED",
+    "HUBSPOT_ACCESS_TOKEN",
+    "RESEND_API_KEY",
+    "RESEND_FROM_EMAIL",
+    "CONTACT_INBOX_EMAIL",
+    "VERCEL_PROJECT_PRODUCTION_URL"
   ],
   "tasks": {
     "build": {

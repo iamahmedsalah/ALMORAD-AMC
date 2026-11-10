@@ -9,6 +9,7 @@ const allowed:Record<string,string>={'auth/login':'POST','auth/logout':'POST','a
 export async function forward(request:NextRequest,endpoint:string,namespace:'staff'|'booking'|'contact'){
  const routes=namespace==='staff'?allowed:namespace==='contact'?contactAllowed:publicAllowed;
  const bodyLimit=namespace==='contact'?16384:namespace==='staff'&&endpoint==='booking-settings'?16384:4096;
+ const unavailable=()=>NextResponse.json({message:namespace==='staff'?'Staff service unavailable':namespace==='contact'?'Contact service unavailable':'Booking service unavailable'},{status:503,headers});
  const headers={'Cache-Control':'private, no-store','X-Robots-Tag':'noindex, nofollow'};
  if(!routes[endpoint]?.split(',').includes(request.method))return NextResponse.json({message:'Not found'},{status:404,headers});
  const fallbackOrigin=process.env.VERCEL_PROJECT_PRODUCTION_URL?`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`:request.nextUrl.origin||'http://localhost:3000';
@@ -19,20 +20,22 @@ export async function forward(request:NextRequest,endpoint:string,namespace:'sta
   if(process.env.VERCEL_PROJECT_PRODUCTION_URL)origins.add(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
   if(process.env.VERCEL_URL)origins.add(`https://${process.env.VERCEL_URL}`);
   if(process.env.VERCEL_BRANCH_URL)origins.add(`https://${process.env.VERCEL_BRANCH_URL}`);
-  const isVercelHost=/^[a-zA-Z0-9.-]+\.vercel\.app$/.test(new URL(reqOrigin || 'http://unknown').hostname);
+  let originUrl:URL;
+  try{originUrl=new URL(reqOrigin);}catch{return NextResponse.json({message:'Forbidden'},{status:403,headers});}
+  const isVercelHost=/^[a-zA-Z0-9.-]+\.vercel\.app$/.test(originUrl.hostname);
   const isSameHost=reqOrigin===request.nextUrl.origin;
   const local=process.env.NODE_ENV!=='production'&&isSameHost&&['127.0.0.1','localhost'].includes(request.nextUrl.hostname);
   if(!origins.has(reqOrigin)&&!local&&!(isSameHost&&isVercelHost))return NextResponse.json({message:'Forbidden'},{status:403,headers});
  }
  const value=process.env.STAFF_API_ORIGIN||(process.env.NODE_ENV==='production'?undefined:'http://127.0.0.1:4000');
  const secret=process.env.STAFF_PROXY_SECRET;
- if(!value||(process.env.NODE_ENV==='production'&&(!secret||secret.length<64)))return NextResponse.json({message:'Staff service unavailable'},{status:503,headers});
+ if(!value||(process.env.NODE_ENV==='production'&&(!secret||secret.length<64)))return unavailable();
  let api:URL;
  try{
   api=new URL(value);
   const internalOrLocal=api.protocol==='http:'&&(['127.0.0.1','localhost','api','[::1]'].includes(api.hostname)||api.hostname.endsWith('.internal')||process.env.VERCEL_ENV==='development');
   if((api.protocol!=='https:'&&!internalOrLocal)||api.pathname!=='/'||api.username||api.password||api.search||api.hash)throw new Error();
- }catch{return NextResponse.json({message:'Staff service unavailable'},{status:503,headers});}
+ }catch{return unavailable();}
  if(request.method==='POST'&&(!request.headers.get('content-type')?.startsWith('application/json')||Number(request.headers.get('content-length')||0)>bodyLimit))return NextResponse.json({message:'Invalid request'},{status:400,headers});
  let body:string|undefined;
  if(request.method==='POST'){
@@ -48,13 +51,17 @@ export async function forward(request:NextRequest,endpoint:string,namespace:'sta
  if(process.env.STAFF_API_BYPASS_TOKEN)forward.set('x-vercel-protection-bypass',process.env.STAFF_API_BYPASS_TOKEN);
  try{
   const upstream=await fetch(targetUrl,{method:request.method,headers:forward,body,cache:'no-store',redirect:'error',signal:AbortSignal.timeout(15000)});
-  const response=new NextResponse(await upstream.text(),{status:upstream.status,headers:{...headers,'Content-Type':'application/json'}});
+  const payload=await upstream.text();
+  // Platform invocation failures may be plain text/HTML, not the API's JSON contract.
+  if(!upstream.headers.get('content-type')?.toLowerCase().includes('application/json'))return unavailable();
+  try{JSON.parse(payload);}catch{return unavailable();}
+  const response=new NextResponse(payload,{status:upstream.status,headers:{...headers,'Content-Type':'application/json'}});
   for(const cookie of upstream.headers.getSetCookie())response.headers.append('Set-Cookie',cookie);
   return response;
  }catch{
   if(process.env.NODE_ENV!=='production'){
    console.warn(`[API Proxy Warning] Unable to reach backend API at ${targetUrl.toString()}. Please check that the API (@amc/api) is running.`);
   }
-  return NextResponse.json({message:'Staff service unavailable'},{status:503,headers});
+  return unavailable();
  }
 }

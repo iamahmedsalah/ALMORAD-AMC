@@ -20,7 +20,7 @@ export class HealthController {
   @Get('ready')
   async ready() {
     try {
-      await this.prisma.$queryRaw`SELECT u."passwordHash" FROM "StaffUser" u LEFT JOIN "StaffSession" s ON FALSE LEFT JOIN "StaffAuditEvent" a ON FALSE LEFT JOIN "RequestThrottle" r ON FALSE LEFT JOIN "BookingSettings" cfg ON FALSE LEFT JOIN "Booking" b ON FALSE WHERE FALSE`;
+      await this.prisma.$queryRaw`SELECT u."passwordHash", b."hubspotContactId", b."hubspotMeetingId", ci."nextRetryAt", bo."nextRetryAt" FROM "StaffUser" u LEFT JOIN "StaffSession" s ON FALSE LEFT JOIN "StaffAuditEvent" a ON FALSE LEFT JOIN "RequestThrottle" r ON FALSE LEFT JOIN "BookingSettings" cfg ON FALSE LEFT JOIN "Booking" b ON FALSE LEFT JOIN "ContactInquiry" ci ON FALSE LEFT JOIN "BookingOutbox" bo ON FALSE WHERE FALSE`;
       return {status: 'ok', database: 'up'};
     } catch {
       throw new ServiceUnavailableException({status: 'unavailable', database: 'down'});

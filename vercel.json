@@ -5,7 +5,13 @@
       "root": "apps/api",
       "framework": "nestjs",
       "installCommand": "pnpm install --frozen-lockfile",
-      "buildCommand": "pnpm --workspace-root exec turbo run build --filter=@amc/api"
+      "buildCommand": "pnpm --workspace-root exec turbo run build --filter=@amc/api",
+      "outputDirectory": "dist/apps/api/src",
+      "functions": {
+        "dist/apps/api/src/main.js": {
+          "includeFiles": "{dist/apps/api/src/node_modules/**,dist/apps/api/src/package.json}"
+        }
+      }
     },
     "web": {
       "root": "apps/web",

@@ -24,3 +24,5 @@ apps/api/src/generated/
 .turbo-cache/
 .tmp/
 .backups/
+
+.vercel

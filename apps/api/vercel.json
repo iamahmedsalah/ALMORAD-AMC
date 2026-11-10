@@ -3,5 +3,16 @@
   "framework": "nestjs",
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --workspace-root exec turbo run build --filter=@amc/api",
-  "crons": [{"path": "/ops/maintenance", "schedule": "0 3 * * *"}]
+  "crons": [
+    {
+      "path": "/ops/maintenance",
+      "schedule": "0 3 * * *"
+    }
+  ],
+  "outputDirectory": "dist/apps/api/src",
+  "functions": {
+    "dist/apps/api/src/main.js": {
+      "includeFiles": "{dist/apps/api/src/node_modules/**,dist/apps/api/src/package.json}"
+    }
+  }
 }
