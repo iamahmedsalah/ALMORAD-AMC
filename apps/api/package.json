@@ -12,7 +12,8 @@
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate deploy",
     "db:seed:demo": "tsx --env-file=../../.env prisma/seed.ts",
-    "staff:provision": "tsx --env-file=../../.env prisma/provision-staff.ts"
+    "staff:provision": "tsx --env-file=../../.env prisma/provision-staff.ts",
+    "staff:dev:setup": "tsx --env-file=../../.env prisma/provision-dev-staff.ts"
   },
   "dependencies": {
     "@amc/shared": "workspace:*",

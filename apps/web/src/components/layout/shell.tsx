@@ -100,14 +100,13 @@ export async function Footer() {
           </div>
         </div>
         <div className="footer-bottom-row">
-          <small>© {new Date().getFullYear()} ALMORAD AMC</small>
+          <small>© {new Date().getFullYear()} ALMORAD AMC · <a href="/third-party-notices.txt">{locale === 'ar' ? 'تراخيص الأصول' : 'Asset licences'}</a></small>
           <nav aria-label={t('menu')}>
             <Link href="/about">{c.nav.about}</Link>
             <Link href="/work">{c.nav.work}</Link>
             <Link href="/team">{locale === 'ar' ? 'الفريق' : 'Team'}</Link>
             <Link href="/contact">{c.nav.contact}</Link>
             <Link href="/faq">{t('faq')}</Link>
-            <Link href="/credits">{c.nav.credits}</Link>
             <Link href="/staff/login" rel="nofollow">{locale === 'ar' ? 'دخول الفريق' : 'Staff sign in'}</Link>
           </nav>
         </div>

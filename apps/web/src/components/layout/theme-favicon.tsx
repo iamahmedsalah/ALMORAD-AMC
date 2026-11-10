@@ -11,7 +11,7 @@ export function ThemeFavicon() {
   useEffect(() => {
     if (!resolvedTheme) return;
     const synchronize = () => {
-      const href = resolvedTheme === 'dark' ? '/favicon-orange.svg' : '/favicon-light.svg';
+      const href = resolvedTheme === 'dark' ? '/favicon-navy.svg' : '/favicon-light.svg';
       let link = document.head.querySelector<HTMLLinkElement>('link[data-amc-favicon]');
       if (!link) {
         link = document.createElement('link');

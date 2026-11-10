@@ -4,6 +4,7 @@ import {resolve,join} from 'node:path';
 import {createRequire} from 'node:module';
 import {inspectMigrations,migrationTarget,ReleasePolicyError} from './migrations.mjs';
 import {runDatabaseCommand as run,postgresEnvironment as pgEnvironment} from './database-command.mjs';
+import {archiveExtensions,missingExtensions} from './restore-extensions.mjs';
 const mode=process.argv[2];
 const directory=resolve(process.env.RUNNER_TEMP||'.tmp','amc-database-release');
 const dump=join(directory,'database.dump'),encrypted=join(directory,'database.dump.enc');
@@ -43,6 +44,11 @@ try{
     const expected=JSON.parse(await readFile(join(directory,'backup.json'),'utf8')).sha256;
     if(createHash('sha256').update(await readFile(encrypted)).digest('hex')!==expected)throw new ReleasePolicyError('Encrypted backup checksum mismatch');
     run('rehearsal_decrypt','openssl',['enc','-d','-aes-256-cbc','-pbkdf2','-iter','200000','-in',encrypted,'-out',dump,'-pass','env:BACKUP_ENCRYPTION_KEY']);
+    // Inspect only extension TOC entries. Never emit SQL, table names or archive contents.
+    const required=archiveExtensions(run('rehearsal_extensions','pg_restore',['--list',dump]));
+    const available=run('rehearsal_extensions','psql',['--no-password','--no-psqlrc','--tuples-only','--no-align','--set','ON_ERROR_STOP=1','--command','SELECT name FROM pg_available_extensions'],{env:pgEnvironment(local.url.href)});
+    const missing=missingExtensions(required,available);
+    if(missing.length)throw new ReleasePolicyError(JSON.stringify({event:'rehearsal_extensions_missing',extensions:missing,action:'Install matching PostgreSQL 18 extension packages on the isolated rehearsal runner; do not skip archive entries'}));
     const file=await open(dump,'r');
     try{run('rehearsal_restore','pg_restore',['--no-password','--no-owner','--no-privileges','--exit-on-error','--dbname',decodeURIComponent(local.url.pathname.slice(1))],{env:pgEnvironment(local.url.href),stdio:[file.fd,'pipe','pipe']});}finally{await file.close();}
     const state=await inspectMigrations({DIRECT_URL:local.url.href});

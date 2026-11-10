@@ -1,0 +1,70 @@
+.form-alert {
+  --feedback-color: var(--destructive);
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--feedback-color) 52%, var(--surface));
+  border-inline-start-width: 4px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--feedback-color) 9%, var(--surface));
+  color: var(--foreground);
+  max-height: 220px;
+  opacity: 1;
+  transform: translateY(0);
+  overflow: hidden;
+  transition: opacity .24s ease, transform .24s ease, max-height .28s ease,
+    padding .28s ease, border-width .28s ease;
+}
+.staff-login .staff-form .form-alert { background: color-mix(in srgb, var(--feedback-color) 9%, var(--surface)); border-inline-start-width: 4px; padding: 14px 16px; }
+.form-alert[data-state="closed"], .staff-login .staff-form .form-alert[data-state="closed"] {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  padding-block: 0;
+  border-block-width: 0;
+  pointer-events: none;
+}
+.form-alert[data-state="open"] .form-alert-icon { animation: form-status-pop .46s cubic-bezier(.22, 1, .36, 1) both; }
+.form-alert-success { --feedback-color: var(--success); }
+.form-alert-icon { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: var(--feedback-color); font-weight: 800; }
+.form-alert-icon .solar-icon { width: 22px; height: 22px; }
+.form-alert-title { display: block; margin-block-end: 2px; font-size: .94rem; line-height: 1.4; }
+.form-alert-description { margin: 0; font-size: .88rem; line-height: 1.6; }
+.field-feedback { display: flex; align-items: center; gap: 7px; margin: 0; font-size: .82rem; line-height: 1.5; }
+.field-feedback[data-state="valid"] { color: var(--success); }
+.field-feedback[data-state="invalid"] { color: var(--destructive); }
+.field-feedback-symbol { display: grid; place-items: center; flex: 0 0 18px; width: 18px; height: 18px; border: 1px solid currentColor; border-radius: 50%; font-size: .68rem; font-weight: 800; }
+.contact-field :is(input, textarea)[aria-invalid="true"],
+.staff-login .staff-form input[aria-invalid="true"] { border-color: var(--destructive); outline: 1px solid var(--destructive); }
+.contact-field :is(input, textarea)[data-valid="true"],
+.staff-login .staff-form input[data-valid="true"] { border-color: var(--success); }
+.contact-field :is(input, textarea)[data-valid="true"]:focus,
+.staff-login .staff-form input[data-valid="true"]:focus { outline: 2px solid var(--success); outline-offset: 2px; }
+.contact-field :is(input, textarea)[aria-invalid="true"]:focus,
+.staff-login .staff-form input[aria-invalid="true"]:focus { outline: 2px solid var(--destructive); outline-offset: 2px; }
+.contact-success { opacity: 1; transform: translateY(0); animation: form-status-arrive .35s ease-out both; transition: opacity .28s ease, transform .28s ease; }
+.contact-success[data-state="closed"] { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+.staff-password-field { display: grid; gap: .5rem; }
+.staff-password-wrap { position: relative; display: block; }
+.staff-login .staff-form .staff-password-wrap input { padding-inline-end: 58px; }
+.staff-login .staff-form .staff-password-wrap .staff-password-toggle {
+  position: absolute; inset-inline-end: 4px; top: 50%; transform: translateY(-50%);
+  display: grid; place-items: center; width: 44px; min-height: 44px; padding: 0;
+  border: 0; border-radius: var(--radius-sm); background: transparent;
+  color: var(--fg-muted); cursor: pointer;
+}
+.staff-login .staff-form .staff-password-toggle:hover { color: var(--foreground); background: var(--surface-2); }
+.staff-login .staff-form .staff-password-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.staff-password-toggle .solar-icon { width: 22px; height: 22px; }
+.staff-password-icon { display: grid; place-items: center; animation: password-eye-switch .24s ease-out; }
+@keyframes form-status-pop { from { opacity: 0; transform: scale(.55) rotate(-20deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes form-status-arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes password-eye-switch { from { opacity: .4; transform: scale(.8); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .form-alert, .contact-success { animation: none; transition: none; }
+  .form-alert[data-state="open"] .form-alert-icon { animation: none; }
+  .staff-password-icon { animation: none; }
+}

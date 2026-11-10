@@ -1,0 +1,7 @@
+ALMORAD AMC asset notices
+Original ALMORAD AMC 2D and 3D brand artwork.
+Solar icons by 480 Design: https://github.com/480-Design/Solar-Icon-Set
+CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
+Distributed through Iconify; icons selected and sized for this website.
+Fira Sans and Cairo: Google Fonts, SIL Open Font License; see /fonts/Fira-Sans-OFL.txt and /fonts/Cairo-OFL.txt.
+Rock Salt: Google Fonts, Apache License 2.0; see /fonts/Rock-Salt-LICENSE.txt.

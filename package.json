@@ -26,6 +26,7 @@
     "test:db": "vitest run --config vitest.db.config.ts",
     "icons:generate": "node scripts/generate-solar.mjs",
     "staff:provision": "pnpm --filter @amc/api staff:provision",
+    "staff:dev:setup": "pnpm --filter @amc/api staff:dev:setup",
     "db:backup:local": "node scripts/db-safety.mjs backup",
     "db:restore:check": "node scripts/db-safety.mjs rehearse",
     "test:e2e:staff": "playwright test --config playwright.staff.config.ts",

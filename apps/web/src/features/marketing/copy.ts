@@ -1,7 +1,7 @@
 ﻿import type {Locale} from '@amc/shared';
 export const copy = {
  en: {
-  nav:{about:'Studio',work:'Work',contact:'Let’s talk',credits:'Credits'},
+  nav:{about:'About us',work:'Work',contact:'Let’s talk',credits:'Credits'},
   eyebrow:'INDEPENDENT THINKING. CONNECTED POSSIBILITIES.',hero:['Your next move.','Made together.'],intro:'A growth & brand studio connecting strategy, creativity and technology. For brands ready to mean more — and move forward.',cta:'Explore our expertise',secondary:'Meet the studio',scroll:'A little further, a bigger picture',pause:'Pause animation',play:'Play animation',
   strip:['Strategy with purpose','Creativity with character','Technology that connects','Better Together'],
   manifesto:{label:'01 / THE STUDIO',title:'Different disciplines.\nOne shared direction.',body:'Great ideas don’t grow in isolation. We bring marketing, advertising, consulting and web development into the same conversation. A clearer story. A more connected experience. A next step that makes sense.',link:'Get to know AMC'},
@@ -19,7 +19,7 @@ export const copy = {
   detail:{scope:'What we can shape together',process:'From context to a clear direction',processBody:'We begin with your goals, audience and existing materials. Together, we define priorities, agree on deliverables and review the direction before moving into execution. The final scope, schedule and responsibilities are agreed for each project.',related:'Connected expertise',talk:'Discuss your next move',back:'All services',faq:'Before we begin',q:'How is the project scope defined?',a:'The areas below are a starting point for a conversation. Deliverables, responsibilities and timing are agreed after understanding your brief; they are not a fixed package.'}
  },
  ar: {
-  nav:{about:'الاستوديو',work:'أعمالنا',contact:'لنتحدث',credits:'المصادر'},
+  nav:{about:'من نحن',work:'أعمالنا',contact:'لنتحدث',credits:'المصادر'},
   eyebrow:'فكر مستقل. وإمكانيات مترابطة.',hero:['خطوتك القادمة.','نصنعها معًا.'],intro:'استوديو للنمو وبناء العلامات يجمع الاستراتيجية والإبداع والتقنية. لعلامات تطمح إلى أثر أعمق وخطوة أبعد.',cta:'اكتشف خبراتنا',secondary:'تعرّف على الاستوديو',scroll:'خطوة أبعد، وصورة أوضح',pause:'إيقاف الحركة',play:'تشغيل الحركة',
   strip:['استراتيجية بهدف','إبداع بشخصية','تقنية تربط الأفكار','أفضل معًا'],
   manifesto:{label:'٠١ / الاستوديو',title:'تخصصات مختلفة.\nواتجاه واحد.',body:'الأفكار الجيدة لا تنمو وحدها. نجمع التسويق والإعلان والاستشارات وتطوير المواقع في حوار واحد. لحكاية أوضح، وتجربة أكثر ترابطًا، وخطوة قادمة لها معنى.',link:'تعرّف على AMC'},

@@ -2826,68 +2826,72 @@ html[lang="ar"] .finale-banner-title {
   }
 }
 
-/* Studio media: approved warm neutrals and accessible champagne accents. */
+/* Studio media follows the live navy/orange theme tokens in both themes. */
 .amc-landing .lp-tv-unit {
-  --studio-ink: #0B0A08;
-  --studio-surface: #14120E;
-  --studio-ivory: #F5F1E7;
-  --studio-muted: #CFCBC0;
-  --studio-gold: #BE9D5B;
-  --studio-highlight: #D8BE86;
-  --studio-accent: #7A5F28;
-  --studio-panel: var(--studio-ivory);
-  --studio-text: var(--studio-ink);
-  --studio-secondary: var(--studio-accent);
+  --studio-panel: var(--surface);
+  --studio-text: var(--fg);
+  --studio-secondary: var(--accent-text);
+  --studio-screen: var(--amc-cream-100);
+  --studio-screen-border: var(--amc-navy-300);
+  --studio-screen-shadow: var(--amc-navy-900);
+  --studio-stand: var(--amc-navy-800);
 }
 .dark .amc-landing .lp-tv-unit,
 [data-theme="dark"] .amc-landing .lp-tv-unit {
-  --studio-panel: var(--studio-surface);
-  --studio-text: var(--studio-ivory);
-  --studio-secondary: var(--studio-highlight);
+  --studio-screen: var(--amc-navy-950);
+  --studio-screen-border: var(--amc-navy-400);
+  --studio-screen-shadow: var(--amc-navy-950);
 }
 .amc-landing .lp-tv-bezel.lp-showreel {
   background: var(--studio-panel);
   background-image: none;
-  border: 1px solid color-mix(in srgb, var(--studio-gold) 55%, var(--studio-panel));
+  border: 1px solid var(--border-strong);
   color: var(--studio-text);
-  box-shadow: 0 24px 64px color-mix(in srgb, var(--studio-ink) 18%, transparent);
+  box-shadow: var(--shadow-lg);
 }
 .amc-landing .lp-tv-rec-pill {
   color: var(--studio-secondary);
-  background: color-mix(in srgb, var(--studio-gold) 12%, var(--studio-panel));
-  border-color: color-mix(in srgb, var(--studio-gold) 45%, var(--studio-panel));
+  background: var(--accent-soft);
+  border-color: var(--accent);
 }
-.amc-landing .lp-tv-rec-dot { background: var(--studio-secondary); }
+.amc-landing .lp-tv-rec-dot { background: var(--accent); }
 .amc-landing .lp-showreel-scene-label { color: var(--studio-text); }
 .amc-landing .lp-showreel-timecode { color: var(--studio-secondary); direction: ltr; }
 .amc-landing .lp-showreel-btn,
 .amc-landing .lp-showreel-chapter {
   color: var(--studio-text);
-  border-color: color-mix(in srgb, var(--studio-gold) 50%, var(--studio-panel));
+  border-color: var(--border-strong);
   background: var(--studio-panel);
   min-height: 44px;
 }
 .amc-landing .lp-showreel-chapter strong { color: var(--studio-secondary); }
 .amc-landing .lp-showreel-chapter[data-active="true"],
 .amc-landing .lp-showreel-btn:hover {
-  background: var(--studio-highlight);
-  border-color: var(--studio-accent);
-  color: var(--studio-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
 }
-.amc-landing .lp-showreel-chapter[data-active="true"] strong { color: var(--studio-ink); }
+.amc-landing .lp-showreel-chapter[data-active="true"] strong { color: var(--on-accent); }
 .amc-landing .lp-tv-screen.lp-showreel-viewport {
-  background: var(--studio-ink);
+  background: var(--studio-screen);
+  border-color: var(--studio-screen-border);
   aspect-ratio: 16 / 9;
 }
 
 /* Supplied service illustration stages: current navy/orange palette approved by user. */
-.service-motion-stage { position:relative;isolation:isolate;width:100%;aspect-ratio:5/4;overflow:hidden;border-radius:var(--radius-lg);background:var(--amc-navy-950);min-width:0;touch-action:pan-y; }
+.service-motion-stage { position:relative;isolation:isolate;width:100%;aspect-ratio:5/4;overflow:hidden;border-radius:var(--radius-lg);background:var(--amc-cream-100);min-width:0;touch-action:pan-y; }
 .service-motion-poster,.service-motion-canvas {position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.service-motion-poster { filter: invert(1) hue-rotate(180deg); }
 .service-motion-canvas {pointer-events:none;}
-.service-motion-toggle {position:absolute;z-index:3;inset-inline-end:12px;bottom:12px;min-height:44px;max-width:calc(100% - 24px);padding:8px 14px;border:1px solid var(--amc-navy-300);border-radius:var(--radius-md);background:var(--amc-navy-950);color:var(--amc-cream-100);font:inherit;font-size:.78rem;cursor:pointer;}
+.service-motion-toggle {position:absolute;z-index:3;inset-inline-end:12px;bottom:12px;min-height:44px;max-width:calc(100% - 24px);padding:8px 14px;border:1px solid var(--amc-navy-300);border-radius:var(--radius-md);background:var(--amc-cream-100);color:var(--amc-navy-900);font:inherit;font-size:.78rem;cursor:pointer;}
+.dark .service-motion-stage,[data-theme="dark"] .service-motion-stage {background:var(--amc-navy-950);}
+.dark .service-motion-poster,[data-theme="dark"] .service-motion-poster {filter:none;}
+.dark .service-motion-toggle,[data-theme="dark"] .service-motion-toggle {background:var(--amc-navy-950);color:var(--amc-cream-100);}
 .service-motion-toggle:focus-visible {outline:3px solid var(--amc-orange-500);outline-offset:3px;}
 .service-motion-toggle:disabled {cursor:default;}
 .amc-landing .service-card-stack .lp-cap-card .lp-cap-visual {height:auto;min-height:0;aspect-ratio:5/4;}
+.amc-landing .service-card-stack .lp-cap-card .lp-cap-visual {border-radius:var(--radius-xl);border-color:color-mix(in srgb,var(--accent) 28%,var(--border));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 6%,transparent);}
+.amc-landing .service-card-stack .service-motion-stage {border-radius:calc(var(--radius-xl) - 1px);}
 .amc-landing .lp-cap-visual-badge {z-index:4;pointer-events:none;}
 .service-device-scene {aspect-ratio:5/4;align-self:center;}
 .service-build-process {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:0;list-style:none;margin-block:24px;}

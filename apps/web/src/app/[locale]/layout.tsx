@@ -14,7 +14,7 @@ export const metadata = {
   icons: {
     icon: [
       { url: '/favicon-light.svg', media: '(prefers-color-scheme: light)', type: 'image/svg+xml' },
-      { url: '/favicon-orange.svg', media: '(prefers-color-scheme: dark)', type: 'image/svg+xml' },
+      { url: '/favicon-navy.svg', media: '(prefers-color-scheme: dark)', type: 'image/svg+xml' },
       { url: '/favicon.ico', sizes: '32x32' },
     ],
     apple: [
@@ -43,6 +43,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={dir}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
 

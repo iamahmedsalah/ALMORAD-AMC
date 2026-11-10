@@ -41,6 +41,7 @@ for (const locale of ['en', 'ar'] as const) {
     await page.locator('.booking-check input').check();
     await page.getByRole('button', { name: c.confirm, exact: true }).click();
     await expect(page.locator('.booking-confirmation')).toContainText('UI-FIXTURE-001');
+    await expect(page.locator('.booking-confirmation .submission-art')).toBeVisible();
     await expect(page.locator('.booking-steps [aria-current="step"]')).toContainText(c.confirmation);
     await page.goto(`/${locale}/booking/manage#id=${booking.id}&token=${'a'.repeat(64)}`);
     await expect(page.getByRole('heading', { name: c.current, exact: true })).toBeVisible();

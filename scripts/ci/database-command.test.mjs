@@ -95,8 +95,9 @@ test('rehearsal invokes native clients, keeps failed restore blocking and preser
       import {appendFileSync,writeFileSync} from 'node:fs';
       cp.spawnSync=(executable,args)=>{
         appendFileSync(process.env.NATIVE_COMMAND_LOG,JSON.stringify({executable,args})+'\\n');
-        if(executable==='psql')return {status:0};
+        if(executable==='psql')return {status:0,stdout:process.env.NATIVE_MISSING==='1'?'plpgsql\\n':'btree_gist\\n'};
         if(executable==='openssl'){writeFileSync(args[args.indexOf('-out')+1],'synthetic plaintext fixture');return {status:0};}
+        if(executable==='pg_restore'&&args.includes('--list'))return {status:0,stdout:'2; 3079 1 EXTENSION - btree_gist\\n'};
         if(executable==='pg_restore')return {status:1,stderr:'ERROR: relation private_fixture already exists'};
         throw new Error('Unexpected executable');
       };
@@ -108,8 +109,21 @@ test('rehearsal invokes native clients, keeps failed restore blocking and preser
     assert.equal(result.status,1);
     assert.deepEqual(JSON.parse(result.stderr.trim()),{event:'database_release_command_failed',stage:'rehearsal_restore',category:'restore_target_conflict',exitCode:1});
     const calls=(await readFile(commands,'utf8')).trim().split('\n').map(line=>JSON.parse(line));
-    assert.deepEqual(calls.map(call=>call.executable),['psql','openssl','pg_restore']);
+    assert.deepEqual(calls.map(call=>call.executable),['psql','openssl','pg_restore','psql','pg_restore']);
     assert.ok(calls.every(call=>!JSON.stringify(call.args).includes('postgresql://')));
+    await assert.rejects(access(join(artifacts,'database.dump')),{code:'ENOENT'});
+    assert.deepEqual(await readFile(join(artifacts,'database.dump.enc')),encrypted);
+    await writeFile(commands,'');
+    const unavailable=spawnSync(process.execPath,['--import',pathToFileURL(preload).href,'scripts/ci/database-release.mjs','rehearse'],{
+      env:{...process.env,RUNNER_TEMP:directory,NATIVE_COMMAND_LOG:commands,NATIVE_MISSING:'1',REHEARSAL_DATABASE_URL:'postgresql://amc_release:fixture@127.0.0.1:55432/amc_release_test'},encoding:'utf8',timeout:30000,
+    });
+    assert.equal(unavailable.status,1);
+    const diagnostic=JSON.parse(unavailable.stderr.trim());
+    assert.equal(diagnostic.event,'rehearsal_extensions_missing');
+    assert.deepEqual(diagnostic.extensions,['btree_gist']);
+    const blockedCalls=(await readFile(commands,'utf8')).trim().split('\n').map(line=>JSON.parse(line));
+    assert.deepEqual(blockedCalls.map(call=>call.executable),['psql','openssl','pg_restore','psql']);
+    assert.ok(blockedCalls.find(call=>call.executable==='pg_restore').args.includes('--list'));
     await assert.rejects(access(join(artifacts,'database.dump')),{code:'ENOENT'});
     assert.deepEqual(await readFile(join(artifacts,'database.dump.enc')),encrypted);
   }finally{

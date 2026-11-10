@@ -8,7 +8,7 @@ export function postgresEnvironment(connection,env=process.env){
   return {...inherited,PGHOST:url.hostname,PGPORT:url.port||'5432',PGUSER:decodeURIComponent(url.username),PGPASSWORD:decodeURIComponent(url.password),PGDATABASE:decodeURIComponent(url.pathname.slice(1)),PGSSLMODE:local?'disable':'verify-full',PGSSLROOTCERT:local?'':'system',PGCONNECT_TIMEOUT:'15',PGOPTIONS:''};
 }
 
-const stages=new Set(['backup_dump','backup_encrypt','rehearsal_connect','rehearsal_decrypt','rehearsal_restore','rehearsal_migrate']);
+const stages=new Set(['backup_dump','backup_encrypt','rehearsal_connect','rehearsal_extensions','rehearsal_decrypt','rehearsal_restore','rehearsal_migrate']);
 
 /** Classify captured failures; never return provider output, SQL, paths or credentials. */
 export function databaseCommandFailure(stage,result){
@@ -36,4 +36,5 @@ export function runDatabaseCommand(stage,executable,args,options={},execute=spaw
   if(!stages.has(stage))throw new ReleasePolicyError('Unknown database release stage');
   const result=execute(executable,args,{...options,encoding:'utf8',timeout:300000});
   if(result.error||result.status!==0)throw new ReleasePolicyError(JSON.stringify(databaseCommandFailure(stage,result)));
+  return result.stdout;
 }

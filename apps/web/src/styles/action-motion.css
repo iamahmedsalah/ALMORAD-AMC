@@ -1,0 +1,59 @@
+/* Conversion actions: one light sweep on intent, never a looping distraction. */
+a.button-primary[href*="booking"], .action-motion {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid currentColor;
+}
+a.button-primary[href*="booking"]::after, .action-motion::after {
+  content: "";
+  position: absolute;
+  inset: -80% -30%;
+  background: linear-gradient(110deg, transparent 38%, color-mix(in srgb, currentColor 18%, transparent) 50%, transparent 62%);
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+a.button-primary[href*="booking"]:is(:hover, :focus-visible)::after,
+.action-motion:is(:hover, :focus-visible)::after { animation: action-sweep 650ms ease-out; }
+.action-motion[data-pending="true"]::after { animation: action-sweep 1.4s ease-in-out infinite; }
+.action-motion[data-pending="true"] { cursor: progress; }
+.approach-journey { position: relative; isolation: isolate; }
+.approach-journey .approach-card { position: relative; }
+.approach-traveller { position: absolute; top: 0; left: 0; z-index: 60; width: 80px; height: 54px; padding: 10px 7px; display: grid; place-items: center; border: 1px solid var(--accent); border-radius: var(--radius-md); background: var(--surface); box-shadow: 0 12px 28px rgb(11 31 68 / 16%), 0 0 0 4px color-mix(in srgb, var(--accent) 10%, transparent); visibility: hidden; pointer-events: none; }
+.approach-traveller img { width: 64px; height: auto; }
+.approach-journey .approach-card[data-visited="true"] { border-color: color-mix(in srgb, var(--accent) 32%, var(--border)); }
+.approach-journey .approach-card[data-active="true"] { border-color: var(--accent); box-shadow: inset 0 3px 0 var(--accent), var(--shadow-sm); }
+.brand-ticker { position: relative; overflow: hidden; direction: ltr; margin-block: 2rem; border-block: 1px solid var(--border-strong); background: var(--surface); color: var(--fg); }
+.brand-ticker::before, .brand-ticker::after { content: ""; position: absolute; z-index: 2; inset-block: 0; width: min(5vw, 64px); pointer-events: none; }
+.brand-ticker::before { left: 0; background: linear-gradient(to right, var(--surface), transparent); }
+.brand-ticker::after { right: 0; background: linear-gradient(to left, var(--surface), transparent); }
+.brand-ticker-track { display: flex; width: max-content; animation: brand-ticker-right 30s linear infinite; }
+.brand-ticker:is(:hover, :focus-within) .brand-ticker-track { animation-play-state: paused; }
+.brand-ticker-set { display: flex; flex: none; gap: clamp(1rem, 3vw, 3rem); align-items: center; padding: .9rem clamp(1rem, 3vw, 3rem) .9rem 0; }
+.brand-ticker-item { display: flex; flex: none; align-items: center; gap: .8rem; min-width: 240px; padding: .3rem 1rem; border-inline-start: 1px solid var(--border-strong); }
+.brand-ticker-number { font-size: .7rem; font-weight: 700; color: var(--accent-text); font-variant-numeric: tabular-nums; }
+.brand-ticker-logo { display: block; width: 64px; flex: none; }
+.brand-ticker-logo img { display: block; width: 100%; height: auto; filter: brightness(0); transition: filter .22s ease, transform .22s ease; }
+.brand-ticker-logo .brand-ticker-dark { display: none; }
+html.dark .brand-ticker-logo .brand-ticker-light { display: none; }
+html.dark .brand-ticker-logo .brand-ticker-dark { display: block; filter: brightness(0) invert(1); }
+.brand-ticker-item:hover .brand-ticker-logo img { filter: none; transform: scale(1.12); }
+.brand-ticker-label { white-space: nowrap; font-size: .78rem; font-weight: 700; }
+@keyframes brand-ticker-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+.submission-art { display: block; width: 120px; height: 100px; color: var(--foreground); stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.submission-orbit { stroke: var(--accent); opacity: .3; stroke-dasharray: 3 7; }
+.submission-object { transform-origin: center; animation: submission-arrive 650ms cubic-bezier(.22,1,.36,1) both; }
+.submission-check circle { fill: var(--background); stroke: var(--accent); }
+.submission-check path { stroke: var(--accent); stroke-dasharray: 30; animation: submission-draw 500ms 350ms both; }
+.booking-confirmation, .contact-success { animation: submission-arrive 450ms ease-out both; }
+@keyframes action-sweep { to { transform: translateX(100%); } }
+@keyframes submission-arrive { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes submission-draw { from { stroke-dashoffset: 30; } to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .brand-ticker { overflow-x: auto; }
+  .brand-ticker-track { animation: none; }
+  .brand-ticker-set[aria-hidden="true"] { display: none; }
+  a.button-primary[href*="booking"], .action-motion { transition: none; }
+  a.button-primary[href*="booking"]::after, .action-motion::after { display: none; }
+  .submission-object, .submission-check path, .booking-confirmation, .contact-success { animation: none; }
+}

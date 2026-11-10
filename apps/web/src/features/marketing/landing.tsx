@@ -1,3 +1,5 @@
+import {ApproachJourney} from '@/components/landing/approach-journey';
+import {BrandTicker} from '@/components/landing/brand-ticker';
 import Image from 'next/image';
 import {ServiceMotionStage} from '@/components/landing/service-motion-stage';
 import {disciplineCopy,disciplineFor} from '@/features/services/discipline-content';
@@ -121,19 +123,7 @@ export function Landing({ locale }: { locale: Locale }) {
           </section>
         </Container>
 
-        {/* Discipline Strip */}
-        <div className="discipline-strip border-y border-[var(--border)] bg-[var(--surface)]/80 backdrop-blur-md py-4 my-8">
-          <Container>
-            <div className="flex flex-wrap items-center justify-between gap-4 text-sm font-medium text-[var(--fg-muted)]">
-              {c.strip.map((s) => (
-                <span key={s} className="badge rounded-squircle-md">
-                  <SolarIcon name="star-linear" className="text-[var(--amc-orange-500)]" />
-                  <span>{s}</span>
-                </span>
-              ))}
-            </div>
-          </Container>
-        </div>
+        <BrandTicker locale={locale} />
 
         <Container>
           {/* Chapter 02: Strategy & Studio Manifesto — Stacked Header Above Wide TV Monitor */}
@@ -409,23 +399,7 @@ export function Landing({ locale }: { locale: Locale }) {
                 <div data-process-progress className="lp-process-progress" />
               </div>
 
-              <ol className="approach-grid grid sm:grid-cols-2 gap-6">
-                {c.approach.steps.map(([title, body], i) => (
-                  <li
-                    key={title}
-                    data-scroll-card
-                    className="approach-card glass-surface rounded-squircle-lg p-6 sm:p-8"
-                  >
-                    <span className="index badge badge-accent rounded-squircle-sm mb-4">
-                      0{i + 1}
-                    </span>
-                    <h3 className="text-xl font-bold mb-2">{title}</h3>
-                    <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
-                      {body}
-                    </p>
-                  </li>
-                ))}
-              </ol>
+              <ApproachJourney steps={c.approach.steps} />
             </div>
 
             {/* Section G: Cross-Device Experience Showcase */}

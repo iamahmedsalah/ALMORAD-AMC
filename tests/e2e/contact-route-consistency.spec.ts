@@ -11,7 +11,7 @@ for (const locale of ['en','ar']) for (const theme of ['light','dark']) for (con
     await page.emulateMedia({reducedMotion:'reduce'});
     await page.addInitScript(value => localStorage.setItem('theme', value), theme);
     await mockOperations(page);
-    const paths = ['', '/about','/services', ...pillars.map(pillar => `/services/${pillar.id}`), ...services.map(service => `/services/${service.slug}`), '/work','/contact','/faq','/credits','/booking','/booking/manage','/staff','/staff/login','/staff/calendar','/staff/settings','/staff/analytics'];
+    const paths = ['', '/about','/services', ...pillars.map(pillar => `/services/${pillar.id}`), ...services.map(service => `/services/${service.slug}`), '/work','/contact','/faq','/booking','/booking/manage','/staff','/staff/login','/staff/calendar','/staff/settings','/staff/analytics'];
     for (const path of paths) {
       const response = await page.goto(`/${locale}${path}`);
       expect(response?.status(),path).toBe(200);
@@ -50,6 +50,7 @@ for (const locale of ['en','ar']) for (const theme of ['light','dark']) for (con
     await expect(page.locator('#contact-message')).toHaveValue('Synthetic contact inquiry for browser verification only.');
     await form.locator('[type="submit"]').click();
     await expect(page.locator('.contact-success')).toBeFocused();
+    await expect(page.locator('.contact-success .submission-art')).toBeVisible();
     expect(bodies).toHaveLength(2);
     expect(bodies[0]?.idempotencyKey).toBe(bodies[1]?.idempotencyKey);
     expect(bodies[1]).toMatchObject({locale,consent:true});

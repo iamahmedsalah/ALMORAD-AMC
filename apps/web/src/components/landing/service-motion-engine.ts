@@ -5,13 +5,15 @@ import type { SceneEngine } from './service-scene-types';
 
   const PRE = [
     '#ifdef GL_FRAGMENT_PRECISION_HIGH', 'precision highp float;', '#else', 'precision mediump float;', '#endif',
-    'uniform vec2 uRes;uniform float uTime;uniform vec2 uPtr;uniform float uPtrOn;',
-    'const vec3 DEEP=vec3(.024,.059,.141);',
-    'const vec3 NAVY=vec3(.043,.122,.267);',
-    'const vec3 NAVY2=vec3(.086,.188,.416);',
+    'uniform vec2 uRes;uniform float uTime;uniform vec2 uPtr;uniform float uPtrOn;uniform float uLight;',
+    '#define DEEP mix(vec3(.024,.059,.141),vec3(.984,.945,.902),uLight)',
+    '#define NAVY mix(vec3(.043,.122,.267),vec3(.933,.945,.969),uLight)',
+    '#define NAVY2 mix(vec3(.086,.188,.416),vec3(.867,.890,.937),uLight)',
+    '#define PANEL mix(vec3(.059,.129,.278),vec3(.867,.890,.937),uLight)',
+    '#define PANEL_TOP mix(vec3(.09,.16,.35),vec3(.945,.953,.969),uLight)',
     'const vec3 ORANGE=vec3(.969,.463,.118);',
-    'const vec3 CREAM=vec3(.984,.945,.902);',
-    'const vec3 SLATE=vec3(.424,.498,.690);',
+    '#define CREAM mix(vec3(.984,.945,.902),vec3(.043,.122,.267),uLight)',
+    '#define SLATE mix(vec3(.424,.498,.690),vec3(.290,.373,.561),uLight)',
     'const float PI=3.14159265;',
     'float ss(float a,float b,float x){return a<b?smoothstep(a,b,x):1.-smoothstep(b,a,x);}',
     'float hash(float n){return fract(sin(n*127.1)*43758.5453);}',
@@ -126,10 +128,10 @@ import type { SceneEngine } from './service-scene-types';
     ' vec2 q=p-m*.015*uPtrOn;',
     ' float win=sdBox(q,vec2(.52,.4),.03);',
     ' col=mix(col,DEEP,fill(sdBox(q-vec2(0.,-.02),vec2(.54,.42),.04))*.5);',
-    ' col=mix(col,vec3(.059,.129,.278),fill(win));',
+    ' col=mix(col,PANEL,fill(win));',
     ' float inW=fill(win+.003);',
-    ' vec3 ui=vec3(.059,.129,.278);',
-    ' ui=mix(ui,vec3(.09,.16,.35),fill(el(q,0.,.34,.52,.045,0.)));',
+    ' vec3 ui=PANEL;',
+    ' ui=mix(ui,PANEL_TOP,fill(el(q,0.,.34,.52,.045,0.)));',
     ' for(int i=0;i<3;i++){float cx=-.46+.04*float(i);ui=mix(ui,i<2?ORANGE:SLATE,fill(el(q,cx,.34,.01,.01,.01)));}',
     ' for(int i=0;i<3;i++){float cx=-.34+.12*float(i);ui=mix(ui,CREAM,fill(el(q,cx,.22,.045,.012,.012))*(i==0?.9:.3));}',
     ' ui=mix(ui,CREAM,fill(el(q,-.24,.13,.22,.022,.022))*.95);',
@@ -191,6 +193,7 @@ export function createFlatScene(canvas: HTMLCanvasElement, name: string): SceneE
     gl.enableVertexAttribArray(attribute); gl.vertexAttribPointer(attribute,2,gl.FLOAT,false,0,0);
     const res=gl.getUniformLocation(program,'uRes'),time=gl.getUniformLocation(program,'uTime');
     const ptr=gl.getUniformLocation(program,'uPtr'),on=gl.getUniformLocation(program,'uPtrOn');
+    const light=gl.getUniformLocation(program,'uLight');
     let x=.5,y=.5,tx=.5,ty=.5,amount=0,target=0;
     return {
       resize(w,h,dpr) { canvas.width=Math.max(1,Math.round(w*dpr));canvas.height=Math.max(1,Math.round(h*dpr));gl.viewport(0,0,canvas.width,canvas.height); },
@@ -198,7 +201,9 @@ export function createFlatScene(canvas: HTMLCanvasElement, name: string): SceneE
       render(seconds) {
         x+=(tx-x)*.14;y+=(ty-y)*.14;amount+=(target-amount)*.12;
         gl.uniform2f(res,canvas.width,canvas.height);gl.uniform1f(time,seconds);
-        gl.uniform2f(ptr,x,y);gl.uniform1f(on,amount);gl.drawArrays(gl.TRIANGLES,0,3);
+        gl.uniform2f(ptr,x,y);gl.uniform1f(on,amount);
+        gl.uniform1f(light,document.documentElement.classList.contains('dark')||document.documentElement.dataset.theme==='dark'?0:1);
+        gl.drawArrays(gl.TRIANGLES,0,3);
       },
       destroy,
     };

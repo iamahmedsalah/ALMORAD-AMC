@@ -13,25 +13,21 @@ const REEL_SCENES = [
     code: '01',
     en: 'BRAND ARCHITECTURE · SYSTEM TOKENS',
     ar: 'بنية العلامة · نظام الألوان والهوية',
-    accent: '#BE9D5B',
   },
   {
     code: '02',
     en: 'KINETIC TYPOGRAPHY · BILINGUAL GRID',
     ar: 'تايبوغرافي حركي · شبكة ثنائية اللغة',
-    accent: '#D8BE86',
   },
   {
     code: '03',
     en: 'OUTDOOR & CAMPAIGN DIRECTION',
     ar: 'إخراج الحملات والإعلانات الخارجية',
-    accent: '#7A5F28',
   },
   {
     code: '04',
     en: 'INTERACTIVE WEB & 3D EXPERIENCES',
     ar: 'تجارب الويب التفاعلية وثلاثية الأبعاد',
-    accent: '#BE9D5B',
   },
 ] as const;
 
@@ -141,27 +137,38 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
 
       const w = canvas.width;
       const h = canvas.height;
+      const dark = document.documentElement.classList.contains('dark') || document.documentElement.dataset.theme === 'dark';
+      const colors = dark ? {
+        start: '#061430', end: '#0B1F44', node: '#162B54', ink: '#FBF1E6',
+        grid: 'rgba(188, 199, 222, 0.12)', orbit: 'rgba(188, 199, 222, 0.3)',
+        spot: 'rgba(247, 118, 30, 0.3)', spotEdge: 'rgba(247, 118, 30, 0)',
+        track: 'rgba(251, 241, 230, 0.2)',
+      } : {
+        start: '#FBF1E6', end: '#EEF1F7', node: '#FFFFFF', ink: '#0B1F44',
+        grid: 'rgba(11, 31, 68, 0.1)', orbit: 'rgba(11, 31, 68, 0.26)',
+        spot: 'rgba(247, 118, 30, 0.16)', spotEdge: 'rgba(247, 118, 30, 0)',
+        track: 'rgba(11, 31, 68, 0.18)',
+      };
+      const orange = '#F7761E';
 
-      // Deep OLED Studio Broadcast Backdrop (#0B0A08 -> #14120E)
+      // The canvas uses the same official navy/orange system as the DOM shell.
       const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-      bgGrad.addColorStop(0, '#0B0A08');
-      bgGrad.addColorStop(0.5, '#14120E');
-      bgGrad.addColorStop(1, '#14120E');
+      bgGrad.addColorStop(0, colors.start);
+      bgGrad.addColorStop(1, colors.end);
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, w, h);
 
-      // Ambient Champagne Gold Broadcast Spotlight (#BE9D5B)
       const spotX = w * (0.5 + Math.cos(elapsed * 0.7) * 0.28);
       const spotY = h * (0.48 + Math.sin(elapsed * 0.95) * 0.18);
       const radGrad = ctx.createRadialGradient(spotX, spotY, 15, spotX, spotY, w * 0.55);
-      radGrad.addColorStop(0, 'rgba(190, 157, 91, 0.34)');
-      radGrad.addColorStop(0.45, 'rgba(216, 190, 134, 0.12)');
-      radGrad.addColorStop(1, 'rgba(11, 10, 8, 0)');
+      radGrad.addColorStop(0, colors.spot);
+      radGrad.addColorStop(0.45, colors.spotEdge);
+      radGrad.addColorStop(1, colors.spotEdge);
       ctx.fillStyle = radGrad;
       ctx.fillRect(0, 0, w, h);
 
       // Broadcast Architectural Perspective Grid
-      ctx.strokeStyle = 'rgba(207, 203, 192, 0.08)';
+      ctx.strokeStyle = colors.grid;
       ctx.lineWidth = 1;
       const gridOffset = (elapsed * 42) % 64;
       for (let x = -64 + gridOffset; x < w + 64; x += 64) {
@@ -184,7 +191,7 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
       for (let i = 0; i < 3; i++) {
         ctx.save();
         ctx.rotate(elapsed * (0.32 + i * 0.16) * (i % 2 === 0 ? 1 : -1));
-        ctx.strokeStyle = i === 0 ? '#BE9D5B' : 'rgba(245, 241, 231, 0.22)';
+        ctx.strokeStyle = i === 0 ? orange : colors.orbit;
         ctx.lineWidth = i === 0 ? 2.5 : 1.2;
         ctx.beginPath();
         ctx.ellipse(0, 0, 260 + i * 75, 96 + i * 32, 0, 0, Math.PI * 2);
@@ -205,15 +212,15 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
         ctx.translate(cx, cy);
         ctx.scale(scale, scale);
 
-        ctx.fillStyle = isCurrent ? '#BE9D5B' : 'rgba(20, 18, 14, 0.92)';
-        ctx.strokeStyle = isCurrent ? '#F5F1E7' : 'rgba(190, 157, 91, 0.55)';
+        ctx.fillStyle = isCurrent ? orange : colors.node;
+        ctx.strokeStyle = isCurrent ? colors.ink : orange;
         ctx.lineWidth = isCurrent ? 2 : 1.2;
         ctx.beginPath();
         ctx.roundRect(-72, -32, 144, 64, 14);
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = isCurrent ? '#0B0A08' : '#F5F1E7';
+        ctx.fillStyle = isCurrent ? '#061430' : colors.ink;
         ctx.font = '700 13px monospace';
         ctx.textAlign = 'center';
         ctx.fillText(nodeTitles[k]!, 0, 5);
@@ -223,25 +230,25 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
       // Center AMC Monolith Broadcast Core
       const pulse = 1 + Math.sin(elapsed * 2.8) * 0.045;
       ctx.scale(pulse, pulse);
-      ctx.fillStyle = '#14120E';
-      ctx.strokeStyle = '#BE9D5B';
+      ctx.fillStyle = colors.node;
+      ctx.strokeStyle = orange;
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.roundRect(-86, -48, 172, 96, 24);
       ctx.fill();
       ctx.stroke();
 
-      ctx.fillStyle = '#F5F1E7';
+      ctx.fillStyle = colors.ink;
       ctx.font = '800 30px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('AMC', 0, 4);
-      ctx.fillStyle = '#D8BE86';
+      ctx.fillStyle = colors.ink;
       ctx.font = '600 10px monospace';
       ctx.fillText('STUDIO BROADCAST', 0, 24);
       ctx.restore();
 
       // Broadcast Corner Viewfinder Brackets
-      ctx.strokeStyle = 'rgba(216, 190, 134, 0.45)';
+      ctx.strokeStyle = orange;
       ctx.lineWidth = 2;
       const bLen = 22;
       const pad = 28;
@@ -256,9 +263,9 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
 
       // Bottom Progress Scrubber Line inside Canvas
       const progress = elapsed / duration;
-      ctx.fillStyle = 'rgba(245, 241, 231, 0.14)';
+      ctx.fillStyle = colors.track;
       ctx.fillRect(42, h - 18, w - 84, 4);
-      ctx.fillStyle = '#BE9D5B';
+      ctx.fillStyle = orange;
       ctx.fillRect(42, h - 18, (w - 84) * progress, 4);
 
       if (!paused && visible) {
@@ -282,11 +289,14 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
       } else if (!paused) wake();
     });
     observer.observe(canvas);
+    const themeObserver = new MutationObserver(wake);
+    themeObserver.observe(document.documentElement, {attributes: true, attributeFilter: ['class', 'data-theme']});
     document.addEventListener('visibilitychange', wake);
     drawFrame(performance.now());
     return () => {
       cancelAnimationFrame(rafId);
       observer.disconnect();
+      themeObserver.disconnect();
       document.removeEventListener('visibilitychange', wake);
     };
   }, [paused, manualScene]);
@@ -356,11 +366,11 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
                 <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.06" />
                 <stop offset="35%" stopColor="#FFFFFF" stopOpacity="0.015" />
                 <stop offset="36%" stopColor="#FFFFFF" stopOpacity="0" />
-                <stop offset="100%" stopColor="#000000" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="var(--studio-screen-shadow)" stopOpacity="0.12" />
               </linearGradient>
             </defs>
             <rect width="1280" height="680" fill="url(#tvGlare)" />
-            <rect x="2" y="2" width="1276" height="676" rx="18" fill="none" stroke="rgba(216,190,134,0.22)" strokeWidth="2" />
+            <rect x="2" y="2" width="1276" height="676" rx="18" fill="none" stroke="var(--studio-screen-border)" strokeWidth="2" />
           </svg>
         </div>
 
@@ -385,9 +395,9 @@ export function StudioShowreel({ locale }: StudioShowreelProps) {
       {/* Realistic SVG TV Stand / Pedestal Neck */}
       <div className="lp-tv-pedestal" aria-hidden="true">
         <svg viewBox="0 0 360 42" className="lp-tv-stand-svg">
-          <path d="M135 0 L225 0 L245 28 L115 28 Z" fill="rgba(20, 18, 14, 0.95)" stroke="rgba(190, 157, 91, 0.35)" strokeWidth="1.5" />
-          <rect x="60" y="28" width="240" height="8" rx="4" fill="#14120E" stroke="rgba(216, 190, 134, 0.45)" strokeWidth="1.5" />
-          <circle cx="180" cy="14" r="3" fill="#BE9D5B" />
+          <path d="M135 0 L225 0 L245 28 L115 28 Z" fill="var(--studio-stand)" stroke="var(--studio-screen-border)" strokeWidth="1.5" />
+          <rect x="60" y="28" width="240" height="8" rx="4" fill="var(--studio-stand)" stroke="var(--studio-screen-border)" strokeWidth="1.5" />
+          <circle cx="180" cy="14" r="3" fill="var(--accent)" />
         </svg>
       </div>
     </div>

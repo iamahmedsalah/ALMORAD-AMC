@@ -43,8 +43,8 @@ function PreloaderCycle() {
       aria-hidden={hidden} role="status" aria-live="polite">
       <div className="amc-preloader-inner" key={cycle}>
         <div className="studio-loader-mark" aria-hidden="true">
-          <Image unoptimized src="/brand/amc-mark.svg" className="brand-mark-light" width={160} height={73} alt="" loading="eager" />
-          <Image unoptimized src="/brand/amc-mark-white.svg" className="brand-mark-dark" width={160} height={73} alt="" loading="eager" />
+          <Image unoptimized src="/brand/amc-mark.svg" className="brand-mark-light" width={150} height={56} alt="" loading="eager" />
+          <Image unoptimized src="/brand/amc-mark-white.svg" className="brand-mark-dark" width={150} height={56} alt="" loading="eager" />
         </div>
         <div className="studio-loader-track" aria-hidden="true"><span /></div>
         <div className="amc-preloader-label"><strong>ALMORAD AMC</strong><small>{t('tagline')}</small></div>
