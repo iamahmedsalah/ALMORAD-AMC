@@ -5,6 +5,7 @@ import {existsSync,mkdirSync,readFileSync,writeFileSync,copyFileSync,rmSync} fro
 import {resolve,join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {loadEnvFile} from 'node:process';
+import {postgresEnvironment} from './ci/database-command.mjs';
 if(existsSync('.env'))loadEnvFile('.env');
 const mode=process.argv[2];
 if(!['backup','rehearse'].includes(mode))throw new Error('Usage: node scripts/db-safety.mjs backup|rehearse');
@@ -15,7 +16,8 @@ if(!database.endsWith('_test'))throw new Error('Native backup/restore checks req
 const user=decodeURIComponent(url.username);if(!/^[a-zA-Z0-9_]+$/.test(user))throw new Error('Invalid local database user');
 const {Client}=createRequire(new URL('../apps/api/package.json',import.meta.url))('pg');
 const connection=new Client({connectionString:url.href});
-const pg=(command,...args)=>execFileSync(command,args,{encoding:'utf8',stdio:['ignore','pipe','pipe'],env:{...process.env,PGHOST:url.hostname,PGPORT:url.port||'5432',PGPASSWORD:decodeURIComponent(url.password),PGSSLMODE:'disable',PGOPTIONS:'',PGSERVICE:'',PGSSLROOTCERT:''}}).trim();
+const nativeEnvironment=postgresEnvironment(url.href);
+const pg=(command,...args)=>execFileSync(command,args,{encoding:'utf8',stdio:['ignore','pipe','pipe'],env:nativeEnvironment}).trim();
 const sql=(db,query)=>pg('psql','-X','-v','ON_ERROR_STOP=1','-U',user,'-d',db,'-At','-c',query);
 function snapshot(db){const names=sql(db,"SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename").split('\n').filter(Boolean);return Object.fromEntries(names.map(name=>{if(!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name))throw new Error('Unsupported table identifier');return [name,Number(sql(db,`SELECT count(*) FROM "${name}"`))];}));}
 const stamp=randomUUID();const temp=join(tmpdir(),`amc-${stamp}.dump`);

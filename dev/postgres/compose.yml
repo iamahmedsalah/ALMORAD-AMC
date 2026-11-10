@@ -1,0 +1,23 @@
+name: almorad-amc-dev
+services:
+  postgres:
+    # Match the existing local data volume's PostgreSQL major; no automatic upgrade.
+    image: postgres:17-alpine
+    container_name: almorad-amc-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-amc_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_only_password}
+      POSTGRES_DB: ${POSTGRES_DB:-amc_dev}
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - almorad_amc_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  almorad_amc_dev_data:
+    name: almorad-amc-dev_almorad_amc_dev_data

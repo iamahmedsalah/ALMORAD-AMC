@@ -4,7 +4,8 @@ import {migrationTarget,ReleasePolicyError} from './migrations.mjs';
 export function postgresEnvironment(connection,env=process.env){
   const {url}=migrationTarget({DIRECT_URL:connection});
   const local=['127.0.0.1','localhost'].includes(url.hostname);
-  return {...env,PGHOST:url.hostname,PGPORT:url.port||'5432',PGUSER:decodeURIComponent(url.username),PGPASSWORD:decodeURIComponent(url.password),PGDATABASE:decodeURIComponent(url.pathname.slice(1)),PGSSLMODE:local?'disable':'verify-full',PGSSLROOTCERT:local?'':'system',PGCONNECT_TIMEOUT:'15',PGOPTIONS:'',PGSERVICE:''};
+  const inherited={...env};delete inherited.PGSERVICE;delete inherited.PGSERVICEFILE;
+  return {...inherited,PGHOST:url.hostname,PGPORT:url.port||'5432',PGUSER:decodeURIComponent(url.username),PGPASSWORD:decodeURIComponent(url.password),PGDATABASE:decodeURIComponent(url.pathname.slice(1)),PGSSLMODE:local?'disable':'verify-full',PGSSLROOTCERT:local?'':'system',PGCONNECT_TIMEOUT:'15',PGOPTIONS:''};
 }
 
 const stages=new Set(['backup_dump','backup_encrypt','rehearsal_connect','rehearsal_decrypt','rehearsal_restore','rehearsal_migrate']);

@@ -32,5 +32,4 @@ runs:
         PGPORT: '55432'
         PGSSLMODE: disable
         PGOPTIONS: ''
-        PGSERVICE: ''
       run: bash "$GITHUB_ACTION_PATH/start.sh"

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# An empty PGSERVICE still selects a libpq service named ""; remove the keys.
+unset PGSERVICE PGSERVICEFILE
 
 stage='validate_settings'
 task_pg_dir=''

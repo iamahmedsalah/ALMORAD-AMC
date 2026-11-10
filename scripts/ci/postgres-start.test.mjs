@@ -20,6 +20,10 @@ async function fixture(check){
     const mock=`#!/usr/bin/env bash
 set -euo pipefail
 command_name="$(basename "$0")"
+if [[ -v PGSERVICE || -v PGSERVICEFILE ]]; then
+  echo 'Unexpected libpq service environment' >&2
+  exit 42
+fi
 printf '%s ' "$command_name" "$@" >> "$COMMAND_LOG"
 printf '\\n' >> "$COMMAND_LOG"
 if [[ "\${MOCK_FAIL_COMMAND:-}" == "$command_name" ]]; then
@@ -40,7 +44,7 @@ fi
 
 for(const database of ['amc_test','amc_release_test'])test(`native startup accepts workflow database ${database}`,options,async()=>{
   await fixture(async({run,runner,log})=>{
-    const result=run({PGDATABASE:database});
+    const result=run({PGDATABASE:database,PGSERVICE:'',PGSERVICEFILE:'unrelated'});
     assert.equal(result.status,0,result.stderr);
     const commands=await readFile(log,'utf8');
     assert.deepEqual(commands.trim().split('\n').map(line=>line.split(' ')[0]),['initdb','pg_ctl','createdb']);

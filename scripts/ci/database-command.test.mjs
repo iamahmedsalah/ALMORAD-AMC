@@ -8,11 +8,12 @@ import {pathToFileURL} from 'node:url';
 import {databaseCommandFailure,runDatabaseCommand,postgresEnvironment} from './database-command.mjs';
 
 test('native PostgreSQL clients use decoded environment credentials and retain remote TLS verification',()=>{
-  const local=postgresEnvironment('postgresql://amc_ci:fixture%40value@127.0.0.1:55432/amc_test',{PGHOST:'wrong',PGOPTIONS:'unsafe',PGSERVICE:'unrelated'});
+  const local=postgresEnvironment('postgresql://amc_ci:fixture%40value@127.0.0.1:55432/amc_test',{PGHOST:'wrong',PGOPTIONS:'unsafe',PGSERVICE:'',PGSERVICEFILE:'unrelated'});
   assert.equal(local.PGHOST,'127.0.0.1');assert.equal(local.PGPORT,'55432');
   assert.equal(local.PGPASSWORD,'fixture@value');assert.equal(local.PGDATABASE,'amc_test');
   assert.equal(local.PGSSLMODE,'disable');assert.equal(local.PGOPTIONS,'');
-  assert.equal(local.PGSERVICE,'');
+  assert.equal(Object.hasOwn(local,'PGSERVICE'),false);
+  assert.equal(Object.hasOwn(local,'PGSERVICEFILE'),false);
   const remote=postgresEnvironment('postgresql://fixture:fixture@database.example.invalid/app',{});
   assert.equal(remote.PGSSLMODE,'verify-full');assert.equal(remote.PGSSLROOTCERT,'system');
   assert.equal(remote.PGPORT,'5432');
