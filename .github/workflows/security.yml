@@ -1,16 +1,7 @@
 name: Security gates
 on:
   workflow_call:
-    inputs:
-      scan_containers:
-        type: boolean
-        default: false
   workflow_dispatch:
-    inputs:
-      scan_containers:
-        description: Also validate future VPS container images
-        type: boolean
-        default: false
 permissions:
   contents: read
 jobs:
@@ -36,29 +27,13 @@ jobs:
           build-mode: none
           queries: security-extended
       - uses: github/codeql-action/analyze@v4
-  containers:
-    # Docker is local-preview infrastructure; the production target is Vercel.
-    if: inputs.scan_containers == true
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        service: [web, api]
-    steps:
-      - uses: actions/checkout@v4
-      - run: docker build -f Dockerfile.${{ matrix.service }} -t amc-${{ matrix.service }}:ci .
-      - uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: amc-${{ matrix.service }}:ci
-          scanners: vuln
-          severity: CRITICAL,HIGH
-          exit-code: '1'
-      - uses: aquasecurity/trivy-action@v0.36.0
+          output: codeql-results
+      - name: Retain analysis even if GitHub rejects the code-scanning upload
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          image-ref: amc-${{ matrix.service }}:ci
-          format: cyclonedx
-          output: sbom-${{ matrix.service }}.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: sbom-${{ matrix.service }}
-          path: sbom-${{ matrix.service }}.json
+          name: codeql-results
+          path: codeql-results/*.sarif
+          if-no-files-found: ignore
+          retention-days: 7

@@ -1,0 +1,31 @@
+name: Manual container security (local preview / future VPS)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  containers:
+    # Vercel does not deploy these images. Run manually when validating Docker.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        service: [web, api]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f Dockerfile.${{ matrix.service }} -t amc-${{ matrix.service }}:ci .
+      - uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: amc-${{ matrix.service }}:ci
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+      - uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: amc-${{ matrix.service }}:ci
+          format: cyclonedx
+          output: sbom-${{ matrix.service }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.service }}
+          path: sbom-${{ matrix.service }}.json

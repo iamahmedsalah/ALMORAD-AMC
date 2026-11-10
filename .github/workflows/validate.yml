@@ -54,16 +54,63 @@ jobs:
           LOCAL_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
       - run: pnpm build
       - run: pnpm typecheck
+      - name: Package the public browser build once for all shards
+        run: tar --exclude='.next/cache' --exclude='.next/dev' --exclude='.next/standalone' -czf "$RUNNER_TEMP/web-e2e-build.tar.gz" -C apps/web .next
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-e2e-build
+          path: ${{ runner.temp }}/web-e2e-build.tar.gz
+          compression-level: 0
+          retention-days: 1
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
       - run: pnpm test:e2e:staff
       - run: pnpm audit --prod --audit-level=high
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: browser-results
+          name: staff-browser-results
           path: |
             playwright-report/
             playwright-staff-report/
+            test-results/
+          retention-days: 7
+  public-e2e:
+    name: Public E2E (${{ matrix.shard }}/4)
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      TURBO_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.11.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-e2e-build
+          path: ${{ runner.temp }}/web-e2e-build
+      - name: Restore the verified web build
+        run: tar -xzf "$RUNNER_TEMP/web-e2e-build/web-e2e-build.tar.gz" -C apps/web
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Run the complete public suite across four shards
+        run: pnpm test:e2e --shard=${{ matrix.shard }}/4
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: public-browser-results-${{ matrix.shard }}
+          path: |
+            playwright-report/
             test-results/
           retention-days: 7

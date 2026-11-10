@@ -1,3 +1,21 @@
+# CI browser sharding and security workflow cleanup — 10 November 2026
+
+Authorized scope: shorten CI validation, explain the newer CodeQL failure, and remove irrelevant skipped containers from the Vercel pipeline. No commit, push, deployment, remote database operation, paid feature activation or repository setting change.
+
+- `validate.yml` retains every public E2E case and moves them to a four-job matrix. The checks job builds once and uploads a tar archive of `.next`, excluding cache, development output and standalone dependencies. Each public runner installs frozen-lockfile dependencies and restores that build. All public shards must pass before the reusable validation workflow, and therefore the existing release dependency, can succeed. Staff browser tests keep their single worker and isolated PostgreSQL service in the checks job.
+- `playwright.config.ts` enables test-level sharding with `fullyParallel`, one worker per CI runner, and `forbidOnly` in CI. All 228 tests remain: test-list comparison confirmed four disjoint sets of 57, zero omissions and zero duplicates. See [Playwright sharding](https://playwright.dev/docs/test-sharding). Four runner slots/setup operations trade additional concurrency for shorter elapsed browser time; revised GitHub duration is unmeasured until the first run.
+- `security.yml` no longer has the opt-in `scan_containers` input or skipped container job. Docker/Trivy/SBOM checks are preserved in the independent, manually dispatched `container-security.yml`. Vercel does not deploy these local-preview/future-VPS images. Run that manual workflow when validating Dockerfiles or preparing container hosting.
+- The newly supplied CodeQL log completed analysis and reached SARIF upload; GitHub then explicitly rejected it because **code scanning is not enabled**. Existing token permissions are sufficient for the previously reported workflow-run read issue. Keep CodeQL fail-closed and retain its SARIF as an artifact even when the upload fails.
+
+Repository administrator action still needed: open [repository security settings](https://github.com/iamahmedsalah/ALMORAD-AMC/settings/security_analysis), enable Code Security/code scanning if available, and choose **advanced setup** to use the existing YAML workflow. Avoid enabling a competing default CodeQL workflow. For a private/internal repository, confirm an eligible Code Security plan first; no purchase is authorized or assumed. References: [GitHub enablement requirements](https://docs.github.com/en/code-security/reference/code-scanning/troubleshoot-analysis-errors/private-repository-enablement), [advanced setup](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/configure-code-scanning/configuring-advanced-setup-for-code-scanning).
+
+Actual local verification:
+- Native `actionlint` PASS on all four workflows; all four YAML files parsed successfully. No remote Actions run claimed.
+- Changed Playwright configuration lint PASS. Release safety tests PASS 8/8.
+- CI-mode test-list union check PASS: 228 total, 57 per shard, no duplication or omission.
+- Build archive packaging/extraction PASS. Final local archive 2.9 MB; cache/dev/standalone absent and build ID preserved. Restored build served `/en`, `/ar`, and their JavaScript assets with HTTP 200 using the existing installed dependencies and public assets. Temporary verification server stopped.
+- `CI=true pnpm.cmd test:e2e --shard=1/4`: PASS, 57/57 in 4.7 minutes with one worker, including pause/delayed-observer regressions, bilingual contact/theme/viewport cases and reel interactions. This is a local shard duration, not a measured GitHub pipeline speedup. No application source/build change in this increment; reused the existing production build. Other public shards, staff/database suites, container scans and CodeQL were not rerun locally.
+
 # CI permission and paused-showreel correction — 10 November 2026
 
 Scope: repair the supplied CodeQL analyze failure and the two public browser-performance failures. No migration, deployment, commit, push or external account change.
