@@ -43,19 +43,8 @@ jobs:
       DIRECT_URL: ${{ secrets.PRODUCTION_DIRECT_URL }}
       BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
       VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
-      REHEARSAL_DATABASE_URL: postgresql://amc_release:ci_only@127.0.0.1:5432/amc_release_test
+      REHEARSAL_DATABASE_URL: postgresql://amc_release:ci_only@127.0.0.1:55432/amc_release_test
       NEXT_TELEMETRY_DISABLED: '1'
-    services:
-      postgres:
-        image: postgres:18-alpine
-        env:
-          POSTGRES_USER: amc_release
-          POSTGRES_PASSWORD: ci_only
-          POSTGRES_DB: amc_release_test
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd "pg_isready -U amc_release -d amc_release_test"
-          --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v6
         with:
@@ -75,6 +64,11 @@ jobs:
           : "${DIRECT_URL:?Set production-vercel secret PRODUCTION_DIRECT_URL}"
           : "${BACKUP_ENCRYPTION_KEY:?Set production-vercel secret BACKUP_ENCRYPTION_KEY}"
       - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup-postgres
+        with:
+          database: amc_release_test
+          user: amc_release
+          password: ci_only
       - name: Install pinned deployment CLI
         run: npm install --global vercel@65.11.0
       - name: Verify reviewed migrations and back up production
@@ -124,3 +118,10 @@ jobs:
       - name: Revoke temporary candidate verification access
         if: always()
         run: node scripts/ci/protection-bypass.mjs cleanup
+      - name: Stop the isolated rehearsal cluster
+        if: always()
+        shell: bash
+        run: |
+          if test -f "$RUNNER_TEMP/amc-ci-postgres/data/postmaster.pid"; then
+            pg_ctl --pgdata="$RUNNER_TEMP/amc-ci-postgres/data" --mode=fast --wait stop
+          fi

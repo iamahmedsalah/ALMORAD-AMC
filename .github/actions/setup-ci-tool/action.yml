@@ -1,0 +1,36 @@
+name: Native CI tool
+description: Install a version-pinned, checksum-verified CI binary
+inputs:
+  tool:
+    description: actionlint or gitleaks
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        CI_TOOL: ${{ inputs.tool }}
+      run: |
+        set -euo pipefail
+        case "$CI_TOOL" in
+          actionlint)
+            release_url='https://github.com/rhysd/actionlint/releases/download/v1.7.7'
+            archive='actionlint_1.7.7_linux_amd64.tar.gz'
+            checksums='actionlint_1.7.7_checksums.txt'
+            ;;
+          gitleaks)
+            release_url='https://github.com/gitleaks/gitleaks/releases/download/v8.30.1'
+            archive='gitleaks_8.30.1_linux_x64.tar.gz'
+            checksums='gitleaks_8.30.1_checksums.txt'
+            ;;
+          *) echo 'Unsupported CI tool'; exit 1 ;;
+        esac
+        tool_dir="$RUNNER_TEMP/amc-$CI_TOOL"
+        mkdir -p "$tool_dir"
+        cd "$tool_dir"
+        curl --fail --silent --show-error --location --retry 3 "$release_url/$archive" --output "$archive"
+        curl --fail --silent --show-error --location --retry 3 "$release_url/$checksums" --output "$checksums"
+        sha256sum --check --ignore-missing "$checksums"
+        tar -xzf "$archive" "$CI_TOOL"
+        chmod +x "$CI_TOOL"
+        echo "$tool_dir" >> "$GITHUB_PATH"

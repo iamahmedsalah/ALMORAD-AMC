@@ -3,7 +3,7 @@ import {open,mkdir,readFile,writeFile,rm} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {createRequire} from 'node:module';
 import {inspectMigrations,migrationTarget,ReleasePolicyError} from './migrations.mjs';
-import {runDatabaseCommand as run} from './database-command.mjs';
+import {runDatabaseCommand as run,postgresEnvironment as pgEnvironment} from './database-command.mjs';
 const mode=process.argv[2];
 const directory=resolve(process.env.RUNNER_TEMP||'.tmp','amc-database-release');
 const dump=join(directory,'database.dump'),encrypted=join(directory,'database.dump.enc');
@@ -22,11 +22,6 @@ async function rowCounts(connection){
     await db.query('ROLLBACK');return counts;
   }finally{await db.end();}
 }
-function pgEnvironment(connection){
-  const {url}=migrationTarget({DIRECT_URL:connection});
-  const local=['127.0.0.1','localhost'].includes(url.hostname);
-  return {...process.env,PGHOST:url.hostname,PGPORT:url.port||'5432',PGUSER:decodeURIComponent(url.username),PGPASSWORD:decodeURIComponent(url.password),PGDATABASE:decodeURIComponent(url.pathname.slice(1)),PGSSLMODE:local?'disable':'verify-full',PGSSLROOTCERT:local?'':'system',PGCONNECT_TIMEOUT:'15'};
-}
 try{
   await mkdir(directory,{recursive:true,mode:0o700});
   if(mode==='backup'){
@@ -34,7 +29,7 @@ try{
     const state=await inspectMigrations();
     await writeFile(join(directory,'manifest.json'),JSON.stringify({...state,createdAt:new Date().toISOString(),commit:process.env.GITHUB_SHA},null,2));
     const file=await open(dump,'w',0o600);
-    try{run('backup_dump','docker',['run','--rm','--network=host',...['PGHOST','PGPORT','PGUSER','PGPASSWORD','PGDATABASE','PGSSLMODE','PGSSLROOTCERT','PGCONNECT_TIMEOUT'].flatMap(key=>['-e',key]),'postgres:18-alpine','pg_dump','--format=custom','--no-owner','--no-privileges'],{env:pgEnvironment(process.env.DIRECT_URL),stdio:['ignore',file.fd,'pipe']});}finally{await file.close();}
+    try{run('backup_dump','pg_dump',['--no-password','--format=custom','--no-owner','--no-privileges'],{env:pgEnvironment(process.env.DIRECT_URL),stdio:['ignore',file.fd,'pipe']});}finally{await file.close();}
     run('backup_encrypt','openssl',['enc','-aes-256-cbc','-salt','-pbkdf2','-iter','200000','-in',dump,'-out',encrypted,'-pass','env:BACKUP_ENCRYPTION_KEY']);
     const encryptedHash=createHash('sha256').update(await readFile(encrypted)).digest('hex');
     await writeFile(join(directory,'backup.json'),JSON.stringify({sha256:encryptedHash,commit:process.env.GITHUB_SHA,createdAt:new Date().toISOString(),format:'openssl-aes-256-cbc-pbkdf2-200000'},null,2));
@@ -43,13 +38,13 @@ try{
   }else if(mode==='rehearse'){
     const local=migrationTarget({DIRECT_URL:process.env.REHEARSAL_DATABASE_URL});
     if(!['127.0.0.1','localhost'].includes(local.url.hostname)||!local.url.pathname.endsWith('_test'))throw new ReleasePolicyError('Rehearsal requires isolated local *_test PostgreSQL');
-    // Use the same Docker network and credentials as restore, before decrypting data.
-    run('rehearsal_connect','docker',['run','--rm','--network=host',...['PGHOST','PGPORT','PGUSER','PGPASSWORD','PGDATABASE','PGSSLMODE','PGCONNECT_TIMEOUT'].flatMap(key=>['-e',key]),'postgres:18-alpine','psql','--no-psqlrc','--set','ON_ERROR_STOP=1','--command','SELECT 1'],{env:pgEnvironment(local.url.href)});
+    // Use the same native client environment as restore, before decrypting data.
+    run('rehearsal_connect','psql',['--no-password','--no-psqlrc','--set','ON_ERROR_STOP=1','--command','SELECT 1'],{env:pgEnvironment(local.url.href)});
     const expected=JSON.parse(await readFile(join(directory,'backup.json'),'utf8')).sha256;
     if(createHash('sha256').update(await readFile(encrypted)).digest('hex')!==expected)throw new ReleasePolicyError('Encrypted backup checksum mismatch');
     run('rehearsal_decrypt','openssl',['enc','-d','-aes-256-cbc','-pbkdf2','-iter','200000','-in',encrypted,'-out',dump,'-pass','env:BACKUP_ENCRYPTION_KEY']);
     const file=await open(dump,'r');
-    try{run('rehearsal_restore','docker',['run','--rm','-i','--network=host',...['PGHOST','PGPORT','PGUSER','PGPASSWORD','PGDATABASE','PGSSLMODE','PGCONNECT_TIMEOUT'].flatMap(key=>['-e',key]),'postgres:18-alpine','pg_restore','--no-owner','--no-privileges','--exit-on-error','--dbname',decodeURIComponent(local.url.pathname.slice(1))],{env:pgEnvironment(local.url.href),stdio:[file.fd,'pipe','pipe']});}finally{await file.close();}
+    try{run('rehearsal_restore','pg_restore',['--no-password','--no-owner','--no-privileges','--exit-on-error','--dbname',decodeURIComponent(local.url.pathname.slice(1))],{env:pgEnvironment(local.url.href),stdio:[file.fd,'pipe','pipe']});}finally{await file.close();}
     const state=await inspectMigrations({DIRECT_URL:local.url.href});
     if(JSON.stringify(state.pending)!==JSON.stringify(JSON.parse(await readFile(join(directory,'manifest.json'),'utf8')).pending))throw new ReleasePolicyError('Restored migration state differs from production snapshot');
     const before=await rowCounts(local.url.href);
