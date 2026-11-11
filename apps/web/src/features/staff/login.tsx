@@ -72,7 +72,7 @@ export function StaffLogin({locale}: {locale: Locale}) {
       {emailState !== 'idle' && <p id="staff-email-feedback" className="field-feedback" data-state={emailState}>
         <span className="field-feedback-symbol" aria-hidden="true">{emailValid ? '✓' : '!'}</span>{emailValid ? feedback.valid : feedback.invalid}
       </p>}
-      <div className="staff-password-field"><label htmlFor="staff-password">{c.password}</label><div className="staff-password-wrap">
+      <div className="staff-password-field"><label htmlFor="staff-password">{c.password}</label><div className="staff-password-wrap" dir="ltr">
         <input id="staff-password" disabled={!hydrated || pending || signedIn} name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" dir="ltr" required maxLength={128}/>
         <button type="button" className="staff-password-toggle" disabled={!hydrated || pending || signedIn}
           aria-label={showPassword ? feedback.hidePassword : feedback.showPassword} aria-pressed={showPassword}

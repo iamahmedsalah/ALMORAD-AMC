@@ -28,6 +28,7 @@ for (const locale of ['en', 'ar'] as const) {
   });
 
   test(`staff sign in validates email and presents failed login in ${locale}`, async ({page}) => {
+    if (locale === 'ar') await page.setViewportSize({width: 390, height: 844});
     await page.goto(`/${locale}/staff/login`);
     const form = page.locator('.staff-form');
     const email = form.locator('[name="email"]');
@@ -47,15 +48,27 @@ for (const locale of ['en', 'ar'] as const) {
     expect(await email.evaluate(element => getComputedStyle(element).borderTopColor))
       .toBe(await page.locator('#staff-email-feedback').evaluate(element => getComputedStyle(element).color));
     await password.fill('synthetic-test-password');
+    const eye = form.locator('.staff-password-toggle');
+    const expectEyeAtPasswordEnd = async () => {
+      const [inputBox, eyeBox] = await Promise.all([password.boundingBox(), eye.boundingBox()]);
+      expect(inputBox).not.toBeNull();
+      expect(eyeBox).not.toBeNull();
+      expect(eyeBox!.x).toBeGreaterThan(inputBox!.x + inputBox!.width - 56);
+      expect(eyeBox!.x + eyeBox!.width).toBeLessThanOrEqual(inputBox!.x + inputBox!.width + 1);
+    };
+    await expectEyeAtPasswordEnd();
     const show = form.getByRole('button', {name: locale === 'ar' ? 'إظهار كلمة المرور' : 'Show password'});
     await show.click();
     await expect(password).toHaveAttribute('type', 'text');
+    await expectEyeAtPasswordEnd();
     const hide = form.getByRole('button', {name: locale === 'ar' ? 'إخفاء كلمة المرور' : 'Hide password'});
     await hide.click();
     await expect(password).toHaveAttribute('type', 'password');
+    await expectEyeAtPasswordEnd();
     await page.route('**/api/staff/auth/login', route => route.fulfill({status: 401, contentType: 'application/json', body: '{}'}));
     await form.locator('[type="submit"]').click();
     await expect(form.locator('[role="alert"]')).toBeVisible();
+    await expect(form.locator('[role="alert"]')).toHaveCSS('opacity', '1');
     await expect(password).toHaveValue('synthetic-test-password');
     await mkdir('docs/reviews/form-feedback', {recursive: true});
     await page.screenshot({path: `docs/reviews/form-feedback/sign-in-${locale}.png`});
@@ -73,3 +86,17 @@ for (const locale of ['en', 'ar'] as const) {
     await expect(form.locator('[data-variant="success"]')).toHaveAttribute('data-state', 'open');
   });
 }
+
+test('staff controls stay disabled without JavaScript', async ({browser}) => {
+  const context = await browser.newContext({javaScriptEnabled: false});
+  try {
+    const page = await context.newPage();
+    await page.goto('/ar/staff/login');
+    await expect(page.locator('form')).toHaveAttribute('method', 'post');
+    await expect(page.locator('input[name="password"]')).toBeDisabled();
+    await expect(page.locator('form button[type="submit"]')).toBeDisabled();
+    await expect(page.locator('form button[type="button"]')).toBeDisabled();
+  } finally {
+    await context.close();
+  }
+});
