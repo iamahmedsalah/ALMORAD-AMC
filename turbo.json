@@ -11,6 +11,7 @@
   ],
   "globalEnv": [
     "NODE_ENV",
+    "NODE_OPTIONS",
     "NEXT_PUBLIC_CONTENT_APPROVED",
     "NEXT_PUBLIC_SITE_URL",
     "NEXT_PUBLIC_CONTACT_EMAIL",
@@ -23,6 +24,7 @@
     "VERCEL"
   ],
   "globalPassThroughEnv": [
+    "AMC_RELEASE_MIGRATIONS",
     "DATABASE_URL",
     "TEST_DATABASE_URL",
     "SWC_NATIVE_BINDING_CACHE",
