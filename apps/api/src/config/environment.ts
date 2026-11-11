@@ -15,6 +15,7 @@ export const environmentSchema = z.object({
   WEB_ORIGIN: z.string().url().default('http://localhost:3000'),
   RESEND_API_KEY: z.string().min(1).optional(),
   RESEND_FROM_EMAIL: emailOrMailbox.optional(),
+  BOOKING_INBOX_EMAIL: z.email().optional(),
   CRON_SECRET: z.string().min(32).optional(),
   BOOKING_TOKEN_SECRET: z.string().min(32).optional()
 });

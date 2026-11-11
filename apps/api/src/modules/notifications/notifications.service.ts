@@ -5,6 +5,7 @@ import {PrismaService} from '../../prisma/prisma.service.js';
 import {generateIcs,services} from '@amc/shared';
 import {renderBookingConfirmationEmail} from './templates/booking-confirmation.template.js';
 import {renderBookingRescheduledEmail} from './templates/booking-rescheduled.template.js';
+import {renderBookingOwnerEmail} from './templates/booking-owner.template.js';
 import {renderBookingCancelledEmail} from './templates/booking-cancelled.template.js';
 
 export interface DrainResult {
@@ -143,6 +144,12 @@ export class NotificationsService {
           continue;
         }
 
+        const ownerAlert=item.kind==='BOOKING_CREATED:OWNER:EMAIL';
+        const ownerInbox=process.env.BOOKING_INBOX_EMAIL;
+        if(ownerAlert&&!ownerInbox){
+          await this.prisma.bookingOutbox.update({where:{id:item.id},data:{status:'UNCONFIGURED',lastError:'BOOKING_INBOX_EMAIL is not configured'}});
+          failed++;continue;
+        }
         // Generate deterministic management link
         const token = this.deriveManagementToken(booking);
         const managementUrl = `${this.webOrigin}/${booking.locale}/booking/manage#id=${booking.id}&token=${token}`;
@@ -154,7 +161,9 @@ export class NotificationsService {
         let emailContent: {subject: string; text: string; html: string};
         let attachments: {filename: string; content: Buffer}[] | undefined;
 
-        if (isCancelled) {
+        if(ownerAlert){
+          emailContent=renderBookingOwnerEmail({reference:booking.reference,clientName:booking.clientName,email:booking.email,phone:booking.phone,serviceTitle,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,staffUrl:`${this.webOrigin}/en/staff/calendar`});
+        } else if (isCancelled) {
           emailContent = renderBookingCancelledEmail({
             reference: booking.reference,
             clientName: booking.clientName,
@@ -219,11 +228,11 @@ export class NotificationsService {
         const resendResponse = await this.resend.emails.send(
           {
             from: this.fromEmail,
-            to: booking.email,
+            to: ownerAlert ? ownerInbox! : booking.email,
             subject: emailContent.subject,
             text: emailContent.text,
             html: emailContent.html,
-            replyTo: this.replyTo,
+            replyTo: ownerAlert ? booking.email : (ownerInbox || this.replyTo),
             attachments
           },
           {
@@ -251,7 +260,7 @@ export class NotificationsService {
           this.prisma.bookingEvent.create({
             data: {
               bookingId: booking.id,
-              kind: isCancelled ? 'EMAIL_CANCELLED_DELIVERED' : isRescheduled ? 'EMAIL_RESCHEDULED_DELIVERED' : 'EMAIL_DELIVERED',
+              kind: ownerAlert ? 'OWNER_EMAIL_DELIVERED' : isCancelled ? 'EMAIL_CANCELLED_DELIVERED' : isRescheduled ? 'EMAIL_RESCHEDULED_DELIVERED' : 'EMAIL_DELIVERED',
               details: {
                 outboxId: item.id,
                 resendId,

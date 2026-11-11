@@ -12,7 +12,7 @@
     "dev:api": "turbo run dev --filter=@amc/api",
     "dev:db": "docker compose --env-file .env -f dev/postgres/compose.yml up -d --wait postgres",
     "dev:db:stop": "docker compose --env-file .env -f dev/postgres/compose.yml stop postgres",
-    "dev:setup": "pnpm dev:db && pnpm db:migrate:dev",
+    "dev:setup": "node scripts/local-runtime.mjs setup",
     "db:migrate:dev": "node scripts/dev-migrations.mjs",
     "lint": "eslint .",
     "typecheck": "turbo run typecheck",
@@ -36,7 +36,13 @@
     "preview:demo": "node scripts/demo.mjs preview",
     "ci:release:test": "node --test scripts/ci/*.test.mjs",
     "db:release:inspect": "node scripts/ci/migrations.mjs inspect",
-    "db:release:deploy": "node scripts/ci/migrations.mjs deploy"
+    "db:release:deploy": "node scripts/ci/migrations.mjs deploy",
+    "dev:setup:docker": "pnpm dev:db && pnpm db:migrate:dev",
+    "db:check": "node scripts/local-runtime.mjs check",
+    "preview:cert": "node scripts/local-runtime.mjs cert",
+    "preview:build": "node scripts/local-runtime.mjs build",
+    "preview:local": "node scripts/local-runtime.mjs preview",
+    "email:test": "node scripts/test-email.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",

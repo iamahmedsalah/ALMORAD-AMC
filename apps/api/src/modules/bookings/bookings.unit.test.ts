@@ -61,6 +61,7 @@ describe('PublicBookingController unit tests', () => {
   });
 
   it('auto-provisions local development BookingSettings when missing in development mode', async () => {
+    vi.stubEnv('DATABASE_URL', 'postgresql://fixture:fixture@127.0.0.1/amc_dev');
     vi.stubEnv('NODE_ENV', 'development');
     vi.stubEnv('VITEST', '');
     const seededRow = {

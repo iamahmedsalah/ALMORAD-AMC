@@ -36,20 +36,21 @@ test('process mark travels through four cards then hides after completion',async
  await page.setViewportSize({width:390,height:1000});
  await expect(marker).toBeHidden();
 });
-test('monitor redraws for light and dark themes and ticker keeps the official mark',async({page})=>{
+test('monitor surfaces follow the theme and ticker keeps the official mark',async({page})=>{
  await page.emulateMedia({reducedMotion:'reduce'});
  await page.addInitScript(()=>localStorage.setItem('theme','light'));
  await page.goto('/en');
  await expect(page.locator('.amc-preloader')).toBeHidden();
- const sample=()=>page.locator('.lp-showreel-canvas').evaluate((canvas:HTMLCanvasElement)=>{
-  const pixels=canvas.getContext('2d')!.getImageData(24,24,1,1).data;
-  return Array.from(pixels).slice(0,3);
- });
- const light=await sample();
+ const screen=page.locator('.lp-showreel-viewport');
+ await screen.scrollIntoViewIfNeeded();
+ const light=await screen.evaluate(element=>getComputedStyle(element).backgroundColor);
+ const poster=await screen.locator('video').getAttribute('poster');
+ await expect(page.locator('.lp-showreel-pause-poster')).toBeVisible();
  await mkdir('docs/reviews/home-motion',{recursive:true});
  await page.locator('.manifesto-tv-wrap').screenshot({path:'docs/reviews/home-motion/monitor-light.png'});
- await page.evaluate(()=>{localStorage.setItem('theme','dark');document.documentElement.classList.add('dark');});
- await expect.poll(async()=>(await sample())[0]).toBeLessThan(light[0]! - 100);
+ await page.evaluate(()=>{localStorage.setItem('theme','dark');document.documentElement.classList.remove('light');document.documentElement.classList.add('dark');});
+ await expect.poll(()=>screen.evaluate(element=>getComputedStyle(element).backgroundColor)).not.toBe(light);
+ await expect(screen.locator('video')).toHaveAttribute('poster',poster!);
  await page.locator('.manifesto-tv-wrap').screenshot({path:'docs/reviews/home-motion/monitor-dark.png'});
  await expect(page.locator('.lp-tv-bezel')).toHaveCSS('background-color','rgb(11, 31, 68)');
  const ticker=page.locator('.brand-ticker');

@@ -27,7 +27,8 @@ export class BookingsService {
  private enabled(row:BookingSettings){return row.enabled&&(process.env.NODE_ENV!=='production'||(process.env.BOOKING_APPROVED==='true'&&!row.isDemo));}
  private async ensureDevSettings(){
   let row=await this.db.bookingSettings.findUnique({where:{id:'agency'}});
-  if(process.env.NODE_ENV==='development'&&!process.env.VITEST&&(!row||!row.enabled)){
+  let localDatabase=false;try{localDatabase=['localhost','127.0.0.1','[::1]'].includes(new URL(process.env.DATABASE_URL||'').hostname);}catch{/* Invalid configuration is rejected at startup. */}
+  if(localDatabase&&process.env.NODE_ENV==='development'&&!process.env.VITEST&&(!row||!row.enabled)){
    await Promise.all(services.map(s=>this.db.bookingService.upsert({where:{slug:s.slug},create:{slug:s.slug},update:{}})));
    const defaultHours=Array.from({length:7},(_,i)=>({day:i+1,open:'09:00',close:'17:00'}));
    const defaultSlugs=services.map(v=>v.slug);
@@ -51,6 +52,7 @@ export class BookingsService {
  private async event(tx:Tx,id:string,kind:string,actorId:string|undefined,details:Prisma.InputJsonValue,emailStatus='UNCONFIGURED'){
    const event=await tx.bookingEvent.create({data:{bookingId:id,actorId,kind,details}});
    await tx.bookingOutbox.create({data:{bookingId:id,eventId:event.id,kind:kind+':EMAIL',status:emailStatus}});
+   if(kind==='BOOKING_CREATED'&&process.env.BOOKING_INBOX_EMAIL)await tx.bookingOutbox.create({data:{bookingId:id,eventId:event.id,kind:'BOOKING_CREATED:OWNER:EMAIL',status:emailStatus}});
    const crmStatus=this.hubspot?.enabled?'PENDING':'UNCONFIGURED';
    await tx.bookingOutbox.create({data:{bookingId:id,eventId:event.id,kind:kind+':HUBSPOT',status:crmStatus}});
    await tx.staffAuditEvent.create({data:{actorId,subjectId:id,action:kind}});

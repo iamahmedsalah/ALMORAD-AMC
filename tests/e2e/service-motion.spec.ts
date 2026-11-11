@@ -38,7 +38,7 @@ for(const locale of ['en','ar'])for(const theme of ['light','dark'])for(const wi
   const result=await new AxeBuilder({page}).include('.service-motion-stage').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();expect(result.violations).toEqual([]);
   await page.locator('h1').scrollIntoViewIfNeeded();await expect(page.locator('.service-motion-stage[data-active="true"]')).toHaveCount(0);
   await page.emulateMedia({reducedMotion:'reduce'});
-  for(const scene of scenes){const stage=stageFor(page,scene);await stage.scrollIntoViewIfNeeded();await expect(stage).toHaveAttribute('data-active','false');await expect(stage.locator('button')).toBeDisabled();await expect(stage.locator('img')).toBeVisible();}
+  for(const scene of scenes){const stage=stageFor(page,scene);await stage.scrollIntoViewIfNeeded();await expect(stage).toHaveAttribute('data-active','false');await expect(stage.locator('button')).toBeDisabled();await expect(stage.locator('img:visible')).toBeVisible();}
   await page.emulateMedia({reducedMotion:'no-preference'});
   // Existing GSAP stack changes document height when motion is restored. Revisit the device section after layout refresh.
   await expect.poll(async()=>{await stageFor(page,'devices').scrollIntoViewIfNeeded();return stageFor(page,'devices').getAttribute('data-active');}).toBe('true');
@@ -54,7 +54,7 @@ for(const locale of ['en','ar'])for(const theme of ['light','dark'])for(const wi
 test('blocked WebGL retains artwork and readable controls',async({page})=>{
  await page.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(this:HTMLCanvasElement,kind:string,...args:unknown[]){if(kind==='webgl'||kind==='webgl2')return null;return Reflect.apply(original,this,[kind,...args]);} as typeof original;});
  await page.goto('/en');
- for(const scene of scenes){const stage=stageFor(page,scene);await stage.scrollIntoViewIfNeeded();await expect(stage).toHaveAttribute('data-failed','true');await expect(stage.locator('img')).toBeVisible();await expect(stage.locator('button')).toBeDisabled();}
+ for(const scene of scenes){const stage=stageFor(page,scene);await stage.scrollIntoViewIfNeeded();await expect(stage).toHaveAttribute('data-failed','true');await expect(stage.locator('img:visible')).toBeVisible();await expect(stage.locator('button')).toBeDisabled();}
 });
 
 test('context loss and tab visibility release drawing',async({page})=>{
@@ -66,11 +66,11 @@ test('context loss and tab visibility release drawing',async({page})=>{
  await expect(stage).toHaveAttribute('data-active','true');
  await expect.poll(()=>stage.locator('canvas').evaluate(c=>Number(c.dataset.frames??0))).toBeGreaterThan(2);
  await stage.locator('canvas').evaluate(canvas=>{canvas.getContext('webgl')?.getExtension('WEBGL_lose_context')?.loseContext();});
- await expect(stage).toHaveAttribute('data-failed','true');await expect(stage.locator('img')).toBeVisible();
+ await expect(stage).toHaveAttribute('data-failed','true');await expect(stage.locator('img:visible')).toBeVisible();
  const device=stageFor(page,'devices');await device.scrollIntoViewIfNeeded();await expect(device).toHaveAttribute('data-active','true');
  await expect.poll(()=>device.locator('canvas').evaluate(c=>Number(c.dataset.frames??0))).toBeGreaterThan(2);
  await device.locator('canvas').evaluate(canvas=>{canvas.getContext('webgl2')?.getExtension('WEBGL_lose_context')?.loseContext();});
- await expect(device).toHaveAttribute('data-failed','true');await expect(device.locator('img')).toBeVisible();
+ await expect(device).toHaveAttribute('data-failed','true');await expect(device.locator('img:visible')).toBeVisible();
 });
 
 for(const width of [320,768])test(`small and tablet layout ${width}`,async({page})=>{

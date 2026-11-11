@@ -93,7 +93,7 @@ export function ServiceMotionStage({scene,locale,label,fallback='/studio/studio-
     void start();
     return()=>{dead=true;setReady(false);canvas.removeEventListener('webglcontextlost',lost);stop();element.removeEventListener('pointermove',pointer);element.removeEventListener('pointerleave',leave);};
   },[selected,eligible,scene,locale,paused]);
-  const running=selected&&eligible&&ready;
+  const running=selected&&eligible&&ready&&!paused;
   const poster=scene==='devices'?fallback:`/studio/services/${scene}.webp`;
   const posterSource=failedPoster===poster?fallback:poster;
   return <div ref={ref} className={`service-motion-stage ${scene==='devices'?'service-device-scene':''}`} data-scene={scene} data-active={running?'true':'false'} data-failed={failed?'true':'false'}>
