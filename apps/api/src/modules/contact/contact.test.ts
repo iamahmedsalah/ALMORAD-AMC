@@ -21,6 +21,13 @@ function database() {
   }};
 }
 describe('contact storage contract', () => {
+  it('persists a supplied phone and rejects a malformed number before writing',async()=>{
+    const db=database(),service=new ContactService(db as unknown as PrismaService);
+    await service.submit({...payload(),phone:'+1 202 555 0100'});
+    expect(db.contactInquiry.create.mock.calls[0]?.[0].data).toMatchObject({phone:'+1 202 555 0100'});
+    await expect(service.submit({...payload(),phone:'not-a-number'})).rejects.toMatchObject({status:400});
+    expect(db.contactInquiry.create).toHaveBeenCalledTimes(1);
+  });
   it('normalizes data, stores consent and acknowledges retries without duplicate writes', async () => {
     const db = database(); const service = new ContactService(db as unknown as PrismaService); const body = payload();
     await expect(service.submit(body)).resolves.toEqual({accepted:true});

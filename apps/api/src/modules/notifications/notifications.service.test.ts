@@ -116,7 +116,7 @@ describe('NotificationsService', () => {
       expect(sendMock).toHaveBeenCalledWith(
         expect.objectContaining({
           to: 'sarah@example.com',
-          from: expect.stringContaining('onboarding@resend.dev')
+          from: expect.stringContaining('bookings@almorad-amc.com')
         }),
         expect.any(Object)
       );

@@ -5,7 +5,7 @@ import {SubmissionArt} from '@/components/ui/submission-art';
 import {Button} from '@/components/ui/button';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 
-type ContactField = 'name' | 'email' | 'message';
+type ContactField = 'name' | 'email' | 'phone' | 'message';
 
 function FieldFeedback({id, valid, message}: {id: string; valid: boolean; message: string}) {
   return <p id={id} className={`field-feedback${valid ? '' : ' field-error'}`} data-state={valid ? 'valid' : 'invalid'}>
@@ -20,14 +20,14 @@ export function ContactForm({locale}: {locale: Locale}) {
     consent: 'أوافق على استخدام بياناتي للرد على هذا الاستفسار.', send: 'إرسال الرسالة', pending: 'جارٍ الإرسال…',
     success: 'تم استلام رسالتك. شكرًا لتواصلك معنا.', again: 'إرسال رسالة أخرى', invalid: 'يرجى مراجعة الحقول وإدخال بيانات صحيحة والموافقة على التواصل.',
     failed: 'تعذر إرسال الرسالة الآن. بياناتك محفوظة هنا؛ حاول مرة أخرى.', limited: 'أرسلت عدة رسائل مؤخرًا. يرجى الانتظار دقيقة ثم المحاولة.',
-    hint: 'من ١٠ إلى ٢٠٠٠ حرف. لا ترسل كلمات مرور أو معلومات حساسة.', required: 'جميع الحقول مطلوبة.',
+    hint: 'من ١٠ إلى ٢٠٠٠ حرف. لا ترسل كلمات مرور أو معلومات حساسة.', required: 'جميع الحقول مطلوبة باستثناء رقم الهاتف.',
     errName: 'يرجى كتابة الاسم (حرفين على الأقل).', errEmail: 'يرجى إدخال بريد إلكتروني صحيح.', errMessage: 'يرجى كتابة رسالة واضحة (١٠ أحرف على الأقل).', errConsent: 'يرجى الموافقة على استخدام البيانات للرد.'
   } : {
     title: 'Start a conversation', intro: 'Tell us about your project and where you want to go.', name: 'Name', email: 'Email', message: 'How can we help?',
     consent: 'I agree to my details being used to respond to this inquiry.', send: 'Send message', pending: 'Sending…',
     success: 'Your message has been received. Thank you for getting in touch.', again: 'Send another message', invalid: 'Please review the fields, enter valid information, and agree to be contacted.',
     failed: 'We couldn’t send your message. Your details are still here; please try again.', limited: 'You’ve sent several messages recently. Please wait a minute before trying again.',
-    hint: '10–2,000 characters. Please leave out passwords and sensitive information.', required: 'All fields are required.',
+    hint: '10–2,000 characters. Please leave out passwords and sensitive information.', required: 'All fields except phone number are required.',
     errName: 'Name must be at least 2 characters.', errEmail: 'Please enter a valid email address.', errMessage: 'Message must be at least 10 characters.', errConsent: 'You must agree to be contacted.'
   };
   const [state, setState] = useState<'idle'|'pending'|'success'|'error'>('idle');
@@ -35,8 +35,8 @@ export function ContactForm({locale}: {locale: Locale}) {
   const exitTimer = useRef<number | null>(null);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [values, setValues] = useState<Record<ContactField, string>>({name: '', email: '', message: ''});
-  const [touched, setTouched] = useState<Record<ContactField, boolean>>({name: false, email: false, message: false});
+  const [values, setValues] = useState<Record<ContactField, string>>({name: '', email: '', phone: '', message: ''});
+  const [touched, setTouched] = useState<Record<ContactField, boolean>>({name: false, email: false, phone: false, message: false});
   const feedback = ar ? {valid: 'البيانات صحيحة', problem: 'راجع البيانات'} : {valid: 'Looks good', problem: 'Please check your details'};
   const fieldStatus = (field: ContactField) => fieldErrors[field] ? 'invalid' : !touched[field] ? 'idle' :
     contactSubmissionSchema.shape[field].safeParse(values[field]).success ? 'valid' : 'invalid';
@@ -58,7 +58,7 @@ export function ContactForm({locale}: {locale: Locale}) {
     if (busy.current) return;
     const form = event.currentTarget;
     const data = new FormData(form);
-    const fields = {locale, name: String(data.get('name') || ''), email: String(data.get('email') || ''), message: String(data.get('message') || ''), consent: data.get('consent') === 'on', website: String(data.get('website') || '')};
+    const fields = {locale, name: String(data.get('name') || ''), email: String(data.get('email') || ''), phone: String(data.get('phone') || ''), message: String(data.get('message') || ''), consent: data.get('consent') === 'on', website: String(data.get('website') || '')};
     const fingerprint = JSON.stringify(fields);
     if (attempt.current?.fingerprint !== fingerprint) attempt.current = {fingerprint, key: crypto.randomUUID()};
     const parsed = contactSubmissionSchema.safeParse({...fields, idempotencyKey: attempt.current.key});
@@ -95,8 +95,8 @@ export function ContactForm({locale}: {locale: Locale}) {
       }
       const result: unknown = await response.json();
       if (!result || typeof result !== 'object' || !('accepted' in result) || result.accepted !== true) throw new Error('Invalid acknowledgement');
-      form.reset(); attempt.current = null; setValues({name: '', email: '', message: ''});
-      setTouched({name: false, email: false, message: false}); setSuccessLeaving(false); setState('success');
+      form.reset(); attempt.current = null; setValues({name: '', email: '', phone: '', message: ''});
+      setTouched({name: false, email: false, phone: false, message: false}); setSuccessLeaving(false); setState('success');
     } catch { setError(c.failed); setState('error'); }
     finally { busy.current = false; }
   }
@@ -116,6 +116,7 @@ export function ContactForm({locale}: {locale: Locale}) {
         </div>})}</div>
         <div className="contact-field"><label htmlFor="contact-message">{c.message}</label><textarea id="contact-message" name="message" required minLength={10} maxLength={2000} rows={6} value={values.message} onChange={event => changeField('message', event.target.value)} onBlur={() => setTouched(previous => ({...previous, message: true}))} aria-invalid={fieldStatus('message') === 'invalid'} data-valid={fieldStatus('message') === 'valid'} aria-describedby={`contact-hint${fieldStatus('message') !== 'idle' ? ' contact-err-message' : ''}`}/><small id="contact-hint">{c.hint}</small>
         {fieldStatus('message') !== 'idle' && <FieldFeedback id="contact-err-message" valid={fieldStatus('message') === 'valid'} message={fieldStatus('message') === 'valid' ? feedback.valid : fieldErrors.message || c.errMessage}/>}</div>
+        <div className="contact-field"><label htmlFor="contact-phone">{ar?'??? ?????? (???????)':'Phone number (optional)'}</label><input id="contact-phone" name="phone" type="tel" autoComplete="tel" dir="ltr" maxLength={40} value={values.phone} onChange={event=>changeField('phone',event.target.value)} aria-invalid={Boolean(fieldErrors.phone)}/>{fieldErrors.phone&&<p role="alert">{ar?'???? ??? ???? ??????':'Enter a valid phone number'}</p>}</div>
         <div className="contact-honeypot" aria-hidden="true"><label htmlFor="contact-website">Website</label><input id="contact-website" name="website" tabIndex={-1} autoComplete="off"/></div>
         <label className="contact-consent"><input type="checkbox" name="consent" required aria-invalid={Boolean(fieldErrors.consent)} aria-describedby={fieldErrors.consent ? 'contact-err-consent' : undefined}/><span>{c.consent}</span></label>
         {fieldErrors.consent && <FieldFeedback id="contact-err-consent" valid={false} message={fieldErrors.consent}/>}

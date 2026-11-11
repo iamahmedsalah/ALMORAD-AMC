@@ -4,7 +4,7 @@ import {proxyClient,signProxy} from '@amc/shared/server';
 
 const publicAllowed:Record<string,string>={'config':'GET','slots':'GET','create':'POST','manage':'POST','action':'POST'};
 const contactAllowed:Record<string,string>={'submit':'POST'};
-const allowed:Record<string,string>={'auth/login':'POST','auth/logout':'POST','auth/password':'POST','auth/session':'GET','security/sessions':'GET','security/revoke':'POST','security/overview':'GET','security/audit':'GET','accounts':'GET','accounts/create':'POST','accounts/update':'POST','accounts/deactivate':'POST','appointments':'GET','appointments/detail':'GET','appointments/create':'POST','appointments/action':'POST','booking-settings':'GET,POST','booking-analytics':'GET'};
+const allowed:Record<string,string>={'auth/login':'POST','auth/logout':'POST','auth/password':'POST','auth/session':'GET','security/sessions':'GET','security/revoke':'POST','security/overview':'GET','security/audit':'GET','accounts':'GET','accounts/create':'POST','accounts/update':'POST','accounts/deactivate':'POST','inquiries':'GET','appointments':'GET','appointments/detail':'GET','appointments/create':'POST','appointments/action':'POST','booking-settings':'GET,POST','booking-analytics':'GET'};
 
 export async function forward(request:NextRequest,endpoint:string,namespace:'staff'|'booking'|'contact'){
  const routes=namespace==='staff'?allowed:namespace==='contact'?contactAllowed:publicAllowed;

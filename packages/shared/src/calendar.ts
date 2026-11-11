@@ -7,6 +7,7 @@ export interface CalendarEventInput {
   description?: string;
   location?: string;
   status?: 'CONFIRMED' | 'CANCELLED';
+  sequence?: number;
 }
 
 export function generateIcs(event: CalendarEventInput): string {
@@ -19,6 +20,7 @@ export function generateIcs(event: CalendarEventInput): string {
     'CALSCALE:GREGORIAN',
     'BEGIN:VEVENT',
     `UID:${event.id}@almorad-amc.com`,
+    `SEQUENCE:${Math.max(0, Math.floor(event.sequence || 0))}`,
     `DTSTAMP:${stamp(new Date())}`,
     `DTSTART:${stamp(event.startsAt)}`,
     `DTEND:${stamp(event.endsAt)}`,

@@ -1,3 +1,5 @@
+import {emailSender} from './sender.js';
+import {renderBookingUpdateEmail} from './templates/booking-update.template.js';
 import {Injectable, Logger, Inject} from '@nestjs/common';
 import {createHmac, randomBytes} from 'node:crypto';
 import {Resend} from 'resend';
@@ -27,6 +29,7 @@ export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
   private readonly resend: Resend | null = null;
   private readonly fromEmail: string;
+  private readonly bookingFromEmail: string;
   private readonly replyTo: string;
   private readonly webOrigin: string;
   private readonly tokenSecret: string;
@@ -41,7 +44,8 @@ export class NotificationsService {
     const vercelOrigin = (process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL)
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL}`
       : undefined;
-    this.fromEmail = process.env.RESEND_FROM_EMAIL || 'ALMORAD AMC <onboarding@resend.dev>';
+    this.fromEmail = emailSender(process.env.RESEND_FROM_EMAIL,'contact');
+    this.bookingFromEmail = emailSender(process.env.RESEND_BOOKING_FROM_EMAIL,'booking');
     this.replyTo = process.env.REPLY_TO_EMAIL || 'hello@almorad-amc.com';
     this.webOrigin = process.env.WEB_ORIGIN || vercelOrigin || 'http://localhost:3000';
     this.tokenSecret = process.env.BOOKING_TOKEN_SECRET || randomBytes(32).toString('hex');
@@ -120,7 +124,7 @@ export class NotificationsService {
       try {
         const booking = await this.prisma.booking.findUnique({
           where: {id: item.bookingId},
-          include: {calendar: true}
+          include: {calendar: true,events:{where:{id:item.eventId},take:1}}
         });
 
         if (!booking) {
@@ -144,7 +148,7 @@ export class NotificationsService {
           continue;
         }
 
-        const ownerAlert=item.kind==='BOOKING_CREATED:OWNER:EMAIL';
+        const ownerAlert=item.kind.endsWith(':OWNER:EMAIL');
         const ownerInbox=process.env.BOOKING_INBOX_EMAIL;
         if(ownerAlert&&!ownerInbox){
           await this.prisma.bookingOutbox.update({where:{id:item.id},data:{status:'UNCONFIGURED',lastError:'BOOKING_INBOX_EMAIL is not configured'}});
@@ -155,14 +159,19 @@ export class NotificationsService {
         const managementUrl = `${this.webOrigin}/${booking.locale}/booking/manage#id=${booking.id}&token=${token}`;
 
         const serviceTitle=services.find(service=>service.slug===booking.serviceSlug)?.[booking.locale==='ar'?'ar':'en']||booking.serviceSlug;
-        const isCancelled = item.kind.includes('CANCEL');
-        const isRescheduled = item.kind.includes('RESCHEDULE');
+        const eventKind=item.kind.split(':')[0] || item.kind;
+        const eventDetails=booking.events?.[0]?.details;
+        const proposedStartAt=eventDetails&&typeof eventDetails==='object'&&!Array.isArray(eventDetails)&&typeof eventDetails.proposedStartAt==='string'?eventDetails.proposedStartAt:null;
+        const isCancelled = eventKind==='BOOKING_CANCELLED';
+        const isRescheduled = eventKind==='BOOKING_RESCHEDULED';
 
         let emailContent: {subject: string; text: string; html: string};
         let attachments: {filename: string; content: Buffer}[] | undefined;
 
         if(ownerAlert){
-          emailContent=renderBookingOwnerEmail({reference:booking.reference,clientName:booking.clientName,email:booking.email,phone:booking.phone,serviceTitle,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,staffUrl:`${this.webOrigin}/en/staff/calendar`});
+          emailContent=renderBookingOwnerEmail({eventKind,reference:booking.reference,clientName:booking.clientName,email:booking.email,phone:booking.phone,serviceTitle,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,staffUrl:`${this.webOrigin}/en/staff/calendar`});
+        } else if (!['BOOKING_CREATED','BOOKING_RESCHEDULED','BOOKING_CANCELLED'].includes(eventKind)) {
+          emailContent=renderBookingUpdateEmail({kind:eventKind,proposedStartAt,reference:booking.reference,clientName:booking.clientName,serviceTitle,locale:booking.locale,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,managementUrl,meetingUrl:booking.meetingUrl,officeAddress:booking.locale==='ar'?booking.calendar.officeAddressAr:booking.calendar.officeAddressEn});
         } else if (isCancelled) {
           emailContent = renderBookingCancelledEmail({
             reference: booking.reference,
@@ -177,13 +186,14 @@ export class NotificationsService {
           const icsContent = generateIcs({
             id: booking.id,
             reference: booking.reference,
+            sequence: booking.version,
             startsAt: booking.startsAt,
             endsAt: booking.endsAt,
             summary: `ALMORAD AMC - ${booking.reference}`,
             description: `Booking reference: ${booking.reference}\nManage: ${managementUrl}`,
             location: booking.meetingType === 'IN_PERSON'
               ? (booking.calendar.officeAddressEn || 'ALMORAD AMC Agency')
-              : 'Online Meeting'
+              : (booking.meetingUrl || 'Online Meeting - link pending')
           });
 
           attachments = [
@@ -205,10 +215,12 @@ export class NotificationsService {
               timezone: booking.timezone,
               managementUrl,
               officeAddress: booking.locale === 'ar' ? booking.calendar.officeAddressAr : booking.calendar.officeAddressEn,
+              meetingUrl:booking.meetingUrl,
               directionsUrl: booking.calendar.directionsUrl || null
             });
           } else {
             emailContent = renderBookingConfirmationEmail({
+              status:booking.status,
               reference: booking.reference,
               clientName: booking.clientName,
               serviceTitle,
@@ -219,15 +231,20 @@ export class NotificationsService {
               timezone: booking.timezone,
               managementUrl,
               officeAddress: booking.locale === 'ar' ? booking.calendar.officeAddressAr : booking.calendar.officeAddressEn,
+              meetingUrl:booking.meetingUrl,
               directionsUrl: booking.calendar.directionsUrl || null
             });
           }
         }
 
+        // A newly supplied link or staff confirmation also carries an updated calendar file.
+        if(!ownerAlert&&['BOOKING_EDIT','BOOKING_CONFIRM','BOOKING_CANCELLED'].includes(eventKind)){
+          attachments=[{filename:booking.reference+'.ics',content:Buffer.from(generateIcs({id:booking.id,reference:booking.reference,sequence:booking.version,status:isCancelled?'CANCELLED':'CONFIRMED',startsAt:booking.startsAt,endsAt:booking.endsAt,location:booking.meetingType==='ONLINE'?(booking.meetingUrl||'Online Meeting - link pending'):(booking.locale==='ar'?booking.calendar.officeAddressAr:booking.calendar.officeAddressEn)||'',description:'Manage: '+managementUrl}),'utf8')}];
+        }
         // Transmit email via Resend
         const resendResponse = await this.resend.emails.send(
           {
-            from: this.fromEmail,
+            from: this.bookingFromEmail,
             to: ownerAlert ? ownerInbox! : booking.email,
             subject: emailContent.subject,
             text: emailContent.text,

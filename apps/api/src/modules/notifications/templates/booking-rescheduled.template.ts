@@ -13,6 +13,7 @@ export interface BookingRescheduledTemplateInput {
   managementUrl: string;
   officeAddress?: string | null;
   directionsUrl?: string | null;
+  meetingUrl?: string | null;
 }
 
 export function renderBookingRescheduledEmail(input: BookingRescheduledTemplateInput): EmailContent {
@@ -24,10 +25,10 @@ export function renderBookingRescheduledEmail(input: BookingRescheduledTemplateI
     timeStyle: 'short'
   });
 
-  const formattedTime = timeFormatter.format(input.startsAt);
+  const formattedTime = timeFormatter.format(input.startsAt) + ' – ' + new Intl.DateTimeFormat(isAr ? 'ar-EG' : 'en-US', {timeZone:input.timezone,timeStyle:'short'}).format(input.endsAt);
   const locationText = input.meetingType === 'IN_PERSON'
     ? (input.officeAddress || (isAr ? 'مقر الاستوديو' : 'Agency Office'))
-    : (isAr ? 'عبر الإنترنت (سيتم إرسال رابط الاجتماع)' : 'Online Meeting (Video link will be provided)');
+    : (input.meetingUrl || (isAr ? 'عبر الإنترنت (سيتم إرسال رابط الاجتماع)' : 'Online Meeting (Video link will be provided)'));
 
   const subject = isAr
     ? `تم تحديث موعد استشارتك مع المراد AMC - ${input.reference}`
@@ -55,7 +56,8 @@ export function renderBookingRescheduledEmail(input: BookingRescheduledTemplateI
       ${detailsRow(isAr ? 'الخدمة' : 'Service', escapeHtml(input.serviceTitle))}
       ${detailsRow(isAr ? 'الموعد الجديد' : 'New Schedule', `<strong>${escapeHtml(formattedTime)} (${escapeHtml(input.timezone)})</strong>`)}
       ${detailsRow(isAr ? 'المكان' : 'Location', escapeHtml(locationText))}
-      ${input.directionsUrl ? detailsRow(isAr ? 'الاتجاهات' : 'Directions', `<a href="${escapeHtml(input.directionsUrl)}" style="color: #F7761E; text-decoration: underline;">${isAr ? 'عرض على خرائط جوجل' : 'View on Google Maps'}</a>`) : ''}
+      ${input.meetingType === 'ONLINE' && input.meetingUrl ? detailsRow(isAr ? 'رابط الاجتماع' : 'Join meeting', `<a href="${escapeHtml(input.meetingUrl)}">${escapeHtml(input.meetingUrl)}</a>`) : ''}
+      ${input.meetingType === 'IN_PERSON' && input.directionsUrl ? detailsRow(isAr ? 'الاتجاهات' : 'Directions', `<a href="${escapeHtml(input.directionsUrl)}" style="color: #F7761E; text-decoration: underline;">${isAr ? 'عرض على خرائط جوجل' : 'View on Google Maps'}</a>`) : ''}
     </table>
     <p style="margin: 16px 0 0; font-size: 14px; color: #625D52;">
       ${isAr ? 'تم إرفاق ملف تقويم (.ics) محدث لتعديل الموعد على تقويمك.' : 'An updated calendar invite (.ics) is attached to update this on your calendar.'}

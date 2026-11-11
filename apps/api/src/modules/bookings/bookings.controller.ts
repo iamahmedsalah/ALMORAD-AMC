@@ -56,7 +56,8 @@ export class PublicBookingController {
 
   @ApiOperation({ summary: 'Client booking action', description: 'Request reschedule or cancellation by client.' })
   @Post('action') @Header('Cache-Control','no-store') @Throttle({default:{limit:10,ttl:60000}})
-  action(@Body() input:unknown){return this.bookings.clientAction(input);}
+  async action(@Body() input:unknown){const result=await this.bookings.clientAction(input);this.deliver();return result;}
+  private deliver(){const job=this.notifications.drain(10).catch(()=>console.error('Booking notification drain failed'));if(process.env.VERCEL)waitUntil(job);else void job;}
 }
 
 @ApiTags('Staff Appointments')
@@ -64,7 +65,8 @@ export class PublicBookingController {
 @UseGuards(SessionGuard,CsrfGuard,PermissionGuard)
 @RequirePermission('appointments:read')
 export class StaffBookingsController {
-  constructor(@Inject(BookingsService) private readonly bookings:BookingsService){}
+  constructor(@Inject(BookingsService) private readonly bookings:BookingsService,@Inject(NotificationsService) private readonly notifications:NotificationsService){}
+  private deliver(){const job=this.notifications.drain(10).catch(()=>console.error('Booking notification drain failed'));if(process.env.VERCEL)waitUntil(job);else void job;}
 
   @ApiOperation({ summary: 'List appointments', description: 'Filter and paginate studio client bookings.' })
   @Get() @Header('Cache-Control','no-store')
@@ -77,11 +79,11 @@ export class StaffBookingsController {
 
   @ApiOperation({ summary: 'Staff create appointment', description: 'Create an internal appointment with staff confirmation.' })
   @Post('create') @Header('Cache-Control','no-store') @RequirePermission('appointments:write')
-  create(@Req() request:StaffRequest,@Body() input:unknown){return this.bookings.create(input,request.staff!.id);}
+  async create(@Req() request:StaffRequest,@Body() input:unknown){const result=await this.bookings.create(input,request.staff!.id);this.deliver();return result;}
 
   @ApiOperation({ summary: 'Staff update appointment action', description: 'Confirm, reschedule, complete, or cancel booking.' })
   @Post('action') @Header('Cache-Control','no-store') @RequirePermission('appointments:write')
-  action(@Req() request:StaffRequest,@Body() input:unknown){return this.bookings.staffAction(input,request.staff!.id);}
+  async action(@Req() request:StaffRequest,@Body() input:unknown){const result=await this.bookings.staffAction(input,request.staff!.id);this.deliver();return result;}
 }
 
 @ApiTags('Staff Booking Settings')

@@ -4,6 +4,13 @@ const ar={title:'احجز اجتماعًا',intro:'اختر الخدمة وال�
 export const bookingCopy=(locale:Locale)=>locale==='ar'?ar:en;
 export function bookingDeliveryCopy(locale:Locale,notifications:{kind:string;status:string}[]):string {
  const latest=notifications.find(item=>item.kind.endsWith(':EMAIL')&&!item.kind.includes(':OWNER:'));
+ if(latest&&latest.kind!=='BOOKING_CREATED:EMAIL'){
+  const ar=locale==='ar';
+  if(latest.status==='DELIVERED')return ar?'قبل مزود البريد آخر تحديث لموعدك. احتفظ برابط الإدارة الخاص.':'Your latest appointment update was accepted by the email provider. Keep your private management link.';
+  if(latest.status==='FAILED')return ar?'تعذر إرسال آخر تحديث بالبريد. راجع الحالة هنا وتواصل مع الاستوديو.':'The latest email update failed. Review the current status here and contact the studio.';
+  if(latest.status==='UNCONFIGURED')return ar?'لم يُرسل آخر تحديث؛ خدمة البريد غير مهيأة.':'The latest update was not emailed because delivery is not configured.';
+  return ar?'آخر تحديث للموعد في قائمة إرسال البريد.':'Your latest appointment email update is queued.';
+ }
  if(!latest)return locale==='ar'?'حالة البريد غير متاحة. احتفظ برابط إدارة الموعد الخاص.':'Email status is unavailable. Save your private management link.';
  if(latest?.status==='DELIVERED')return locale==='ar'?'أُرسلت رسالة التأكيد إلى بريدك الإلكتروني. احتفظ أيضًا برابط إدارة الموعد الخاص.':'A confirmation email was sent. Keep your private management link as well.';
  if(latest?.status==='UNCONFIGURED')return locale==='ar'?'لم تُرسل رسالة بريد؛ خدمة البريد غير مهيأة. احتفظ برابط إدارة الموعد الخاص.':'No email was sent because delivery is not configured. Save your private management link.';

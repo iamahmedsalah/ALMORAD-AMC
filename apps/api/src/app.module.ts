@@ -1,3 +1,4 @@
+import {InquiriesController} from './modules/contact/inquiries.controller.js';
 import {BookingsService} from './modules/bookings/bookings.service.js';
 import {PublicBookingController,StaffBookingsController,BookingSettingsController,BookingAnalyticsController,BookingOriginGuard} from './modules/bookings/bookings.controller.js';
 import {Module} from '@nestjs/common';
@@ -25,7 +26,7 @@ import {HubSpotClient} from './modules/contact/hubspot.client.js';
     NotificationsModule,
     ThrottlerModule.forRoot([{ttl: 60000, limit: 60, getTracker:req=>(req as ProxyRequest).trustedClient||String(req.ip||'unknown')}])
   ],
-  controllers: [ContactController,PublicBookingController,StaffBookingsController,BookingSettingsController,BookingAnalyticsController,HealthController, StaffController, StaffAccountsController, AuthController, SecurityController, OperationsController],
+  controllers: [InquiriesController,ContactController,PublicBookingController,StaffBookingsController,BookingSettingsController,BookingAnalyticsController,HealthController, StaffController, StaffAccountsController, AuthController, SecurityController, OperationsController],
   providers: [
     ContactService, HubSpotClient, BookingsService, BookingOriginGuard, PrismaService, SessionGuard, PermissionGuard, Reflector, AuthService, StaffAccountsService, CsrfService, CsrfGuard, ProxyGuard,
     {provide:APP_GUARD,useExisting:ProxyGuard},

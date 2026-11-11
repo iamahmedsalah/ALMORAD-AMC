@@ -5,6 +5,7 @@ export interface ContactEmailInput {
   locale: string;
   name: string;
   email: string;
+  phone?: string | null;
   message: string;
 }
 
@@ -39,12 +40,13 @@ export function renderContactOwnerEmail(input: ContactEmailInput & {id: string})
   const bodyHtml = `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:15px;">
 ${row('Name', escapeHtml(name))}
 ${row('Email', `<a href="mailto:${escapeHtml(input.email)}" style="color:#B84A05;">${escapeHtml(input.email)}</a>`)}
+${input.phone ? row('Phone', escapeHtml(input.phone)) : ''}
 ${row('Language', input.locale === 'ar' ? 'Arabic' : 'English')}
 ${row('Reference', escapeHtml(input.id))}
 </table>
 <p style="margin:18px 0 8px;font-weight:700;color:#B84A05;">Message</p>
 <div style="background:#FCF8F3;padding:14px 16px;border-radius:12px;">${paragraphs(input.message)}</div>`;
   const html = renderEmailLayout({locale: 'en', heading: 'New website inquiry', bodyHtml, preheader: `${name}: ${singleLine(input.message).slice(0, 90)}`, footerNote: 'Reply to this email to answer the visitor directly.'});
-  const text = `New website inquiry\n\nName: ${name}\nEmail: ${input.email}\nLanguage: ${input.locale}\nReference: ${input.id}\n\n${input.message}`;
+  const text = `New website inquiry\n\nName: ${name}\nEmail: ${input.email}\nPhone: ${input.phone || 'Not supplied'}\nLanguage: ${input.locale}\nReference: ${input.id}\n\n${input.message}`;
   return {subject, text, html};
 }

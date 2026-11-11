@@ -18,6 +18,7 @@ export const inquirySchema = z.object({
   locale: localeSchema,
   name: z.string().trim().min(2, {message: 'Name must be at least 2 characters'}).max(120, {message: 'Name cannot exceed 120 characters'}),
   email: z.string().trim().toLowerCase().regex(emailRegex, {message: 'Please provide a valid email address'}).max(254),
+  phone: z.string().trim().regex(phoneRegex).max(40).optional().or(z.literal('')),
   message: z.string().trim().min(10, {message: 'Message must be at least 10 characters'}).max(2000, {message: 'Message cannot exceed 2000 characters'})
 });
 

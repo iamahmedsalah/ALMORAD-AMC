@@ -39,6 +39,7 @@ export async function mockOperations(page: Page, role: StaffRole = 'CEO') {
     else if (path === 'booking/manage') json = { booking, schedule };
     else if (path === 'staff/appointments') json = { items: [booking], total: 1, page: 0, timezone: 'Africa/Cairo', isDemo: true };
     else if (path === 'staff/appointments/detail') json = { booking };
+    else if (path === 'staff/inquiries') json = {items:[{id:'ui-inquiry-fixture',name:'UI Fixture Inquiry',email:'inquiry@example.invalid',phone:'+1 202 555 0100',message:'Synthetic browser inquiry, not a real lead.',createdAt:booking.createdAt,ownerEmailStatus:'FAILED',visitorEmailStatus:'SENT'}],total:1,page:0};
     else if (path === 'staff/booking-analytics') json = analytics;
     else if (path === 'staff/booking-settings') json = schedule;
     else if (path === 'staff/security/sessions') json = [{ id: 'ui-fixture-session', createdAt: booking.createdAt, expiresAt: booking.startsAt, current: true }];
@@ -49,7 +50,7 @@ export async function mockOperations(page: Page, role: StaffRole = 'CEO') {
   });
 }
 
-export async function fixtureScreenshot(page: Page, path: string) {
+export async function fixtureScreenshot(page: Page, path: string, fullPage = false) {
   await page.evaluate(() => {
     const label = document.createElement('div');
     label.textContent = 'UI PREVIEW · SYNTHETIC BROWSER FIXTURES';
@@ -57,5 +58,5 @@ export async function fixtureScreenshot(page: Page, path: string) {
     document.body.appendChild(label);
     window.scrollTo({ top: 0, behavior: 'instant' });
   });
-  await page.screenshot({ path });
+  await page.screenshot({ path, fullPage });
 }

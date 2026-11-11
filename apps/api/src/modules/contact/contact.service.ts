@@ -27,9 +27,9 @@ export class ContactService {
   async submit(input: unknown) {
     const parsed = contactSubmissionSchema.safeParse(input);
     if (!parsed.success) throw new BadRequestException('Invalid contact submission');
-    const {idempotencyKey, website, name, email, message, locale} = parsed.data;
+    const {idempotencyKey, website, name, email, phone, message, locale} = parsed.data;
     if (website) return {accepted: true};
-    const fields = {name, email, message, locale};
+    const fields = {name, email, message, locale, ...(phone ? {phone} : {})};
     const requestHash = createHash('sha256').update(JSON.stringify(fields)).digest('hex');
     const existing = await this.prisma.contactInquiry.findUnique({where: {idempotencyKey}, select: {requestHash: true}});
     if (existing) {
@@ -62,7 +62,7 @@ export class ContactService {
     if (!row) return;
     const errors: string[] = [];
     const patch: Record<string, string | Date | null> = {};
-    const mail = {locale: row.locale, name: row.name, email: row.email, message: row.message};
+    const mail = {locale: row.locale, name: row.name, email: row.email, phone: row.phone, message: row.message};
 
     if (open.includes(row.ownerEmailStatus)) {
       const inbox = process.env.CONTACT_INBOX_EMAIL;

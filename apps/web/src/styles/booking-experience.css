@@ -1,0 +1,49 @@
+/* Shared operational components use the site's current semantic brand tokens. */
+.booking-choice-grid.booking-choice-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
+.booking-service-choice,.booking-choice-grid > button,.booking-choice-grid > .booking-office-panel { grid-column:1/-1; }
+.booking-choice-grid > button { justify-self:start; }
+.booking-details-grid.booking-details-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.booking-details-grid > :is(h2,p,.booking-check,.booking-actions),.booking-details-grid > label:has(textarea) { grid-column:1/-1; }
+.appointment-overview h2 { display:flex; align-items:center; gap:.75rem; }
+.appointment-overview .staff-heading { align-items:center; flex-wrap:wrap; gap:1rem; margin-block-end:1.5rem; }
+.appointment-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.appointment-facts p { padding:1rem; margin:0; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--background); overflow-wrap:anywhere; }
+.appointment-status { display:inline-flex; align-items:center; gap:.5rem; border:1px solid var(--border); border-radius:var(--radius-pill); padding:.4rem .85rem; font-size:.85rem; background:var(--surface-2); }
+.appointment-status::before { content:''; width:.5rem; height:.5rem; border-radius:50%; background:currentColor; }
+.appointment-status[data-status="CONFIRMED"] { color:var(--success); }
+.appointment-status[data-status="CANCELLED"] { color:var(--destructive); }
+.change-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; margin-block:1.5rem; }
+.change-choice { display:flex; align-items:center; gap:1rem; padding:1.25rem; min-height:80px; text-align:start; border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--background); color:var(--foreground); cursor:pointer; }
+.change-choice[aria-pressed="true"] { border-color:var(--foreground); outline:1px solid var(--foreground); background:var(--surface-2); }
+.change-choice .solar-icon { flex-shrink:0; }
+.calendar-actions.calendar-actions { margin-block:1rem; }
+.calendar-actions .button { gap:.5rem; white-space:normal; text-align:center; }
+.staff-workspace .agenda-toolbar { padding:.5rem; border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--surface); gap:.5rem; }
+.agenda-toolbar .button[aria-pressed="true"] { background:var(--foreground); color:var(--background); border-color:var(--foreground); }
+.staff-workspace .calendar-appointment { border-inline-start:3px solid var(--accent); transition:box-shadow .15s; }
+.staff-workspace .calendar-appointment:hover { box-shadow:var(--shadow-md); }
+.calendar-appointment[data-status="CANCELLED"] { border-inline-start-color:var(--muted-foreground); background:var(--surface-2); }
+.calendar-appointment time { font-variant-numeric:tabular-nums; font-weight:600; }
+.meeting-format { display:flex; align-items:center; gap:.4rem; font-size:.8rem; color:var(--muted-foreground); }
+.meeting-format .solar-icon { width:16px; height:16px; }
+.inquiry-search { display:flex; flex-wrap:wrap; gap:.75rem; align-items:end; margin-block:1.5rem; }
+.inquiry-search label { display:grid; gap:.5rem; flex:1 1 260px; }
+.inquiry-search input { width:100%; min-height:48px; border:1px solid var(--input); padding:.75rem; border-radius:var(--radius-md); background:var(--background); color:var(--foreground); }
+.inquiry-grid { display:grid; gap:1rem; }
+.inquiry-card.inquiry-card { margin:0; }
+.inquiry-card time { font-size:.8rem; color:var(--muted-foreground); }
+.inquiry-card .staff-heading { flex-wrap:wrap; gap:.75rem; }
+.inquiry-contact { display:flex; flex-wrap:wrap; gap:1rem; margin-block:1rem; overflow-wrap:anywhere; }
+.inquiry-contact a { display:inline-flex; align-items:center; gap:.5rem; min-height:44px; text-decoration:underline; }
+.inquiry-contact .solar-icon { width:20px; height:20px; flex-shrink:0; }
+.inquiry-message { white-space:pre-wrap; overflow-wrap:anywhere; padding:1rem; background:var(--background); border-radius:var(--radius-md); }
+.inquiry-delivery { display:flex; flex-wrap:wrap; gap:1.5rem; border-block-start:1px solid var(--border); padding-block-start:1rem; }
+.inquiry-delivery dt { color:var(--muted-foreground); font-size:.8rem; }
+.inquiry-delivery dd { margin:0; font-size:.9rem; }
+.booking-settings > fieldset { display:grid; gap:1.25rem; }
+@media(max-width:600px) {
+ .booking-choice-grid.booking-choice-grid,.booking-details-grid.booking-details-grid,.appointment-facts,.change-choices { grid-template-columns:minmax(0,1fr); }
+ .agenda-toolbar .button { flex:1 1 44%; }
+ .calendar-actions .button { width:100%; }
+ .booking-page .booking-actions { gap:.65rem; }
+}
