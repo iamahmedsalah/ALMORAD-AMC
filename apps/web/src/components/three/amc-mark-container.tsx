@@ -93,8 +93,8 @@ export function AmcMarkContainer({ dir = 'ltr' }: AmcMarkContainerProps) {
             className="scroll-hud-dot"
             aria-current={activeChapter === idx ? 'step' : undefined}
             data-active={activeChapter === idx ? 'true' : 'false'}
-            aria-label={`${item.num} ${isRtl ? item.ar : item.en}`}
-            title={`${item.num} — ${isRtl ? item.ar : item.en}`}
+            aria-label={isRtl ? item.ar : item.en}
+            title={isRtl ? item.ar : item.en}
             onClick={() => scrollToChapter(idx)}
             onKeyDown={(event) => {
               let target = idx;
@@ -108,16 +108,13 @@ export function AmcMarkContainer({ dir = 'ltr' }: AmcMarkContainerProps) {
             }}
           >
             <SolarIcon name={chapterIcons[idx] ?? 'widget-2-linear'} />
-            <span className="scroll-hud-tooltip" aria-hidden="true">{item.num} ? {isRtl ? item.ar : item.en}</span>
+            <span className="scroll-hud-tooltip" aria-hidden="true">{isRtl ? item.ar : item.en}</span>
           </button>
         ))}
       </nav>
 
       {/* Active Chapter Pill Indicator */}
       <div className="scroll-hud-chapter-pill rounded-squircle-md" aria-hidden="true">
-        <strong>
-          {currentMeta.num} / {String(CHAPTER_METADATA.length).padStart(2, '0')}
-        </strong>
         <span>{isRtl ? currentMeta.ar : currentMeta.en}</span>
       </div>
     </>

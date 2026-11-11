@@ -1,22 +1,21 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 
-export function FaqAccordion({ items, locale }: { items: readonly (readonly [string, string])[]; locale: string }) {
+export function FaqAccordion({ items }: { items: readonly (readonly [string, string])[]; locale: string }) {
   return (
     <div className="faq-accordion">
-      {items.map(([question, answer], index) => (
+      {items.map(([question, answer]) => (
         <FaqItem
           key={question}
           question={question}
           answer={answer}
-          number={new Intl.NumberFormat(locale, { minimumIntegerDigits: 2 }).format(index + 1)}
         />
       ))}
     </div>
   );
 }
 
-function FaqItem({ question, answer, number }: { question: string; answer: string; number: string }) {
+function FaqItem({ question, answer }: { question: string; answer: string }) {
   const details = useRef<HTMLDetailsElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const animation = useRef<Animation | null>(null);
@@ -91,7 +90,6 @@ function FaqItem({ question, answer, number }: { question: string; answer: strin
           };
         }}
       >
-        <span className="faq-accordion-number" aria-hidden="true">{number}</span>
         <span className="faq-accordion-question">{question}</span>
         <span className="faq-accordion-toggle" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

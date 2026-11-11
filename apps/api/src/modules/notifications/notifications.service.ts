@@ -2,7 +2,7 @@ import {Injectable, Logger, Inject} from '@nestjs/common';
 import {createHmac, randomBytes} from 'node:crypto';
 import {Resend} from 'resend';
 import {PrismaService} from '../../prisma/prisma.service.js';
-import {generateIcs} from '@amc/shared';
+import {generateIcs,services} from '@amc/shared';
 import {renderBookingConfirmationEmail} from './templates/booking-confirmation.template.js';
 import {renderBookingRescheduledEmail} from './templates/booking-rescheduled.template.js';
 import {renderBookingCancelledEmail} from './templates/booking-cancelled.template.js';
@@ -147,6 +147,7 @@ export class NotificationsService {
         const token = this.deriveManagementToken(booking);
         const managementUrl = `${this.webOrigin}/${booking.locale}/booking/manage#id=${booking.id}&token=${token}`;
 
+        const serviceTitle=services.find(service=>service.slug===booking.serviceSlug)?.[booking.locale==='ar'?'ar':'en']||booking.serviceSlug;
         const isCancelled = item.kind.includes('CANCEL');
         const isRescheduled = item.kind.includes('RESCHEDULE');
 
@@ -157,7 +158,7 @@ export class NotificationsService {
           emailContent = renderBookingCancelledEmail({
             reference: booking.reference,
             clientName: booking.clientName,
-            serviceTitle: booking.serviceSlug,
+            serviceTitle,
             locale: booking.locale,
             cancelledAt: new Date(),
             timezone: booking.timezone
@@ -187,7 +188,7 @@ export class NotificationsService {
             emailContent = renderBookingRescheduledEmail({
               reference: booking.reference,
               clientName: booking.clientName,
-              serviceTitle: booking.serviceSlug,
+              serviceTitle,
               locale: booking.locale,
               meetingType: booking.meetingType,
               startsAt: booking.startsAt,
@@ -201,7 +202,7 @@ export class NotificationsService {
             emailContent = renderBookingConfirmationEmail({
               reference: booking.reference,
               clientName: booking.clientName,
-              serviceTitle: booking.serviceSlug,
+              serviceTitle,
               locale: booking.locale,
               meetingType: booking.meetingType,
               startsAt: booking.startsAt,

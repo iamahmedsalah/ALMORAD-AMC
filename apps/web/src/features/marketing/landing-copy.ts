@@ -36,14 +36,14 @@ export const landingCopy = {
       scroll: 'Scroll to explore',
     },
     capabilities: {
-      label: '01 — Capabilities',
+      label: '— Capabilities',
       title: 'Four disciplines.\nOne connected direction.',
       body: 'Marketing, advertising, consulting and web development work as one studio, so strategy, creative and technology stay in the same conversation.',
       servicesLabel: 'Services',
       explore: 'Explore discipline',
     },
     gallery: {
-      label: '02 — Service index',
+      label: '— Service index',
       title: 'Eleven ways\nto move forward.',
       body: 'Each service has its own guide covering scope, process and questions to ask before you begin.',
       hint: 'Scroll to browse',
@@ -52,11 +52,11 @@ export const landingCopy = {
       open: 'Open guide',
     },
     process: {
-      label: '03 — Process',
+      label: '— Process',
       body: 'A clear sequence keeps decisions shared and work focused. Every engagement follows the same four movements.',
     },
     connected: {
-      label: '04 — Better together',
+      label: '— Better together',
       title: 'Combine disciplines.\nSee the connections.',
       body: 'Select the disciplines your challenge touches. The map shows which services can work together on it.',
       legend: 'Disciplines',
@@ -66,7 +66,7 @@ export const landingCopy = {
       centre: 'AMC',
     },
     devices: {
-      label: '05 — Every screen',
+      label: '— Every screen',
       title: 'Designed for\nevery screen.',
       body: 'Company websites, landing pages and online stores are planned for desktop, tablet and mobile from the first sketch, in Arabic and English.',
       points: [
@@ -77,7 +77,7 @@ export const landingCopy = {
       cta: 'Web development services',
     },
     engagement: {
-      label: '06 — Engagement',
+      label: '— Engagement',
       title: 'Ways to\nwork together.',
       body: 'Indicative engagement models. Scope, timing and fees are agreed after we understand your brief.',
       onRequest: 'Quoted after a discovery call',
@@ -90,9 +90,9 @@ export const landingCopy = {
       billing: { project: 'Per project', retainer: 'Monthly' },
       billingLabel: 'Billing',
     },
-    faq: { label: '07 — Questions' },
+    faq: { label: '— Questions' },
     final: {
-      label: '08 — Your next chapter',
+      label: '— Your next chapter',
       primary: 'Book a consultation',
     },
     footer: {
@@ -135,14 +135,14 @@ export const landingCopy = {
       scroll: 'مرّر للاستكشاف',
     },
     capabilities: {
-      label: '٠١ — القدرات',
+      label: 'القدرات',
       title: 'أربعة تخصصات.\nواتجاه واحد مترابط.',
       body: 'يعمل التسويق والإعلان والاستشارات وتطوير المواقع كاستوديو واحد، لتبقى الاستراتيجية والإبداع والتقنية في حوار واحد.',
       servicesLabel: 'الخدمات',
       explore: 'استكشف التخصص',
     },
     gallery: {
-      label: '٠٢ — دليل الخدمات',
+      label: 'دليل الخدمات',
       title: 'إحدى عشرة طريقة\nللتقدم إلى الأمام.',
       body: 'لكل خدمة دليل خاص يوضح النطاق والمنهج والأسئلة المهمة قبل البدء.',
       hint: 'مرّر للتصفح',
@@ -151,11 +151,11 @@ export const landingCopy = {
       open: 'افتح الدليل',
     },
     process: {
-      label: '٠٣ — المنهج',
+      label: 'المنهج',
       body: 'تسلسل واضح يجعل القرارات مشتركة والعمل مركزًا. كل تعاون يمر بالمراحل الأربع نفسها.',
     },
     connected: {
-      label: '٠٤ — أفضل معًا',
+      label: 'أفضل معًا',
       title: 'اجمع التخصصات.\nوشاهد الروابط.',
       body: 'اختر التخصصات التي يمسها تحديك، وستعرض الخريطة الخدمات التي يمكن أن تعمل معًا عليه.',
       legend: 'التخصصات',
@@ -165,7 +165,7 @@ export const landingCopy = {
       centre: 'AMC',
     },
     devices: {
-      label: '٠٥ — كل الشاشات',
+      label: 'كل الشاشات',
       title: 'تصميم يناسب\nكل شاشة.',
       body: 'نخطط مواقع الشركات وصفحات الهبوط والمتاجر الإلكترونية لسطح المكتب والأجهزة اللوحية والهواتف منذ الرسم الأول، بالعربية والإنجليزية.',
       points: [
@@ -176,7 +176,7 @@ export const landingCopy = {
       cta: 'خدمات تطوير المواقع',
     },
     engagement: {
-      label: '٠٦ — نماذج التعاون',
+      label: 'نماذج التعاون',
       title: 'طرق\nللعمل معًا.',
       body: 'نماذج تعاون استرشادية. يتم الاتفاق على النطاق والتوقيت والرسوم بعد فهم طلبك.',
       onRequest: 'يُحدد السعر بعد جلسة تعارف',
@@ -189,9 +189,9 @@ export const landingCopy = {
       billing: { project: 'لكل مشروع', retainer: 'شهريًا' },
       billingLabel: 'طريقة الدفع',
     },
-    faq: { label: '٠٧ — أسئلة' },
+    faq: { label: 'أسئلة' },
     final: {
-      label: '٠٨ — فصلك القادم',
+      label: 'فصلك القادم',
       primary: 'احجز استشارة',
     },
     footer: {

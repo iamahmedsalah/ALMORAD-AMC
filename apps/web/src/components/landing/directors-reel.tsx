@@ -32,7 +32,6 @@ export function DirectorsReel({ children, locale, count }: { children: ReactNode
           <div className="director-pagination" role="group" aria-label={isAr ? 'اختر مجموعة الفريق' : 'Choose a team group'}>
             {pages.map((page, index) => <button key={index} type="button" className="director-page-button" aria-current={active === index ? 'step' : undefined} aria-label={isAr ? `عرض أعضاء الفريق ${index * 2 + 1} إلى ${index * 2 + page.length}` : `View specialists ${index * 2 + 1} to ${index * 2 + page.length}`} onClick={() => setActive(index)}>
               <span aria-hidden="true" className="director-page-marker" />
-              <bdi>{String(index * 2 + 1).padStart(2, '0')}{page.length > 1 ? ` — ${String(index * 2 + page.length).padStart(2, '0')}` : ''}</bdi>
             </button>)}
           </div>
         </div>}

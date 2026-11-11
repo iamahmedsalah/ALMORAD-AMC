@@ -13,8 +13,7 @@ export function BrandTicker({locale}: {locale: Locale}) {
   return <div className="brand-ticker" role="region" tabIndex={0} aria-label={locale === 'ar' ? 'مجالات عمل المراد AMC' : 'ALMORAD AMC disciplines'}>
     <div className="brand-ticker-track">
       {[0, 1].map((copy) => <div className="brand-ticker-set" key={copy} aria-hidden={copy === 1}>
-        {labels.map((label, index) => <div className="brand-ticker-item" key={label}>
-          <span className="brand-ticker-number" aria-hidden="true">0{index + 1}</span>
+        {labels.map((label) => <div className="brand-ticker-item" key={label}>
           <span className="brand-ticker-logo" aria-hidden="true">
             <Image src="/brand/amc-mark.svg" alt="" width={120} height={45} className="brand-ticker-light" />
             <Image src="/brand/amc-mark-on-dark.svg" alt="" width={120} height={45} className="brand-ticker-dark" />

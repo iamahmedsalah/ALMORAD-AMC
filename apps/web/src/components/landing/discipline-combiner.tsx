@@ -17,10 +17,10 @@ interface DisciplineCombinerProps {
 }
 
 const ANIMATION_MODES = [
-  { id: 'orbit', code: '01', en: '3D Orbit & Layer Depth', ar: 'مدار ثلاثي الأبعاد وطبقات' },
-  { id: 'explode', code: '02', en: 'Exploded Architecture', ar: 'تفكيك هندسي للأبعاد' },
-  { id: 'pulse', code: '03', en: 'Kinetic Signal Wave', ar: 'موجة الإشارة الحركية' },
-  { id: 'spin', code: '04', en: '360° Dimensional Turn', ar: 'دوران كامل ٣٦٠ درجة' },
+  { id: 'orbit', en: '3D Orbit & Layer Depth', ar: 'مدار ثلاثي الأبعاد وطبقات' },
+  { id: 'explode', en: 'Exploded Architecture', ar: 'تفكيك هندسي للأبعاد' },
+  { id: 'pulse', en: 'Kinetic Signal Wave', ar: 'موجة الإشارة الحركية' },
+  { id: 'spin', en: '360° Dimensional Turn', ar: 'دوران كامل ٣٦٠ درجة' },
 ] as const;
 
 export function DisciplineCombiner({ locale, copy }: DisciplineCombinerProps) {
@@ -230,9 +230,9 @@ export function DisciplineCombiner({ locale, copy }: DisciplineCombinerProps) {
         ctx.stroke();
 
         ctx.fillStyle = active ? '#0B0A08' : '#CFCBC0';
-        ctx.font = `700 ${Math.round(13 * node.scale)}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.fillText(`0${node.index + 1}`, 0, 4);
+        ctx.beginPath();
+        ctx.arc(0, 0, 3 * node.scale, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
       });
 
@@ -270,7 +270,7 @@ export function DisciplineCombiner({ locale, copy }: DisciplineCombinerProps) {
       <div className="lp-combiner-controls">
         <p className="lp-combiner-legend">{copy.legend}</p>
         <div className="lp-combiner-pills" role="group" aria-label={copy.legend}>
-          {pillars.map((pillar, idx) => {
+          {pillars.map((pillar) => {
             const active = selected.includes(pillar.id);
             return (
               <button
@@ -281,7 +281,6 @@ export function DisciplineCombiner({ locale, copy }: DisciplineCombinerProps) {
                 aria-pressed={active}
                 onClick={() => togglePillar(pillar.id)}
               >
-                <span className="lp-combiner-pill-index">0{idx + 1}</span>
                 <span>{pillar[locale]}</span>
               </button>
             );
@@ -324,7 +323,6 @@ export function DisciplineCombiner({ locale, copy }: DisciplineCombinerProps) {
                 className="lp-combiner-mode-chip"
                 data-active={animMode === idx ? 'true' : 'false'}
               >
-                <strong>{m.code}</strong>
                 <span>{isAr ? m.ar : m.en}</span>
               </button>
             ))}

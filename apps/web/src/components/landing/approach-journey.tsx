@@ -43,7 +43,7 @@ export function ApproachJourney({steps}: {steps: readonly (readonly string[])[]}
               cards.forEach(item => {delete item.dataset.active;});
               card.dataset.visited = 'true';
               card.dataset.active = 'true';
-            }).fromTo(card.querySelector('.index'), {scale: 1}, {scale: 1.1, duration: .18, repeat: 1, yoyo: true, ease: 'power2.out'})
+            }).fromTo(card.querySelector('h3'), {scale: 1}, {scale: 1.04, duration: .18, repeat: 1, yoyo: true, ease: 'power2.out'})
               .to({}, {duration: .16});
           });
           journey.to(mark, {autoAlpha: 0, scale: .88, duration: .3, ease: 'power2.in'});
@@ -66,8 +66,7 @@ export function ApproachJourney({steps}: {steps: readonly (readonly string[])[]}
       <Image src="/brand/amc-mark-on-dark.svg" width={72} height={27} alt="" className="brand-lockup-dark" />
     </div>
     <ol className="approach-grid grid sm:grid-cols-2 gap-6">
-      {steps.map(([title, body], index) => <li key={title} className="approach-card glass-surface rounded-squircle-lg p-6 sm:p-8">
-        <span className="index badge badge-accent rounded-squircle-sm mb-4">0{index + 1}</span>
+      {steps.map(([title, body]) => <li key={title} className="approach-card glass-surface rounded-squircle-lg p-6 sm:p-8">
         <h3 className="text-xl font-bold mb-2">{title}</h3>
         <p className="text-sm text-[var(--fg-muted)] leading-relaxed">{body}</p>
       </li>)}

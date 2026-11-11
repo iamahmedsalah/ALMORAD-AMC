@@ -2521,9 +2521,9 @@ html.dark .site-header .theme-cycle-button .theme-icon-motion {
 .directors-reel-heading h3 { margin-block: 0; max-width: 28ch; font-size: clamp(1.5rem, 3vw, 2.25rem); line-height: 1.35; }
 .directors-reel-hint { color: var(--fg-muted); font-size: .9rem; margin-block-start: .5rem; }
 .director-pagination { display: flex; flex-wrap: wrap; gap: .5rem; }
-.director-page-button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-width: 78px; min-height: 44px; padding: .6rem .8rem; border: 1px solid var(--glass-border); border-radius: var(--radius-control); background: transparent; color: var(--fg-muted); font-size: .75rem; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color .2s, border-color .2s, color .2s; }
+.director-page-button { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: .6rem; border: 1px solid var(--glass-border); border-radius: var(--radius-control); background: transparent; color: var(--fg-muted); cursor: pointer; transition: background-color .2s, border-color .2s, color .2s; }
 .director-page-button:hover, .director-page-button[aria-current='step'] { background: var(--accent-soft); border-color: var(--accent-text); color: var(--accent-text); }
-.director-page-marker { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .35; }
+.director-page-marker { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .35; }
 .director-page-button[aria-current='step'] .director-page-marker { opacity: 1; }
 .director-page-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .director-page { display: contents; }
@@ -2846,6 +2846,7 @@ html[lang="ar"] .finale-banner-title {
   background: var(--studio-panel);
   background-image: none;
   border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xl);
   color: var(--studio-text);
   box-shadow: var(--shadow-lg);
 }
@@ -2853,6 +2854,7 @@ html[lang="ar"] .finale-banner-title {
   color: var(--studio-secondary);
   background: var(--accent-soft);
   border-color: var(--accent);
+  border-radius: var(--radius-sm);
 }
 .amc-landing .lp-tv-rec-dot { background: var(--accent); }
 .amc-landing .lp-showreel-scene-label { color: var(--studio-text); }
@@ -2862,8 +2864,21 @@ html[lang="ar"] .finale-banner-title {
   color: var(--studio-text);
   border-color: var(--border-strong);
   background: var(--studio-panel);
+  border-radius: var(--radius-sm);
   min-height: 44px;
 }
+.amc-landing .lp-showreel-btn { display:inline-flex;align-items:center;justify-content:center;width:44px;padding:0;flex:none;cursor:pointer; }
+.motion-control-icon { width:1.35rem;height:1.35rem;flex:none;overflow:visible;transition:transform .22s ease; }
+.motion-control-icon :is(.motion-control-sound-waves,.motion-control-sound-off,.motion-control-play,.motion-control-pause) { transform-origin:center;transition:opacity .22s ease,transform .28s cubic-bezier(.2,.8,.2,1); }
+.motion-control-icon[data-muted="true"] .motion-control-sound-waves {opacity:0;transform:scale(.65) rotate(-12deg);}
+.motion-control-icon[data-muted="false"] .motion-control-sound-off {opacity:0;transform:scale(.55) rotate(15deg);}
+.motion-control-icon[data-paused="true"] .motion-control-pause {opacity:0;transform:scale(.6) rotate(-18deg);}
+.motion-control-icon[data-paused="false"] .motion-control-play {opacity:0;transform:scale(.6) rotate(18deg);}
+.lp-showreel-btn:active .motion-control-icon,.service-motion-toggle:active .motion-control-icon {transform:scale(.85);}
+@media (prefers-reduced-motion:reduce) {.motion-control-icon,.motion-control-icon :is(.motion-control-sound-waves,.motion-control-sound-off,.motion-control-play,.motion-control-pause) {transition:none;}}
+.amc-landing .lp-showreel-btn:disabled { cursor:not-allowed;opacity:.6; }
+.amc-landing .lp-showreel-btn:focus-visible,
+.amc-landing .lp-showreel-chapter:focus-visible { outline:3px solid var(--accent);outline-offset:3px; }
 .amc-landing .lp-showreel-chapter strong { color: var(--studio-secondary); }
 .amc-landing .lp-showreel-chapter[data-active="true"],
 .amc-landing .lp-showreel-btn:hover {
@@ -2875,7 +2890,15 @@ html[lang="ar"] .finale-banner-title {
 .amc-landing .lp-tv-screen.lp-showreel-viewport {
   background: var(--studio-screen);
   border-color: var(--studio-screen-border);
+  border-radius: var(--radius-lg);
   aspect-ratio: 16 / 9;
+}
+@supports (corner-shape: squircle) {
+  .amc-landing .lp-tv-bezel.lp-showreel,
+  .amc-landing .lp-tv-screen.lp-showreel-viewport,
+  .amc-landing .lp-tv-rec-pill,
+  .amc-landing .lp-showreel-btn,
+  .amc-landing .lp-showreel-chapter { corner-shape:squircle; }
 }
 
 /* Supplied service illustration stages: current navy/orange palette approved by user. */
@@ -2883,7 +2906,11 @@ html[lang="ar"] .finale-banner-title {
 .service-motion-poster,.service-motion-canvas {position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
 .service-motion-poster { filter:none; }
 .service-motion-canvas {pointer-events:none;}
-.service-motion-toggle {position:absolute;z-index:3;inset-inline-end:12px;bottom:12px;min-height:44px;max-width:calc(100% - 24px);padding:8px 14px;border:1px solid var(--amc-navy-300);border-radius:var(--radius-md);background:var(--amc-cream-100);color:var(--amc-navy-900);font:inherit;font-size:.78rem;cursor:pointer;}
+.light .service-motion-stage:not(.service-device-scene) .service-motion-poster,
+html:not(.dark):not([data-theme="dark"]) .service-motion-stage:not(.service-device-scene) .service-motion-poster {filter:invert(1) hue-rotate(180deg) sepia(.4) saturate(1.6);}
+.light .service-device-scene .service-motion-canvas,
+html:not(.dark):not([data-theme="dark"]) .service-device-scene .service-motion-canvas {filter:invert(1) hue-rotate(180deg) sepia(.4) saturate(1.6);}
+.service-motion-toggle {position:absolute;z-index:3;inset-inline-end:12px;bottom:12px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid var(--amc-navy-300);border-radius:var(--radius-md);background:var(--amc-cream-100);color:var(--amc-navy-900);cursor:pointer;}
 .dark .service-motion-stage,[data-theme="dark"] .service-motion-stage {background:var(--amc-navy-950);}
 .dark .service-motion-poster,[data-theme="dark"] .service-motion-poster {filter:none;}
 .dark .service-device-scene .service-motion-poster,[data-theme="dark"] .service-device-scene .service-motion-poster {filter:invert(1) hue-rotate(180deg);}

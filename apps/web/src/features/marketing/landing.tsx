@@ -210,9 +210,6 @@ export function Landing({ locale }: { locale: Locale }) {
                     style={{ '--stack-index': i } as React.CSSProperties}
                   >
                     <div className="lp-cap-visual rounded-squircle-lg">
-                      <span className="lp-cap-visual-badge badge badge-accent rounded-squircle-sm">
-                        0{i + 1} / 0{pillars.length}
-                      </span>
                       <ServiceMotionStage scene={p.id} locale={locale} label={p[locale]} fallback={pillarPhotos[i]}/>
 
                     </div>
@@ -318,9 +315,6 @@ export function Landing({ locale }: { locale: Locale }) {
                           <BrandArt variant={artVariant} />
                         </div>
                         <div className="lp-gallery-meta">
-                          <span className="badge badge-accent rounded-squircle-sm">
-                            {idx < 9 ? `0${idx + 1}` : idx + 1}
-                          </span>
                           <span>{parentPillar?.[locale]}</span>
                         </div>
                         <h3>
@@ -359,7 +353,6 @@ export function Landing({ locale }: { locale: Locale }) {
                       <span />
                       <span />
                       <span />
-                      <b className="badge badge-accent rounded-squircle-sm">0{i + 1}</b>
                     </div>
                     <p className="eyebrow badge rounded-squircle-sm mb-3">
                       {c.possibilities.tags[i]}

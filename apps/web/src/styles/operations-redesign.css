@@ -8,6 +8,7 @@
 .booking-steps > li[aria-current="step"] { background: var(--foreground); color: var(--background); text-decoration: none; }
 .booking-step-number { display: grid; place-items: center; flex: 0 0 28px; width: 28px; height: 28px; border: 1px solid currentColor; border-radius: var(--radius-sm); font-size: 0.8rem; }
 .booking-step-number .solar-icon { width: 20px; height: 20px; }
+.booking-step-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 .booking-wizard .staff-form { max-width: none; gap: 1.25rem; }
 .booking-wizard h2, .booking-confirmation h2 { font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.4; margin-block: 1rem; }
 .booking-wizard .staff-form > button { min-width: 160px; }

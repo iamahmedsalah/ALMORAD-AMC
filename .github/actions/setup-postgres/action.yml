@@ -17,10 +17,19 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        sudo apt-get update
+        # GitHub's Ubuntu mirror list can stall or fail DNS on azure.archive.ubuntu.com.
+        # This runner is disposable; use Ubuntu's signed primary archive directly.
+        ubuntu_sources=/etc/apt/sources.list.d/ubuntu.sources
+        if test -f "$ubuntu_sources" && grep -qF 'mirror+file:/etc/apt/apt-mirrors.txt' "$ubuntu_sources"; then
+          sudo sed -i 's|mirror+file:/etc/apt/apt-mirrors.txt|https://archive.ubuntu.com/ubuntu|g' "$ubuntu_sources"
+        fi
+        printf 'Acquire::Retries "1";\nAcquire::http::Timeout "15";\nAcquire::https::Timeout "15";\n' | sudo tee /etc/apt/apt.conf.d/zz-amc-ci-acquire.conf >/dev/null
+        sudo apt-get update --error-on=any
         sudo apt-get install --yes postgresql-common ca-certificates
         sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+        sudo apt-get update --error-on=any
         sudo apt-get install --yes postgresql-18 postgresql-client-18
+        test "$(/usr/lib/postgresql/18/bin/pg_config --version | cut -d' ' -f2 | cut -d. -f1)" = '18'
         echo '/usr/lib/postgresql/18/bin' >> "$GITHUB_PATH"
     - name: Start a private loopback-only test cluster
       shell: bash

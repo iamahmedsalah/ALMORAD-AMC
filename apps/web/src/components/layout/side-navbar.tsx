@@ -139,9 +139,6 @@ function SideNavbarContent({
               >
                 <span className="side-drawer-link-content">
                   <SolarIcon name={navigationIcons[idx] ?? 'widget-2-linear'} />
-                  <small className="index" style={{ marginInlineEnd: '0.65rem' }}>
-                    0{idx + 1}
-                  </small>
                   <span className="side-drawer-link-label">{item.label}</span>
                 </span>
                 <span className="arrow" aria-hidden="true">

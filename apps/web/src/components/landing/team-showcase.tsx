@@ -45,7 +45,7 @@ function CareerAccents({ type, surrounding = false }: { type: TeamMember['avatar
 
 const CEO_MEMBER: TeamMember = {
   id: 'ceo',
-  badge: '01 / FOUNDER & CEO',
+  badge: 'FOUNDER & CEO',
   featured: true,
   name: { en: 'Eng.khaled Morad', ar: 'م.خالد مراد' },
   role: { en: 'Founder & Chief Executive Officer', ar: 'المؤسس والرئيس التنفيذي (CEO)' },
@@ -64,7 +64,7 @@ const CEO_MEMBER: TeamMember = {
 const CO_LEADERSHIP: readonly TeamMember[] = [
   {
     id: 'co-ceo',
-    badge: '02 / EXECUTIVE LEADERSHIP',
+    badge: 'EXECUTIVE LEADERSHIP',
     name: { en: 'Co-Chief Executive Officer', ar: 'الرئيس التنفيذي المشارك (Co-CEO)' },
     role: { en: 'Co-Chief Executive Officer & Partner', ar: 'الرئيس التنفيذي المشارك والشريك' },
     discipline: { en: 'Corporate Strategy & Global Partnerships', ar: 'الاستراتيجية المؤسسية والشراكات الدولية' },
@@ -80,7 +80,7 @@ const CO_LEADERSHIP: readonly TeamMember[] = [
   },
   {
     id: 'coo',
-    badge: '03 / OPERATIONS EXCELLENCE',
+    badge: 'OPERATIONS EXCELLENCE',
     name: { en: 'Chief Operating Officer', ar: 'رئيس العمليات التنفيذي (COO)' },
     role: { en: 'Chief Operating Officer', ar: 'رئيس العمليات التنفيذي والشريك التشغيلي' },
     discipline: { en: 'Studio Delivery & Governance Systems', ar: 'إدارة العمليات وحوكمة المشاريع وجودة التسليم' },
@@ -99,7 +99,7 @@ const CO_LEADERSHIP: readonly TeamMember[] = [
 const CORE_TEAM_5: readonly TeamMember[] = [
   {
     id: 'creative',
-    badge: '04 / BRAND ARCHITECTURE',
+    badge: 'BRAND ARCHITECTURE',
     name: { en: 'Creative Direction Lead', ar: 'إدارة الإبداع والهوية البصرية' },
     role: { en: 'Executive Creative Director', ar: 'المدير الإبداعي التنفيذي' },
     discipline: { en: 'Identity Systems & Visual Craft', ar: 'أنظمة الهوية والإخراج الفني' },
@@ -115,7 +115,7 @@ const CORE_TEAM_5: readonly TeamMember[] = [
   },
   {
     id: 'growth',
-    badge: '05 / PERFORMANCE & MEDIA',
+    badge: 'PERFORMANCE & MEDIA',
     name: { en: 'Growth & Media Lead', ar: 'إدارة النمو والحملات الإعلانية' },
     role: { en: 'Head of Performance & Campaigns', ar: 'رئيس قطاع النمو وشراء الوسائط' },
     discipline: { en: 'Media Buying, Outdoor & ROI', ar: 'شراء المساحات الإعلانية والحملات الخارجية' },
@@ -131,7 +131,7 @@ const CORE_TEAM_5: readonly TeamMember[] = [
   },
   {
     id: 'tech',
-    badge: '06 / DIGITAL ENGINEERING',
+    badge: 'DIGITAL ENGINEERING',
     name: { en: 'Digital Systems Lead', ar: 'إدارة الهندسة والمنصات الرقمية' },
     role: { en: 'Lead Technology & Web Architect', ar: 'كبير مهندسي المنصات وتطوير الويب' },
     discipline: { en: 'Full-Stack Web & E-Commerce', ar: 'تطوير المواقع والتجارة الإلكترونية' },
@@ -147,7 +147,7 @@ const CORE_TEAM_5: readonly TeamMember[] = [
   },
   {
     id: 'operations',
-    badge: '07 / PRODUCTION & SPRINT',
+    badge: 'PRODUCTION & SPRINT',
     name: { en: 'Head of Production & Sprints', ar: 'إدارة الإنتاج وإدارة المشاريع' },
     role: { en: 'Senior Production Director', ar: 'مدير عام الإنتاج وإدارة المشاريع' },
     discipline: { en: 'Agile Delivery, Timelines & QA', ar: 'إدارة الجداول الزمنية وضمان الجودة البرمجية والتصميمية' },
@@ -163,7 +163,7 @@ const CORE_TEAM_5: readonly TeamMember[] = [
   },
   {
     id: 'client',
-    badge: '08 / CLIENT SUCCESS & VALUE',
+    badge: 'CLIENT SUCCESS & VALUE',
     name: { en: 'Client Strategy & Success Lead', ar: 'إدارة نجاح العملاء والاستشارات' },
     role: { en: 'Director of Strategic Client Success', ar: 'مدير نجاح العملاء والاستشارات الاستراتيجية' },
     discipline: { en: 'Account Growth, Reporting & Value', ar: 'إدارة حسابات الشركاء والتقارير وتحقيق العائد' },
@@ -340,7 +340,7 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
         <div>
           <p className="eyebrow badge badge-accent rounded-squircle-md mb-4">
             <span className="badge-dot" aria-hidden="true" />
-            <span>{isAr ? '٠٦ — القيادة وفريق الاستوديو' : '06 — LEADERSHIP & STUDIO TEAM'}</span>
+            <span>{isAr ? 'القيادة وفريق الاستوديو' : 'LEADERSHIP & STUDIO TEAM'}</span>
           </p>
           <Heading id="team-title" className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">
             {isAr

@@ -6,6 +6,7 @@ import type {Locale} from '@amc/shared';
 import type {DisciplineId} from '@/features/services/discipline-content';
 import type {SceneEngine} from './service-scene-types';
 import {registerMotion} from './service-motion-budget';
+import {PlaybackIcon} from '@/components/ui/motion-control-icon';
 
 const subscribeMotion=(listener:()=>void)=>{const q=matchMedia('(prefers-reduced-motion: reduce)');q.addEventListener('change',listener);return()=>q.removeEventListener('change',listener);};
 const snapshot=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -98,8 +99,8 @@ export function ServiceMotionStage({scene,locale,label,fallback='/studio/studio-
   return <div ref={ref} className={`service-motion-stage ${scene==='devices'?'service-device-scene':''}`} data-scene={scene} data-active={running?'true':'false'} data-failed={failed?'true':'false'}>
     <Image className="service-motion-poster" src={posterSource} width={1000} height={800} sizes="(max-width: 767px) 100vw, 50vw" unoptimized={posterSource.endsWith('.svg')} alt="" loading="lazy" decoding="async" onError={()=>{if(posterSource!==fallback)setFailedPoster(poster);}}/>
     <canvas key={`${scene}-${selected}-${eligible}-${paused}`} ref={canvasRef} className="service-motion-canvas" aria-hidden="true" style={{opacity:ready&&selected&&eligible?1:0}}/>
-    <button type="button" className="service-motion-toggle" aria-label={`${locale==='ar'?(paused?'تشغيل الحركة':'إيقاف الحركة'):(paused?'Play motion':'Pause motion')}: ${label}`} aria-pressed={paused||reduced} disabled={reduced||failed} onClick={()=>setPaused(value=>!value)}>
-      {locale==='ar'?(reduced||failed?'معاينة ثابتة':paused?'تشغيل الحركة':'إيقاف الحركة'):(reduced||failed?'Still preview':paused?'Play motion':'Pause motion')}
+    <button type="button" className="service-motion-toggle" aria-label={`${locale==='ar'?(reduced||failed?'معاينة ثابتة':paused?'تشغيل الحركة':'إيقاف الحركة'):(reduced||failed?'Still preview':paused?'Play motion':'Pause motion')}: ${label}`} aria-pressed={paused||reduced} disabled={reduced||failed} onClick={()=>setPaused(value=>!value)}>
+      <PlaybackIcon paused={paused||reduced||failed}/>
     </button>
   </div>;
 }
