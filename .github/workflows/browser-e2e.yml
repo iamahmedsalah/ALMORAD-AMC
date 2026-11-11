@@ -26,7 +26,7 @@ jobs:
       DIRECT_URL: postgresql://amc_ci:ci_ephemeral_only@127.0.0.1:55432/amc_test
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
         with:
           version: 11.11.0
       - uses: actions/setup-node@v6

@@ -25,7 +25,7 @@ jobs:
           tool: actionlint
       - name: Validate workflow syntax and shell steps
         run: actionlint
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
         with:
           version: 11.11.0
       - uses: actions/setup-node@v6
