@@ -33,7 +33,7 @@ describe('PublicBookingController unit tests', () => {
     const controller = new PublicBookingController(mockService as unknown as BookingsService);
     const result = await controller.slots('2026-11-10', 'branding', 'ONLINE');
     expect(result).toEqual({ date: '2026-11-10', available: ['10:00', '11:00'] });
-    expect(mockService.slots).toHaveBeenCalledWith('2026-11-10', 'branding', 'ONLINE');
+    expect(mockService.slots).toHaveBeenCalledWith('2026-11-10', 'branding', 'ONLINE', undefined);
   });
 
   it('delegates reservation creation', async () => {

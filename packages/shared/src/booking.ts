@@ -4,13 +4,15 @@ const phoneRegex = /^\+?[0-9\s\-()]{7,25}$/;
 export const bookingStatuses=['PENDING','CONFIRMED','CANCELLED','COMPLETED','NO_SHOW'] as const;
 export const changeStatuses=['OPEN','UNDER_REVIEW','ALTERNATIVE_PROPOSED','APPROVED','DECLINED','WITHDRAWN','EXPIRED'] as const;
 export const activeChanges=['OPEN','UNDER_REVIEW','ALTERNATIVE_PROPOSED'] as const;
+export const bookingDurations=[30,60,90,120,150,180,210,240,270,300] as const;
 const time=z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const date=z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-export const settingsInput=z.object({version:z.number().int().min(0),enabled:z.boolean(),timezone:z.string().max(80).refine(v=>{try{new Intl.DateTimeFormat('en',{timeZone:v});return true;}catch{return false;}}),durationMinutes:z.number().int().min(5).max(240),stepMinutes:z.number().int().min(5).max(120),bufferBeforeMinutes:z.number().int().min(0).max(240),bufferAfterMinutes:z.number().int().min(0).max(240),leadMinutes:z.number().int().min(0).max(10080),lookaheadDays:z.number().int().min(1).max(90),changeCutoffMinutes:z.number().int().min(0).max(10080),onlineEnabled:z.boolean(),inPersonEnabled:z.boolean(),officeAddressEn:z.string().trim().max(500).nullable(),officeAddressAr:z.string().trim().max(500).nullable(),directionsUrl:z.url().max(1000).nullable(),weeklyHours:z.array(z.object({day:z.number().int().min(1).max(7),open:time,close:time}).strict().refine(v=>v.open<v.close)).max(21),blackoutDates:z.array(date).max(366),serviceSlugs:z.array(z.string().max(80)).min(1).max(11)}).strict().refine(v=>!v.enabled||(v.onlineEnabled||v.inPersonEnabled)).refine(v=>!v.inPersonEnabled||Boolean(v.officeAddressEn&&v.officeAddressAr&&v.directionsUrl));
+export const settingsInput=z.object({version:z.number().int().min(0),enabled:z.boolean(),timezone:z.string().max(80).refine(v=>{try{new Intl.DateTimeFormat('en',{timeZone:v});return true;}catch{return false;}}),durationMinutes:z.number().int().min(5).max(240),stepMinutes:z.number().int().min(5).max(120),bufferBeforeMinutes:z.number().int().min(0).max(240),bufferAfterMinutes:z.number().int().min(0).max(240),leadMinutes:z.number().int().min(0).max(10080),lookaheadDays:z.number().int().min(1).max(90),changeCutoffMinutes:z.number().int().min(0).max(10080),onlineEnabled:z.boolean(),inPersonEnabled:z.boolean(),officeAddressEn:z.string().trim().max(500).nullable(),officeAddressAr:z.string().trim().max(500).nullable(),directionsUrl:z.url().max(1000).nullable(),weeklyHours:z.array(z.object({day:z.number().int().min(1).max(7),open:time,close:time}).strict().refine(v=>v.open<v.close)).max(21),blackoutDates:z.array(date).max(366),serviceSlugs:z.array(z.string().max(80)).min(1).max(11)}).strict().refine(v=>!v.enabled||(v.onlineEnabled||v.inPersonEnabled)).refine(v=>!v.inPersonEnabled||Boolean(v.officeAddressEn&&v.officeAddressAr));
 export type ScheduleInput=z.infer<typeof settingsInput>;
 export type Schedule=ScheduleInput&{isDemo:boolean};
 export const createBookingInput=z.object({
   idempotencyKey:z.uuid(),
+  durationMinutes:z.number().int().refine(value=>bookingDurations.some(duration=>duration===value)).optional(),
   serviceSlug:z.string().max(80),
   meetingType:z.enum(['ONLINE','IN_PERSON']),
   startsAt:z.iso.datetime(),

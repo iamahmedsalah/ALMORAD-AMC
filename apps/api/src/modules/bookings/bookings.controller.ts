@@ -32,8 +32,9 @@ export class PublicBookingController {
   @ApiQuery({ name: 'date', required: true, description: 'Target date (YYYY-MM-DD)' })
   @ApiQuery({ name: 'service', required: true, description: 'Service slug' })
   @ApiQuery({ name: 'format', required: true, description: 'ONLINE or IN_PERSON' })
+  @ApiQuery({ name: 'duration', required: false, description: 'Meeting length in minutes (30–300, in 30-minute steps)' })
   @Get('slots') @Header('Cache-Control','no-store')
-  slots(@Query('date') date:unknown,@Query('service') service:unknown,@Query('format') format:unknown){return this.bookings.slots(date,service,format);}
+  slots(@Query('date') date:unknown,@Query('service') service:unknown,@Query('format') format:unknown,@Query('duration') duration?:unknown){return this.bookings.slots(date,service,format,duration);}
 
   @ApiOperation({ summary: 'Create appointment reservation', description: 'Books an appointment slot with client contact info.' })
   @ApiResponse({ status: 201, description: 'Booking created successfully' })

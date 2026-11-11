@@ -12,6 +12,9 @@ describe('foundation contracts', () => {
     expect(can('RECEPTIONIST', 'appointments:write')).toBe(true);
     expect(can('CEO', 'analytics:read')).toBe(true);
     expect(can('MANAGER', 'settings:write')).toBe(true);
+    expect(can('CEO', 'staff:manage')).toBe(true);
+    expect(can('MANAGER', 'staff:manage')).toBe(false);
+    expect(can('RECEPTIONIST', 'staff:manage')).toBe(false);
   });
   it('rejects invalid form input at the shared boundary', () => {
     expect(inquirySchema.safeParse({locale:'fr',name:'a',email:'invalid',message:''}).success).toBe(false);

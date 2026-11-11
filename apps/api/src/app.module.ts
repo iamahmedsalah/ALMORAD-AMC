@@ -12,6 +12,8 @@ import {OperationsController} from './operations.controller.js';
 import {PrismaService} from './prisma/prisma.service.js';
 import {HealthController} from './modules/health/health.controller.js';
 import {StaffController} from './modules/auth/staff.controller.js';
+import {StaffAccountsController} from './modules/auth/staff-accounts.controller.js';
+import {StaffAccountsService} from './modules/auth/staff-accounts.service.js';
 import {SessionGuard} from './modules/auth/session.guard.js';
 import {PermissionGuard} from './modules/auth/permission.guard.js';
 import {NotificationsModule} from './modules/notifications/notifications.module.js';
@@ -23,9 +25,9 @@ import {HubSpotClient} from './modules/contact/hubspot.client.js';
     NotificationsModule,
     ThrottlerModule.forRoot([{ttl: 60000, limit: 60, getTracker:req=>(req as ProxyRequest).trustedClient||String(req.ip||'unknown')}])
   ],
-  controllers: [ContactController,PublicBookingController,StaffBookingsController,BookingSettingsController,BookingAnalyticsController,HealthController, StaffController, AuthController, SecurityController, OperationsController],
+  controllers: [ContactController,PublicBookingController,StaffBookingsController,BookingSettingsController,BookingAnalyticsController,HealthController, StaffController, StaffAccountsController, AuthController, SecurityController, OperationsController],
   providers: [
-    ContactService, HubSpotClient, BookingsService, BookingOriginGuard, PrismaService, SessionGuard, PermissionGuard, Reflector, AuthService, CsrfService, CsrfGuard, ProxyGuard,
+    ContactService, HubSpotClient, BookingsService, BookingOriginGuard, PrismaService, SessionGuard, PermissionGuard, Reflector, AuthService, StaffAccountsService, CsrfService, CsrfGuard, ProxyGuard,
     {provide:APP_GUARD,useExisting:ProxyGuard},
     {provide:getStorageToken(),useClass:PostgresThrottleStorage},
     {

@@ -4,9 +4,10 @@ export type Locale = (typeof locales)[number];
 export const localeSchema = z.enum(locales);
 export const roles = ['RECEPTIONIST', 'MANAGER', 'CEO'] as const;
 export type StaffRole = (typeof roles)[number];
-export const permissions = ['appointments:read', 'appointments:write', 'analytics:read', 'settings:write'] as const;
+export const permissions = ['appointments:read', 'appointments:write', 'analytics:read', 'settings:write', 'staff:manage'] as const;
 export type Permission = (typeof permissions)[number];
 export function can(role: StaffRole, permission: Permission): boolean {
+  if(permission==='staff:manage')return role==='CEO';
   return role === 'MANAGER' || role === 'CEO' || (role === 'RECEPTIONIST' && (permission === 'appointments:read' || permission === 'appointments:write'));
 }
 // Shared validation boundary for bilingual contact forms with production-grade email verification.

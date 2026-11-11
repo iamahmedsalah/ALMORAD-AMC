@@ -73,6 +73,15 @@
 .staff-account > .staff-panel, .staff-account > .staff-alert { grid-column: 2; }
 .staff-account > .staff-panel:first-of-type { margin-block-start: 0; }
 .staff-account > * { min-width: 0; }
+.staff-accounts-create { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: none; gap: 1rem; margin-block: 1.5rem; }
+.staff-accounts-create > button { align-self: end; }
+.staff-account-list { display: grid; gap: 1rem; }
+.staff-account-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: none; gap: 0.75rem 1rem; padding: 1rem; border: 1px solid var(--glass-border); border-radius: var(--radius-lg); background: var(--surface-2); }
+.staff-account-row > p { grid-column: 1 / -1; overflow-wrap: anywhere; font-weight: 600; }
+.staff-account-row > small { color: var(--muted-foreground); }
+.staff-account-active { align-self: end; display: inline-flex; align-items: center; gap: 0.5rem; min-height: 48px; }
+.staff-account-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; }
+.staff-account-actions .button { flex: 1 1 130px; }
 @supports (corner-shape: squircle) {
   :is(.booking-page, .staff-workspace, .staff-login) :is(.button, input, select, textarea, .staff-panel, fieldset, .slot),
   .booking-wizard, .staff-login, .operations-nav, .calendar-appointment, .staff-metrics > div { corner-shape: squircle; }
@@ -85,6 +94,8 @@
   .staff-account > .operations-nav, .staff-account > .staff-panel, .staff-account > .staff-alert { grid-column: 1; grid-row: auto; }
 }
 @media (max-width: 600px) {
+  .staff-accounts-create, .staff-account-row { grid-template-columns: minmax(0, 1fr); }
+  .staff-account-row > p { grid-column: 1; }
   .booking-wizard .booking-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .booking-steps > li { font-size: 0.75rem; padding: 0.65rem; }
   .booking-page.booking-page > h1 { font-size: 2.3rem; }
