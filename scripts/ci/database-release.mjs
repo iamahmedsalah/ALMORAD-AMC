@@ -48,7 +48,12 @@ try{
     const required=archiveExtensions(run('rehearsal_extensions','pg_restore',['--list',dump]));
     const available=run('rehearsal_extensions','psql',['--no-password','--no-psqlrc','--tuples-only','--no-align','--set','ON_ERROR_STOP=1','--command','SELECT name FROM pg_available_extensions'],{env:pgEnvironment(local.url.href)});
     const missing=missingExtensions(required,available);
-    if(missing.length)throw new ReleasePolicyError(JSON.stringify({event:'rehearsal_extensions_missing',extensions:missing,action:'Install matching PostgreSQL 18 extension packages on the isolated rehearsal runner; do not skip archive entries'}));
+    if(missing.length){
+      const action=missing.includes('prisma_postgres')
+        ? 'The source archive requires the Prisma Postgres provider extension. Rehearse the full archive on a separate provider-compatible isolated database with that extension; do not install an unverified substitute or skip archive entries'
+        : 'Install matching PostgreSQL 18 extension packages on the isolated rehearsal runner; do not skip archive entries';
+      throw new ReleasePolicyError(JSON.stringify({event:'rehearsal_extensions_missing',extensions:missing,action}));
+    }
     const file=await open(dump,'r');
     try{run('rehearsal_restore','pg_restore',['--no-password','--no-owner','--no-privileges','--exit-on-error','--dbname',decodeURIComponent(local.url.pathname.slice(1))],{env:pgEnvironment(local.url.href),stdio:[file.fd,'pipe','pipe']});}finally{await file.close();}
     const state=await inspectMigrations({DIRECT_URL:local.url.href});

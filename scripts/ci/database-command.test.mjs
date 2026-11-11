@@ -97,7 +97,7 @@ test('rehearsal invokes native clients, keeps failed restore blocking and preser
         appendFileSync(process.env.NATIVE_COMMAND_LOG,JSON.stringify({executable,args})+'\\n');
         if(executable==='psql')return {status:0,stdout:process.env.NATIVE_MISSING==='1'?'plpgsql\\n':'btree_gist\\n'};
         if(executable==='openssl'){writeFileSync(args[args.indexOf('-out')+1],'synthetic plaintext fixture');return {status:0};}
-        if(executable==='pg_restore'&&args.includes('--list'))return {status:0,stdout:'2; 3079 1 EXTENSION - btree_gist\\n'};
+        if(executable==='pg_restore'&&args.includes('--list'))return {status:0,stdout:'2; 3079 1 EXTENSION - '+(process.env.NATIVE_EXTENSION||'btree_gist')+'\\n'};
         if(executable==='pg_restore')return {status:1,stderr:'ERROR: relation private_fixture already exists'};
         throw new Error('Unexpected executable');
       };
@@ -126,6 +126,15 @@ test('rehearsal invokes native clients, keeps failed restore blocking and preser
     assert.ok(blockedCalls.find(call=>call.executable==='pg_restore').args.includes('--list'));
     await assert.rejects(access(join(artifacts,'database.dump')),{code:'ENOENT'});
     assert.deepEqual(await readFile(join(artifacts,'database.dump.enc')),encrypted);
+    const providerExtension=spawnSync(process.execPath,['--import',pathToFileURL(preload).href,'scripts/ci/database-release.mjs','rehearse'],{
+      env:{...process.env,RUNNER_TEMP:directory,NATIVE_COMMAND_LOG:commands,NATIVE_MISSING:'1',NATIVE_EXTENSION:'prisma_postgres',REHEARSAL_DATABASE_URL:'postgresql://amc_release:fixture@127.0.0.1:55432/amc_release_test'},encoding:'utf8',timeout:30000,
+    });
+    assert.equal(providerExtension.status,1);
+    const providerDiagnostic=JSON.parse(providerExtension.stderr.trim());
+    assert.deepEqual(providerDiagnostic.extensions,['prisma_postgres']);
+    assert.match(providerDiagnostic.action,/provider-compatible isolated database/);
+    assert.match(providerDiagnostic.action,/do not install an unverified substitute or skip archive entries/);
+    await assert.rejects(access(join(artifacts,'database.dump')),{code:'ENOENT'});
   }finally{
     assert.ok(directory.startsWith(parent+sep)&&directory.slice(parent.length+1).startsWith('release-diagnostic-test-'));
     await rm(directory,{recursive:true,force:true});

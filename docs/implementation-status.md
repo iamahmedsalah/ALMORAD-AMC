@@ -1,4 +1,4 @@
-# Automatic release migrations and guarded dev command — 10 November 2026
+# Automatic release migrations and guarded dev command â€” 10 November 2026
 
 Owner requested pending migrations during Vercel deployment and a development command. Inspected root vercel.json: its API build already points to `scripts/ci/vercel-api-build.mjs`, which compiles/verifies the API first, then runs production migration inspection/deployment outside Turbo's cache. The protected CI path supplies reviewed release identity, database fingerprint, migration digest and encrypted-backup reference after successful backup/rehearsal. This behavior is preserved, not replaced with an ungated migration on startup. Preview/local builds still skip production migrations; missing release context, compilation failure or migration failure blocks the production candidate. Refactored the build hook into an importable function so these contracts are now tested without deploying or contacting a hosted database.
 
@@ -6,7 +6,7 @@ Added `pnpm db:migrate:dev`: loads local .env, rejects production/CI/Vercel exec
 
 Actual verification: release/startup suite PASS 30/30, zero skipped, including new hosted-target rejection, apply/no-op, failure ordering and production/preview build-hook cases. `pnpm.cmd db:migrate:dev` PASS against the local Docker amc_dev database: applied 0, pending 0, Prisma Client generated. Focused ESLint, actionlint, JS syntax and whitespace PASS; root Vercel API build-hook wiring verified. Full dev:setup was not run because the database was already running and did not need recreation. No hosted migration, production build, commit, push or deployment performed this turn.
 
-# Local development database repair and CI service-variable correction — 10 November 2026
+# Local development database repair and CI service-variable correction â€” 10 November 2026
 
 Confirmed owner preference: local Docker PostgreSQL for development, hosted Prisma PostgreSQL only for Vercel. This supersedes native-only local-development guidance; CI/Vercel still use native runner tools and no containers. Added a database-only `dev/postgres/compose.yml`, `pnpm dev:db`, and `pnpm dev:db:stop`. Existing PostgreSQL 17 major and persistent local volume are preserved; API/web run directly with pnpm. Dev infrastructure is excluded from Vercel uploads. Compose config --quiet PASS.
 
@@ -19,7 +19,7 @@ Verification: synthetic contact accepted/persisted once across retries; booking 
 
 CI startup fix: `createdb: definition of service "" not found` came from passing PGSERVICE as an empty string. The shell now unsets PGSERVICE and PGSERVICEFILE; native-client helpers remove those keys, including backup/restore. Startup fixtures now reject even empty service keys, verifying this regression. Release/startup suite PASS 21/21; focused lint, actionlint, Bash syntax and whitespace PASS. Ubuntu runner execution still needs the next updated CI run. No hosted migration, Vercel setting change, commit, push or deployment performed.
 
-# Vercel-only active deployment and native startup correction — 10 November 2026
+# Vercel-only active deployment and native startup correction â€” 10 November 2026
 
 Owner explicitly requested separating/removing the VPS work for now and focusing exclusively on Vercel. Root Dockerfiles, compose files and `.dockerignore`, plus the container-security workflow, were moved into `archive/future-vps/`. The archived workflow has a `.disabled` suffix and is outside `.github/workflows`; no container workflow remains visible/runnable in GitHub Actions. The legacy dual-backend backup tool was also preserved there as a disabled historical copy. Archive paths were resolved and checked inside the workspace before moving; source content was preserved. `.vercelignore` excludes the entire archive. Templates require fresh review before future activation; no VPS implementation or deployment work continued.
 
@@ -29,7 +29,7 @@ Startup failure correction: the action's regex accepted `amc_release_test` but r
 
 Verification: release/startup suite PASS 21/21, zero skipped. Seven startup tests execute the actual Bash script using fixture client executables: both configured names, unsafe names, initdb/pg_ctl/createdb failures, password cleanup, and refusal to modify existing directories. These are process/control-flow tests, not a real PostgreSQL server run. Focused ESLint, actionlint, Bash syntax and whitespace PASS. Scope check PASS: all seven moved files match their original Git content, all three active workflows and database scripts have no container backend, and the archive is excluded from Vercel. No production connection, migration, commit, push or deployment. First Ubuntu runner execution is still required to confirm real native cluster/rehearsal behavior.
 
-# Native GitHub Actions pipeline; Docker retained for future VPS — 10 November 2026
+# Native GitHub Actions pipeline; Docker retained for future VPS â€” 10 November 2026
 
 Owner requested removal of the Docker daemon requirement from GitHub Actions while preserving the future VPS option. The active Vercel pipeline now uses native runner tools:
 
@@ -42,7 +42,7 @@ Verification: release suite PASS 14/14, including subprocess proof that rehearsa
 
 Limit: this Windows environment has no native PostgreSQL installation; the Ubuntu apt installation, real native cluster, full restore/migration rehearsal, native Linux binary downloads and GitHub Actions execution were not run locally. Those need the first CI run on the updated revision. No production connection, migration, deployment, commit or push performed. Docker removal eliminates that tooling dependency; an unrelated restore/schema error, if present, will still block deployment and report its safe stage/category.
 
-# Database release rehearsal diagnostics — 10 November 2026
+# Database release rehearsal diagnostics â€” 10 November 2026
 
 The supplied `database-release.mjs rehearse` log hides the restore command's underlying error. The workflow already defines PostgreSQL 18 and matching `amc_release_test` credentials. The empty Vercel bypass secret is used later for candidate verification and is not read by rehearsal. Backup/decryption progressed to the restore Docker invocation in the original script; the underlying restore cause remains unknown from this log.
 
@@ -52,7 +52,7 @@ Encrypted checkpoints, checksum/decryption, exit-on-error restore, migration-his
 
 Next steps: publish the reviewed changes through the owner's normal commit/push flow, then start CI using that new revision (rerunning an old commit still uses the old script). If it fails, inspect the safe `database_release_command_failed` JSON. Connection/authentication categories identify the disposable service/URL/network; restore conflicts need freshness/backup-definition inspection; extension, role, permission or compatibility categories require matching the rehearsal environment to the backup. Fix only the reported cause. Do not disable restore errors, reset a database, downgrade PostgreSQL or rotate secrets based on the generic message. Only that safe JSON is needed for follow-up, not raw stderr or plaintext data.
 
-# CI annotation cleanup and image delivery — 10 November 2026
+# CI annotation cleanup and image delivery â€” 10 November 2026
 
 Authorized scope: fix the supplied Actions runtime/runner notices and image lint warnings, and explain the Vercel Node override. No external settings, dependencies, database, deployment, commit or push changed.
 
@@ -63,7 +63,7 @@ Authorized scope: fix the supplied Actions runtime/runner notices and image lint
 
 Final verification: `pnpm.cmd lint` and complete direct ESLint PASS with zero errors/zero warnings; workflow YAML/runtime-reference checks and native actionlint PASS; release-safety suite PASS 8/8; web production build PASS including TypeScript and 64 prerendered pages; git diff --check PASS. Focused browser run PASS 31/31 in 2.0 minutes, zero skipped/flaky cases: all 12 earlier performance/contact regressions, 16 EN/AR light/dark accessibility/responsive checks at 320/390/768/1440px, the official static-logo check, and two new optimized-poster/error-fallback cases. English mobile dark and Arabic desktop light screenshots visually inspected: artwork, proportions and layouts intact. JSON evidence is in `.tmp/warnings-and-e2e-results.json`; standard screenshots are in ignored `test-results/`. The earlier repeated run was interrupted before its final summary; the fresh 31-case run covers those failures. Full public/staff/database suites, container scans and remote CI were not rerun for this increment.
 
-# Public E2E offscreen and contact focus corrections — 10 November 2026
+# Public E2E offscreen and contact focus corrections â€” 10 November 2026
 
 The supplied four-way CI shard log had 55 passes and two failures: an extra offscreen showreel draw in Arabic desktop, and the English desktop contact success panel not receiving focus.
 
@@ -79,7 +79,7 @@ Local verification:
 
 No live contact/booking submitted: browser contact requests are mocked with synthetic fixtures. No database migration, deployment, commit or push. The separately reported production Prisma P2010 issue is not fixed by these client changes.
 
-# CodeQL removal — 10 November 2026
+# CodeQL removal â€” 10 November 2026
 
 The owner explicitly requested removal because CodeQL is unavailable for this private repository's plan. Removed the CodeQL job and SARIF artifact step from `security.yml`, plus the caller's unused `actions: read` and `security-events: write` permissions in `ci-cd.yml`. The default `contents: read` permission remains. Earlier instructions below to enable CodeQL are historical and superseded by this request.
 
@@ -87,7 +87,7 @@ The release still depends on validation and the security workflow (Gitleaks secr
 
 Validation: native actionlint PASS; all four workflow YAML files parsed; assertions verified CodeQL/security-events removal, unchanged release dependencies, retained public E2E matrix and dependency audit; git diff --check PASS. No application tests rerun for this workflow-only deletion.
 
-# CI browser sharding and security workflow cleanup — 10 November 2026
+# CI browser sharding and security workflow cleanup â€” 10 November 2026
 
 Authorized scope: shorten CI validation, explain the newer CodeQL failure, and remove irrelevant skipped containers from the Vercel pipeline. No commit, push, deployment, remote database operation, paid feature activation or repository setting change.
 
@@ -105,7 +105,7 @@ Actual local verification:
 - Build archive packaging/extraction PASS. Final local archive 2.9 MB; cache/dev/standalone absent and build ID preserved. Restored build served `/en`, `/ar`, and their JavaScript assets with HTTP 200 using the existing installed dependencies and public assets. Temporary verification server stopped.
 - `CI=true pnpm.cmd test:e2e --shard=1/4`: PASS, 57/57 in 4.7 minutes with one worker, including pause/delayed-observer regressions, bilingual contact/theme/viewport cases and reel interactions. This is a local shard duration, not a measured GitHub pipeline speedup. No application source/build change in this increment; reused the existing production build. Other public shards, staff/database suites, container scans and CodeQL were not rerun locally.
 
-# CI permission and paused-showreel correction — 10 November 2026
+# CI permission and paused-showreel correction â€” 10 November 2026
 
 Scope: repair the supplied CodeQL analyze failure and the two public browser-performance failures. No migration, deployment, commit, push or external account change.
 
@@ -123,7 +123,7 @@ Actual local validation:
 - `pnpm.cmd exec playwright test tests/e2e/browser-performance.spec.ts --workers=1 --repeat-each=3`: PASS, 12/12 against the fresh local production build, including deliberately delayed observer callbacks. Full public/staff E2E and database suites were not rerun for this focused change.
 - Docker daemon unavailable, so actionlint's Docker-based check was not run locally. No local CodeQL scan or GitHub Actions rerun claimed.
 
-# Implementation status — 9 November 2026
+# Implementation status â€” 9 November 2026
 
 ## Current authorized scope
 
@@ -133,7 +133,7 @@ Latest instruction: Email domain configuration (testing DNS via `onboarding@rese
 
 Earlier deferral/stopping records below are historical. See the latest booking increments, booking-and-demo.md, and the notification drain record below.
 
-## Outbox Decoupling & HubSpot CRM Lifecycle Increment — 9 November 2026
+## Outbox Decoupling & HubSpot CRM Lifecycle Increment â€” 9 November 2026
 
 * **Design**: [`docs/designs/design_draft.md`](docs/designs/design_draft.md) and [`docs/designs/concepts_brief.md`](docs/designs/concepts_brief.md) (converged via 2-round adversarial Goldfish review; drift report at `docs/reports/2026-11-09_DRIFT_REPORT.md`).
 * **Schema Extension**: `apps/api/prisma/schema.prisma`:
@@ -146,7 +146,7 @@ Earlier deferral/stopping records below are historical. See the latest booking i
   * `booking-confirmation.template.ts`, `booking-rescheduled.template.ts`, `booking-cancelled.template.ts`, and `contact-emails.ts` unified under `renderEmailLayout`.
 * **Outbox & Backend Services**:
   * `NotificationsService`: dynamic template dispatch for booking creation, reschedule, and cancellation; `Reply-To: hello@almorad-amc.com`; default sender `ALMORAD AMC <onboarding@resend.dev>`; patched mock status leak (`UNCONFIGURED` when `RESEND_API_KEY` missing).
-  * `HubSpotClient`: Arabic compound name preservation (prevents splitting "عبد الله"), `upsertBookingContact()`, `createMeeting()` (with `associationTypeId: 200`), `updateMeeting()` (with `RESCHEDULED` and `CANCELED` outcomes), and rate-limit backoff handling (`Retry-After`).
+  * `HubSpotClient`: Arabic compound name preservation (prevents splitting "Ø¹Ø¨Ø¯ Ø§Ù„Ù„Ù‡"), `upsertBookingContact()`, `createMeeting()` (with `associationTypeId: 200`), `updateMeeting()` (with `RESCHEDULED` and `CANCELED` outcomes), and rate-limit backoff handling (`Retry-After`).
   * `ContactService`: atomic `$queryRaw` batch leasing with `FOR UPDATE SKIP LOCKED` and exponential backoff.
   * `BookingsService`: decoupled outbox event emission (`:EMAIL` and `:HUBSPOT`), pending outbox status on reschedule/cancel lifecycle actions, and `drainCrm(batchSize)` with atomic row leasing.
   * `OperationsController`: exposed CRM outbox drain at `/ops/notifications/drain` via `drainCrm()`.
@@ -165,7 +165,7 @@ Earlier deferral/stopping records below are historical. See the latest booking i
 
 ---
 
-# Implementation status — 7 November 2026
+# Implementation status â€” 7 November 2026
 
 ## Current authorized scope
 
@@ -175,7 +175,7 @@ Latest instruction: booking transactional email notifications are now implemente
 
 Earlier deferral/stopping records below are historical. See the latest booking increment, booking-and-demo.md, and the notification drain record below.
 
-## Transactional Email Notification Outbox Increment — 7 November 2026
+## Transactional Email Notification Outbox Increment â€” 7 November 2026
 
 * **Design**: [`docs/designs/booking_confirmation_queue.md`](docs/designs/booking_confirmation_queue.md) (Serverless-native transactional outbox drain via periodic cron).
 * **Schema Extension**: `apps/api/prisma/schema.prisma` extends `BookingOutbox` with `lastError`, `deliveredAt`, `nextRetryAt`, `updatedAt`, and indexes on `[status, nextRetryAt]` and `[bookingId]`.
@@ -217,7 +217,7 @@ Publication still needs approved bilingual copy, verified domain/contact/office 
 
 ## Verification evidence
 
-The preceding implementation run passed 19 unit/API tests, all-workspace lint/typecheck/build and 24 Playwright checks. Browser coverage includes EN/AR × light/dark × 320/390/768/1440, axe scans, no-JavaScript offering content, navigation, metadata, keyboard controls and 3D success/failure/reduced-motion behavior. A repeated unchanged build restored all four tasks from Turbo cache in 529 ms. These measurements are local checks, not field Core Web Vitals or accessibility certification.
+The preceding implementation run passed 19 unit/API tests, all-workspace lint/typecheck/build and 24 Playwright checks. Browser coverage includes EN/AR Ã— light/dark Ã— 320/390/768/1440, axe scans, no-JavaScript offering content, navigation, metadata, keyboard controls and 3D success/failure/reduced-motion behavior. A repeated unchanged build restored all four tasks from Turbo cache in 529 ms. These measurements are local checks, not field Core Web Vitals or accessibility certification.
 
 Dependency audit initially identified deepmerge-ts and mysql2 advisories through Prisma tooling. Targeted workspace overrides pin deepmerge-ts 8.0.0 and mysql2 3.23.1. Resumed frozen installation and production audit on 6 November pass; audit reports no known vulnerabilities. Prisma generation and schema validation passed with the overrides in the preceding run; final resumed checks are being recorded below.
 
@@ -333,7 +333,7 @@ Final running-demo smoke PASS: generated RECEPTIONIST and CEO accounts each sign
 
 ---
 
-## Design System Migration & 3D Interactive Landing Experience Increment — 8 November 2026
+## Design System Migration & 3D Interactive Landing Experience Increment â€” 8 November 2026
 
 * **Design Specification:** [`docs/designs/design_system_and_3d_landing.md`](designs/design_system_and_3d_landing.md) (Approved V1 Design Specification).
 * **EGM Review Report:** [`docs/reviews/design_system_and_3d_landing_review.md`](reviews/design_system_and_3d_landing_review.md) (Complete 5-Persona Goldfish Review Audit).
@@ -364,7 +364,7 @@ Final running-demo smoke PASS: generated RECEPTIONIST and CEO accounts each sign
 
 ---
 
-## UI/UX Polish, Squircle Radii, Premotio-Style GSAP Choreography, Preloader, Glass Navigation & API Telemetry Increment — 8 November 2026
+## UI/UX Polish, Squircle Radii, Premotio-Style GSAP Choreography, Preloader, Glass Navigation & API Telemetry Increment â€” 8 November 2026
 
 * **Brainstorm & Architecture Brief:** [`docs/designs/concepts_brief.md`](designs/concepts_brief.md) (4-Agent EGM Brainstorm Synthesis: Zoom-Out, Design Critic, Implementation Readiness, Inventive Catalyst).
 * **Squircle Radii & Design Tokens (`tokens.css` & `globals.css`):**
@@ -395,21 +395,21 @@ Final running-demo smoke PASS: generated RECEPTIONIST and CEO accounts each sign
 
 ---
 
-## Premotio-Inspired 10-Section Landing Page, Studio BrandArt, Discipline Combiner & Device-Aware Preloader Increment — 8 November 2026
+## Premotio-Inspired 10-Section Landing Page, Studio BrandArt, Discipline Combiner & Device-Aware Preloader Increment â€” 8 November 2026
 
 * **Design & Implementation Plans:**
   * [`docs/designs/branding_studio_3d_landing_plan.md`](designs/branding_studio_3d_landing_plan.md)
   * [`docs/designs/premotio_landing_implementation.md`](designs/premotio_landing_implementation.md)
 * **Complete 10-Section Premotio-Inspired Landing Page (`apps/web/src/features/marketing/landing.tsx`):**
-  * **Section A — Navigation (`shell.tsx`, `side-navbar.tsx`, `controls.tsx`):** Frosted glass sticky header, animated 3-bar burger morph button (`.burger-trigger`), slide-over RTL/LTR drawer, 3-icon squircle theme switcher (`Light`, `Dark`, `System`), and persistent 6-chapter HUD rail (`AmcMarkContainer`).
-  * **Section B — Hero Section:** Masked typography, primary/secondary squircle CTAs, studio fact counters (`4` disciplines, `11` services, `EN / ع`), floating studio preview frames (`BrandArt` compositions with scroll parallax), and full-viewport 3D AMC Mark stage.
-  * **Section C — Product / Feature Showcase:** Asymmetric split-screen showcase of all 4 connected disciplines (`Marketing`, `Advertising`, `Consulting`, `Web Development`) with custom `BrandArt` visual demonstrations and direct service pills.
-  * **Section D — Categories / Curated Visual Gallery:** Horizontal snap-scrolling gallery rail (`[data-gallery-track]`) displaying all 11 services with varied editorial proportions (`tall`, `wide`, `square`) alongside the 3 project possibility compositions.
-  * **Section E — How It Works:** 4-step workflow (`Understand`, `Define`, `Create`, `Refine`) inside a glass process band with a scroll-scrubbed progress bar (`[data-process-progress]`).
-  * **Section F — Advanced Features (`discipline-combiner.tsx`):** Interactive client island allowing visitors to toggle any combination of the 4 disciplines, updating a live orbital SVG chord diagram and filtering the connected services from `@amc/shared`.
-  * **Section G — Cross-Device Experience:** Responsive device stage showcasing Desktop (`1440px`), Tablet (`768px`), and Mobile (`390px`) frames with scroll parallax (`[data-device-float]`).
-  * **Section H — Configurable Engagement / Pricing (`engagement.ts` & `engagement.test.ts`):** Three bilingual tiers (`Focused`, `Connected`, `Partnership`) and a 5-row feature comparison table backed by `engagementConfig` (defaults to `null` indicative pricing so no unapproved fees are invented).
-  * **Section I & J — Final CTA, FAQ & Dark Navy Footer:** Closing consultation CTA, squircle FAQ disclosures, and `data-theme="dark"` Navy footer with official `footer-logo-on-dark.svg`.
+  * **Section A â€” Navigation (`shell.tsx`, `side-navbar.tsx`, `controls.tsx`):** Frosted glass sticky header, animated 3-bar burger morph button (`.burger-trigger`), slide-over RTL/LTR drawer, 3-icon squircle theme switcher (`Light`, `Dark`, `System`), and persistent 6-chapter HUD rail (`AmcMarkContainer`).
+  * **Section B â€” Hero Section:** Masked typography, primary/secondary squircle CTAs, studio fact counters (`4` disciplines, `11` services, `EN / Ø¹`), floating studio preview frames (`BrandArt` compositions with scroll parallax), and full-viewport 3D AMC Mark stage.
+  * **Section C â€” Product / Feature Showcase:** Asymmetric split-screen showcase of all 4 connected disciplines (`Marketing`, `Advertising`, `Consulting`, `Web Development`) with custom `BrandArt` visual demonstrations and direct service pills.
+  * **Section D â€” Categories / Curated Visual Gallery:** Horizontal snap-scrolling gallery rail (`[data-gallery-track]`) displaying all 11 services with varied editorial proportions (`tall`, `wide`, `square`) alongside the 3 project possibility compositions.
+  * **Section E â€” How It Works:** 4-step workflow (`Understand`, `Define`, `Create`, `Refine`) inside a glass process band with a scroll-scrubbed progress bar (`[data-process-progress]`).
+  * **Section F â€” Advanced Features (`discipline-combiner.tsx`):** Interactive client island allowing visitors to toggle any combination of the 4 disciplines, updating a live orbital SVG chord diagram and filtering the connected services from `@amc/shared`.
+  * **Section G â€” Cross-Device Experience:** Responsive device stage showcasing Desktop (`1440px`), Tablet (`768px`), and Mobile (`390px`) frames with scroll parallax (`[data-device-float]`).
+  * **Section H â€” Configurable Engagement / Pricing (`engagement.ts` & `engagement.test.ts`):** Three bilingual tiers (`Focused`, `Connected`, `Partnership`) and a 5-row feature comparison table backed by `engagementConfig` (defaults to `null` indicative pricing so no unapproved fees are invented).
+  * **Section I & J â€” Final CTA, FAQ & Dark Navy Footer:** Closing consultation CTA, squircle FAQ disclosures, and `data-theme="dark"` Navy footer with official `footer-logo-on-dark.svg`.
 * **Device-Aware Preloader & Theme Favicons (`preloader.tsx`, `layout.tsx`, `controls.tsx`):**
   * Phone in Light mode displays the animated SVG pulse preloader (`data-variant="phone-light-pulse"`) with concentric pulsing squircle rings on warm Cream (`#FCF8F3`); Desktop/Tablet (and Dark mode) displays the 3D-extruded 5-piece AMC Mark preloader (`data-variant="studio-3d"`).
   * Dark mode uses the Orange favicon (`/favicon-orange.svg`) and Light mode uses the Dark Navy favicon (`/favicon-dark.svg`), synchronized both via media queries and dynamically on theme toggle.
@@ -507,7 +507,7 @@ No database, API contract, booking policy, migration, account, notification, dep
 Specification: [stack_faq_social.md](designs/stack_faq_social.md). Review: [stack_faq_social_review.md](reviews/stack_faq_social_review.md).
 
 - Restored the four service-pillar cards as a GSAP/native-sticky overlap sequence with gentle depth scaling, desktop artwork/copy composition and compact phone cards. Enabled only when cards fit; reduced motion and short screens retain normal document flow. Font readiness precedes measurement; navigation/media cleanup reverts transforms and sticky state. Focused cards rise above overlapping siblings.
-- Restored an original SVG mark plus real localized almorad | AMC / المراد | AMC wording in header/drawer. Dark orange navbar uses navy type and the supplied all-navy SVG mark for contrast. Existing System theme control and desktop/mobile menu behavior remain intact.
+- Restored an original SVG mark plus real localized almorad | AMC / Ø§Ù„Ù…Ø±Ø§Ø¯ | AMC wording in header/drawer. Dark orange navbar uses navy type and the supplied all-navy SVG mark for contrast. Existing System theme control and desktop/mobile menu behavior remain intact.
 - Added bilingual, server-rendered /faq routes with four approved questions, native keyboard disclosures, metadata/alternates and sitemap membership. Added FAQ links to shared navigation, footer and homepage.
 - Reduced footer to a compact brand/action row and lower navigation/copyright. Added a five-icon animated social disclosure, inert closed links, reduced-motion behavior, Escape/focus/outside close and safe external navigation. Uses user-supplied LinkedIn/Facebook/TikTok URLs. Instagram/YouTube are explicitly labeled demo links to platform homepages at the user's request, not claimed company profiles. Optional server SOCIAL_*_URL settings replace defaults.
 
@@ -526,7 +526,7 @@ Final affected browser verification after the stack paint-layer correction: `PLA
 
 Final visual evidence: `docs/reviews/stack-faq-social-evidence/`, covering both locales/themes, desktop and 390px phone header, actual overlapping cards, FAQ, compact footer and expanded five-icon social tray. Reviewed the card copy after the layering fix; the model no longer covers it. Original 3D hero remains visible and the phone uses the official SVG fallback. Supplied all-navy small mark stays complete against the orange navbar.
 
-## Reference Glass, Service Motion and Mobile/Calendar Completion — 8 November 2026
+## Reference Glass, Service Motion and Mobile/Calendar Completion â€” 8 November 2026
 
 Specs: [reference glass/booking/services](designs/reference_glass_booking_services.md), [mobile/calendar completion](designs/mobile_glass_calendar_completion.md). Findings, exact boundaries and remaining gates: [review](reviews/reference_glass_mobile_calendar_review.md).
 
@@ -540,13 +540,13 @@ Actual results:
 - Focused ESLint: PASS across new/changed select, office, booking, motion, controls, calendar, scene and browser checks; existing pages-directory notice only.
 - Final `node node_modules/vitest/vitest.mjs run --maxWorkers=1`: PASS, 22 files / 58 tests, 23.28 seconds. Earlier pnpm unit run: 58 passed in 17.98 seconds. Notification logs were mocked.
 - Full lint during this increment: FAIL with the same 6 pre-existing unrelated errors and 13 warnings.
-- Initial onsite UI browser cases: 8/8 passed EN/AR × 390/1440 × configured/unconfigured synthetic fixtures. Service cases exposed clipping, scroll measurement and missing-blur issues; source fixes followed. No final browser PASS is claimed. Newly added 6-case mobile/calendar/FAQ checks have not run.
+- Initial onsite UI browser cases: 8/8 passed EN/AR Ã— 390/1440 Ã— configured/unconfigured synthetic fixtures. Service cases exposed clipping, scroll measurement and missing-blur issues; source fixes followed. No final browser PASS is claimed. Newly added 6-case mobile/calendar/FAQ checks have not run.
 - Final production build attempt: BLOCKED before compilation by inaccessible SWC native cache (ERR_SWC_NATIVE_CACHE). Do not reuse earlier build results as validation for this increment.
 - Elevated browser diagnostic: automatic approval review could not complete because its usage limit was reached (tool showed 4:14 PM reset). This was explicitly a review-system failure, not a safety determination. No bypass attempted. Fresh visual QA/screenshots and final public/operational browser checks remain outstanding.
 
 Source implementation is saved, but final visual/production validation and the exact standard shadcn calendar dependency integration are incomplete. Existing localhost:3000 dev server remains untouched. Port 3303 serves an older production build, not this increment. No API/schema/database policy mutation, deployment, external-account connection, real booking/account write, notification, commit or push occurred.
 
-## Sidebar Social Links, Return to Reading and FAQ Refinement — 8 November 2026
+## Sidebar Social Links, Return to Reading and FAQ Refinement â€” 8 November 2026
 
 Latest authorized scope: distinct sidebar social button with six supplied official profiles including X, reversible scroll-to-top action, and an improved FAQ presentation/animation. Specification: [sidebar_social_reading_faq.md](designs/sidebar_social_reading_faq.md). Review/evidence: [sidebar_social_reading_faq_review.md](reviews/sidebar_social_reading_faq_review.md).
 
@@ -572,18 +572,18 @@ Final affected acceptance run on the exact final build: PASS, 20/20 in 45.8 seco
 
 Final visual inspection completed for EN/AR light/dark desktop/phone captures: sidebar has named six-platform links, FAQ answers are upright and readable, phone popup fits viewport, and top action remains available with the return arrow. Screenshot evidence was refreshed against the final port 3304 build. The standard date-picker dependency and verified live-onsite-input limitations from the earlier increment remain documented; neither was silently represented as complete here.
 
-## Dark Artwork, Unified Squircles and Theme Stability — 8 November 2026
+## Dark Artwork, Unified Squircles and Theme Stability â€” 8 November 2026
 
 Applied the user-named AMC UI/UX and CI/CD verification skills within the authorized UI scope. Spec: [theme_squircle_stability.md](designs/theme_squircle_stability.md). Findings/evidence: [theme_squircle_stability_review.md](reviews/theme_squircle_stability_review.md).
 
 - Removed the solid-navy dark-navbar image and now display the existing cream/orange mark, matching 3D/fallback artwork, on a small navy tile so both colors remain distinct against orange. Original artwork paths remain unchanged. Light/dark, phone/drawer and localized wording are retained.
 - Added shared --radius-control=20px and applied the sidebar curve to buttons, language/theme controls, badges, icon wells, chapter rail/buttons, return-to-reading action, social anchors, select triggers/items and slot labels across public/operational UI. Native squircle enhancement is progressive; card/panel hierarchy remains separate.
 - Hid social-tray scrollbar chrome in standard/WebKit CSS and clipped horizontal animation overflow. Repeated opening preserves native vertical scrolling on short screens, six links, focus behavior and document width.
-- Added a synchronous head theme initializer and a layout-effect paint guard under the existing provider. Initial browser sampling reproduced empty root theme classes on EN↔AR commits even with the head initializer alone; the guard restores theme attributes before the route paints. Disabled preference-change transitions and hid only the unresolved control icon until readiness. System default, saved preferences, live OS changes and singular favicon ownership remain supported.
+- Added a synchronous head theme initializer and a layout-effect paint guard under the existing provider. Initial browser sampling reproduced empty root theme classes on ENâ†”AR commits even with the head initializer alone; the guard restores theme attributes before the route paints. Disabled preference-change transitions and hid only the unresolved control icon until readiness. System default, saved preferences, live OS changes and singular favicon ownership remain supported.
 
 Actual validation:
 
-- Initial responsive dev cases: PASS 8/8 for EN/AR × 320/390/768/1440 artwork/shape/repeated-social-open/axe checks. Initial 4 frame-sampling cases failed and recorded the root-class flash. After adding the layout-effect guard, all 4 frame cases PASS in 26.8 seconds, with no assertion changes. Covers saved Dark against light OS, System-dark, locale changes and reloads at 390/1440.
+- Initial responsive dev cases: PASS 8/8 for EN/AR Ã— 320/390/768/1440 artwork/shape/repeated-social-open/axe checks. Initial 4 frame-sampling cases failed and recorded the root-class flash. After adding the layout-effect guard, all 4 frame cases PASS in 26.8 seconds, with no assertion changes. Covers saved Dark against light OS, System-dark, locale changes and reloads at 390/1440.
 - `pnpm.cmd typecheck`: PASS, 5 tasks / 4 cached, 4.187 seconds. Final production build also checks web TypeScript.
 - `node node_modules/vitest/vitest.mjs run --maxWorkers=1`: PASS, 22 files / 58 tests, 19.98 seconds. Notification output was mocked, not actual delivery.
 - Focused ESLint of implementation and updated browser tests: PASS; existing monorepo pages-directory notice only. Full ESLint: FAIL with the same 6 unrelated existing errors and 13 warnings.
@@ -645,14 +645,14 @@ Final evidence: docs/reviews/orange-navbar-evidence/ contains eight EN/AR dark h
 No production deployment, existing database migration, external account connection, CRM write or actual notification send was performed. The new Phase 1 plan is a proposal and release checklist, not evidence that the draft CRM/email integration is configured or launch-ready.
 
 
-## Landing UI/UX Overhaul (TV Monitor Showreel, 3D Multi-Animation Stage, Leadership & Team Showcase, Finale Grid & Smooth FAQ) — 8 November 2026
+## Landing UI/UX Overhaul (TV Monitor Showreel, 3D Multi-Animation Stage, Leadership & Team Showcase, Finale Grid & Smooth FAQ) â€” 8 November 2026
 
 Specification: [landing_ui_ux_overhaul_rfc.md](designs/landing_ui_ux_overhaul_rfc.md).
 
 - **Wider TV-Screen Broadcast Showreel (`studio-media.tsx` & `landing.tsx`)**: Stacked the Chapter 02 Manifesto header above the showreel (`manifesto-stacked`, `manifesto-header`, `manifesto-tv-wrap`) to prevent left-column headline clipping, added kinetic `Lines` text animation, and upgraded `StudioShowreel` into a 16:9 `1280x680` TV broadcast monitor (`lp-tv-unit`) with an SVG bezel/glare overlay (`lp-tv-svg-overlay`) and SVG pedestal stand (`lp-tv-pedestal`).
-- **3D Logo Multi-Animation Stage (`amc-mark-scene.tsx` & `discipline-combiner.tsx`)**: Added continuous 4-phase idle/autoplay animation cycling in `AmcMarkScene` when not scrolling, and upgraded `DisciplineCombiner` from a static 2D SVG diagram into a fixed-canvas 60FPS 3D extruded AMC logo + orbiting discipline node stage (`lp-combiner-3d-stage`) with 4 distinct auto-cycling 3D animations (`01 3D Orbit & Layer Depth`, `02 Exploded Architecture`, `03 Kinetic Signal Wave`, `04 360° Dimensional Turn`) and manual mode switcher controls.
+- **3D Logo Multi-Animation Stage (`amc-mark-scene.tsx` & `discipline-combiner.tsx`)**: Added continuous 4-phase idle/autoplay animation cycling in `AmcMarkScene` when not scrolling, and upgraded `DisciplineCombiner` from a static 2D SVG diagram into a fixed-canvas 60FPS 3D extruded AMC logo + orbiting discipline node stage (`lp-combiner-3d-stage`) with 4 distinct auto-cycling 3D animations (`01 3D Orbit & Layer Depth`, `02 Exploded Architecture`, `03 Kinetic Signal Wave`, `04 360Â° Dimensional Turn`) and manual mode switcher controls.
 - **Re-Gridded Finale Banner & Smooth FAQ Transition (`landing.tsx` & `faq-accordion.tsx`)**: Re-organized the Chapter 06 finale banner into a balanced 2-column grid (`finale-banner-grid`), and enhanced `FaqAccordion` with smooth Web Animations API height/opacity/translateY transitions (`380ms cubic-bezier(0.16, 1, 0.3, 1)`), 180-degree chevron rotation, and gold active styling.
-- **Leadership & Studio Team Section Replacing `06 — Engagement` (`team-showcase.tsx` & `landing.tsx`)**: Replaced the homepage `06 — Engagement` pricing/comparison section with a bilingual `TeamShowcase` component featuring an executive spotlight card for **Ahmed Salah (Founder & CEO)** and 3 practice leads with custom luxury SVG portraits (`ExecutivePortraitSvg`).
+- **Leadership & Studio Team Section Replacing `06 â€” Engagement` (`team-showcase.tsx` & `landing.tsx`)**: Replaced the homepage `06 â€” Engagement` pricing/comparison section with a bilingual `TeamShowcase` component featuring an executive spotlight card for **Ahmed Salah (Founder & CEO)** and 3 practice leads with custom luxury SVG portraits (`ExecutivePortraitSvg`).
 - **Production Zod Validation & Vercel Services Config**: Added root `vercel.json` multi-service routing, RFC 5322 email/phone Zod validation in `@amc/shared`, bilingual per-field contact form errors in `contact-form.tsx`, and brand-token email layout updates in `email-layout.ts`.
 
 Actual verification:
@@ -660,7 +660,7 @@ Actual verification:
 - `pnpm.cmd lint`: PASS, 0 errors (12 existing image/directive warnings).
 - `pnpm.cmd --filter @amc/web test`: PASS, exit code 0.
 
-## Compact Team Restoration, Logo Autoplay and Gallery Motion — 9 November 2026
+## Compact Team Restoration, Logo Autoplay and Gallery Motion â€” 9 November 2026
 
 Latest user correction: restore the earlier team structure and simple creative scroll motion, controlling executive size and width. Design: [logo_team_gallery_motion.md](designs/logo_team_gallery_motion.md). Review: [logo_team_gallery_motion_review.md](reviews/logo_team_gallery_motion_review.md).
 
@@ -676,23 +676,23 @@ Actual validation:
 - Exact final `pnpm.cmd run build`: PASS 4 tasks / 3 cached, 42.82s, frontend TypeScript and 62 generated pages. No application source changes followed.
 - Initial affected browser suite: 27/33 PASS, revealing the real rail offset issue plus invalid screenshot equality for a transparent canvas. Final application suite on port 3311: 32/33 PASS in 1.9m; all team/layout/navigation/accessibility/WebGL/fallback regressions passed, remaining failure was transparent-canvas screenshot comparison.
 - Corrected renderer test counts WebGL clear calls: verifies active autoplay and zero additional renders after settling, preserving visual autoplay comparison and no deprecation/page-error checks. Indexed-draw-only instrumentation was discarded because it missed non-indexed geometry. Isolated corrected test PASS 1/1 in 15.0s.
-- Final team/logo acceptance: `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3311 node node_modules/@playwright/test/cli.js test tests/e2e/logo-team-gallery.spec.ts --workers=2 --reporter=list --output=test-results-team-acceptance-final`: PASS **17/17 in 1.1m**, using one worker because the file is sequential. EN/AR × light/dark × 320/390/768/1440, measured widths/heights/overflow, axe, header/drawer team navigation, all added rail targets, autoplay and idle rendering. Full repository E2E was not rerun; the earlier final 32/33 result is retained separately.
+- Final team/logo acceptance: `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3311 node node_modules/@playwright/test/cli.js test tests/e2e/logo-team-gallery.spec.ts --workers=2 --reporter=list --output=test-results-team-acceptance-final`: PASS **17/17 in 1.1m**, using one worker because the file is sequential. EN/AR Ã— light/dark Ã— 320/390/768/1440, measured widths/heights/overflow, axe, header/drawer team navigation, all added rail targets, autoplay and idle rendering. Full repository E2E was not rerun; the earlier final 32/33 result is retained separately.
 
 Visual evidence under `docs/reviews/logo-team-gallery-evidence/`: inspected EN/AR both themes desktop and phone plus executive/director grids and normal-motion gallery. Local preview: http://127.0.0.1:3311/en#chapter-team and /ar#chapter-team. No database/API-policy changes, migrations, external account connections, deployment, commit or push were performed by this task.
 
-## Portrait Directors, Specialty Icons and Six-Mockup Removal — 9 November 2026
+## Portrait Directors, Specialty Icons and Six-Mockup Removal â€” 9 November 2026
 
 Latest user instruction supersedes the horizontal director-card prototype. Design: [directors_scroll_reel.md](designs/directors_scroll_reel.md). Review: [directors_scroll_reel_review.md](reviews/directors_scroll_reel_review.md).
 
 - Removed only the six homepage mockup cards (identity system, outdoor campaign, digital flagship, strategy board, commerce experience and stage direction). Original SVG files remain intact. TV showreel, eleven-service gallery, possibility cards and other sections remain.
 - Retained compact CEO/Co-CEO/COO layout and existing scroll-card entrance. All eight profiles now have theme-colored decorative career icons from the existing Solar set. Executive icons move with section scroll; director accents turn/settle with their slide, including the first card. Existing content and placeholder disclosures are preserved.
-- Five directors now appear as upright portrait cards, one after another from the left with a dimensional flip/fade; Arabic reverses travel. Native scrolling drives a bounded sticky sequence with previous/next buttons, keyboard activation, current-card count and progress line. Heading is “Directors & discipline leads”, removing the incorrect five-agency-pillars wording. Reduced motion, short screens, oversized content or unavailable JS retain the complete readable grid. Scoped cleanup restores styles and observers. Body-size refresh fixes progressive-layout scroll boundary drift.
+- Five directors now appear as upright portrait cards, one after another from the left with a dimensional flip/fade; Arabic reverses travel. Native scrolling drives a bounded sticky sequence with previous/next buttons, keyboard activation, current-card count and progress line. Heading is â€œDirectors & discipline leadsâ€, removing the incorrect five-agency-pillars wording. Reduced motion, short screens, oversized content or unavailable JS retain the complete readable grid. Scoped cleanup restores styles and observers. Body-size refresh fixes progressive-layout scroll boundary drift.
 
 Actual validation:
 
 - Focused ESLint: PASS for all changed implementation/tests; five existing img warnings in landing.tsx. Final slider/test lint PASS. `git diff --check` PASS with line-ending notices only.
 - Initial horizontal prototype: 1/9 browser cases passed, exposing stale scroll boundaries. Corrected with ResizeObserver refresh. Two subsequent viewport checks sampled mid-transition; polling the same strict viewport bounds after settling passed both affected EN cases. This was not a passing prototype acceptance run.
-- Portrait version: `pnpm.cmd run build` PASS, 4 tasks / 3 cached, 58.876s, frontend TypeScript and 62 generated pages. Browser acceptance on port 3314: **31/31 PASS in 1.4m**, covering director transitions/native scroll/keyboard/RTL/axe/icons/portrait proportions, phone 390×844 and desktop, reduced-motion/short-screen fallback, gallery absence, prior team/navigation/logo regression checks at 320/390/768/1440.
+- Portrait version: `pnpm.cmd run build` PASS, 4 tasks / 3 cached, 58.876s, frontend TypeScript and 62 generated pages. Browser acceptance on port 3314: **31/31 PASS in 1.4m**, covering director transitions/native scroll/keyboard/RTL/axe/icons/portrait proportions, phone 390Ã—844 and desktop, reduced-motion/short-screen fallback, gallery absence, prior team/navigation/logo regression checks at 320/390/768/1440.
 - Exact final build after first-card icon refinement: `pnpm.cmd run build` PASS, 4 tasks / 3 cached, 58.319s, frontend TypeScript and 62 static pages. No application changes followed.
 - Final dedicated acceptance: `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3315 node node_modules/@playwright/test/cli.js test tests/e2e/directors-reel.spec.ts --workers=2 --reporter=list --output=test-results-directors-portrait-final`: **10/10 PASS in 48.9s** (one worker for sequential file). Includes all eight locale/theme/phone/desktop slide cases, all five cards, strict portrait/viewport bounds, previous/next, keyboard and native scroll, axe, live reduced-motion restoration, short screen, explicit 3D-matrix flip/left-entry check, first-icon movement, no horizontal overflow and route cleanup/remount.
 - No full workspace unit or complete repository E2E rerun for this UI-only increment; earlier unit results are historical and not substituted for new runs.
@@ -985,7 +985,7 @@ Visual QA: initial screenshots captured the preloader, so screenshot cases now w
 
 Owner does not have the missing extension name. CI now emits rehearsal_extensions_missing with validated names before full restore; the next actual CI run is required to identify/fix the exact extension dependency and prove the original rehearsal passes. No extension was omitted, no recovery gate bypassed and no production DB connection was made.
 
-## Theme, form feedback and local development staff — 11 November 2026
+## Theme, form feedback and local development staff â€” 11 November 2026
 
 The studio monitor and four service illustrations now use the approved cream/navy/orange palette in light mode and navy/orange/cream in dark mode. The service artwork corners match the surrounding card, with a subtle orange border. The AMC strip uses official AMC artwork because the supplied assets folder contains only AMC variants; no client logo or client relationship was invented. The four-step process mark now follows a continuous arc and fades out after card 04, leaving that card in focus. Reduced-motion steps remain static and readable. The process, monitor and strip visual checks are in `docs/reviews/conversion-motion/`, `docs/reviews/home-motion/`, and `docs/reviews/home-theme/`.
 
@@ -998,3 +998,8 @@ The supplied GitHub `pnpm test:e2e:staff` log later showed 2/6 passing and four 
 Later supplied public Playwright shard logs showed 12 failures in shard 2/4 and 10 in shard 4/4. The shared axe failure was `scrollable-region-focusable` on the overflowing brand ticker. The strip is now a named keyboard-focusable region with horizontal keyboard scrolling, a visible focus outline and motion paused on focus; the duplicate visual track remains hidden from assistive technology. The other four shard 4/4 failures were a stale assertion for a literal `id="amc-theme-init"` tag. Next serializes the `beforeInteractive` initializer into a script queue in `<head>`; local production HTML inspection found its first occurrence before `<body>`. The test now verifies that placement and continues sampling for light flashes across locale switches.
 
 Validation for these shard fixes: web production build PASS (62 pages and TypeScript), `pnpm lint` PASS, affected `foundation.spec.ts` 16/16 PASS, `theme-shape-stability.spec.ts` 12/12 PASS, and the focused keyboard ticker case 1/1 PASS at a 390px viewport. The first keyboard test used a wide reduced-motion viewport whose single static track did not overflow; the viewport was corrected and the case passed. The full CI shards were not rerun or pushed, so their new remote results remain unverified. No database, migrations, external services or deployment were changed.
+# Prisma Postgres extension blocks native release rehearsal â€” 11 November 2026
+
+The new CI diagnostic identifies `prisma_postgres` in the production archive. The current release job restores the full archive to a stock, loopback-only PostgreSQL 18 cluster; that cluster does not provide the source provider's extension. Prisma's published extension list does not list `prisma_postgres`, so no verified PostgreSQL 18 package was found to add to the runner. The release remains blocked before deployment. No archive entry was skipped and no substitute extension was created.
+
+Updated the preflight diagnostic to name the provider-compatible isolated target required for a faithful restore, while keeping generic package guidance for standard missing extensions. Added a subprocess regression check for the exact `prisma_postgres` case and plaintext cleanup. Focused release tests PASS 9/9; full release suite PASS 33/33; Node syntax and `git diff --check` PASS. A real restore was not run locally. The next operational step requires an isolated provider-compatible rehearsal database with the extension and a reviewed connection/cleanup design. No production database connection, hosted database creation, deployment, commit or push was performed here.
