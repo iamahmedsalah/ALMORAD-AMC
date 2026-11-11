@@ -42,6 +42,7 @@
     "preview:cert": "node scripts/local-runtime.mjs cert",
     "preview:build": "node scripts/local-runtime.mjs build",
     "preview:local": "node scripts/local-runtime.mjs preview",
+    "crm:check": "node scripts/check-hubspot.mjs",
     "email:test": "node scripts/test-email.mjs"
   },
   "devDependencies": {

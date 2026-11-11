@@ -1,11 +1,12 @@
 'use client';
 import {useEffect,useState} from 'react';
 import type {Locale} from '@amc/shared';
+import {hubspotStatusLabel} from './hubspot-status';
 import {StaffBookingShell} from './staff-shell';
 import {appointmentDate,bookingFetch} from './helpers';
 import {SolarIcon} from '@/components/ui/solar-icon';
 
-type Inquiry={id:string;name:string;email:string;phone:string|null;message:string;createdAt:string;ownerEmailStatus:string;visitorEmailStatus:string};
+type Inquiry={id:string;name:string;email:string;phone:string|null;message:string;createdAt:string;ownerEmailStatus:string;visitorEmailStatus:string;hubspotStatus?:string;hubspotContactUrl?:string|null};
 type Result={items:Inquiry[];total:number;page:number};
 export function MeetingInquiries({locale}:{locale:Locale}) {
  return <StaffBookingShell locale={locale} view="inquiries">{()=> <Inbox locale={locale}/>}</StaffBookingShell>;
@@ -24,7 +25,7 @@ function Inbox({locale}:{locale:Locale}) {
   {result&&<><p role="status">{result.total} {ar?'استفسار':'inquiries'}</p><div className="inquiry-grid">{result.items.map(row=><article className="staff-panel inquiry-card" key={row.id}>
    <div className="staff-heading"><h2>{row.name}</h2><time dateTime={row.createdAt}>{appointmentDate(row.createdAt,locale,'Africa/Cairo')}</time></div>
    <div className="inquiry-contact"><a href={'mailto:'+row.email}><SolarIcon name="letter-linear"/><bdi>{row.email}</bdi></a>{row.phone?<a href={'tel:'+row.phone.replace(/[^+0-9]/g,'')}><SolarIcon name="phone-linear"/><bdi>{row.phone}</bdi></a>:<span>{ar?'لم يترك رقم هاتف':'No phone supplied'}</span>}</div>
-   <p className="inquiry-message">{row.message}</p><dl className="inquiry-delivery"><div><dt>{ar?'إشعار الاستوديو':'Studio alert'}</dt><dd>{delivery(row.ownerEmailStatus)}</dd></div><div><dt>{ar?'إيصال العميل':'Visitor receipt'}</dt><dd>{delivery(row.visitorEmailStatus)}</dd></div></dl>
+   <p className="inquiry-message">{row.message}</p><dl className="inquiry-delivery"><div><dt>{ar?'إشعار الاستوديو':'Studio alert'}</dt><dd>{delivery(row.ownerEmailStatus)}</dd></div><div><dt>{ar?'إيصال العميل':'Visitor receipt'}</dt><dd>{delivery(row.visitorEmailStatus)}</dd></div><div><dt>HubSpot</dt><dd>{hubspotStatusLabel(locale,row.hubspotStatus)}</dd>{row.hubspotContactUrl&&<dd><a href={row.hubspotContactUrl} target="_blank" rel="noopener noreferrer">HubSpot</a></dd>}</div></dl>
   </article>)}</div>{!result.items.length&&<p>{ar?'لا توجد استفسارات مطابقة.':'No matching inquiries.'}</p>}
   <div className="staff-pagination"><button className="button button-secondary" disabled={page===0} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page+1}</span><button className="button button-secondary" disabled={(page+1)*25>=result.total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div></>}
  </>;

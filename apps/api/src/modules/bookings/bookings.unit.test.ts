@@ -5,6 +5,7 @@ import {BookingsService} from './bookings.service.js';
 import type {PrismaService} from '../../prisma/prisma.service.js';
 import type {ExecutionContext} from '@nestjs/common';
 import type {HubSpotClient} from '../contact/hubspot.client.js';
+import type {NotificationsService} from '../notifications/notifications.service.js';
 
 describe('PublicBookingController unit tests', () => {
   it('delegates config retrieval to BookingsService', async () => {
@@ -39,12 +40,15 @@ describe('PublicBookingController unit tests', () => {
   it('delegates reservation creation', async () => {
     const mockService = {
       create: vi.fn().mockResolvedValue({ id: 'bk_123', status: 'CONFIRMED' }),
+      drainCrm:vi.fn().mockResolvedValue({processed:0,succeeded:0,failed:0})
     };
 
-    const controller = new PublicBookingController(mockService as unknown as BookingsService);
+    const notifications={drain:vi.fn().mockRejectedValue(new Error('Synthetic email failure'))};
+    const controller = new PublicBookingController(mockService as unknown as BookingsService,notifications as unknown as NotificationsService);
     const booking = await controller.create({ clientName: 'Nour' });
     expect(booking).toEqual({ id: 'bk_123', status: 'CONFIRMED' });
     expect(mockService.create).toHaveBeenCalledWith({ clientName: 'Nour' });
+    expect(mockService.drainCrm).toHaveBeenCalledTimes(1);
   });
 
   it('validates booking origin guard against trusted origin', () => {
@@ -132,6 +136,7 @@ describe('PublicBookingController unit tests', () => {
             phone: '+2010000000',
             company: 'Brand Co',
             locale: 'ar',
+            meetingType:'ONLINE',status:'CONFIRMED',timezone:'Africa/Cairo',meetingUrl:'https://meet.google.com/abc-defg-hij',
             startsAt: new Date('2026-11-20T10:00:00Z'),
             endsAt: new Date('2026-11-20T10:30:00Z')
           }),
@@ -159,13 +164,13 @@ describe('PublicBookingController unit tests', () => {
         company: 'Brand Co',
         locale: 'ar'
       });
-      expect(hubspotMock.createMeeting).toHaveBeenCalledWith({
+      expect(hubspotMock.createMeeting).toHaveBeenCalledWith(expect.objectContaining({
         contactId: 'hs-contact-99',
         title: 'ALMORAD AMC Consultation - AMC-TEST01',
         startsAt: expect.any(Date),
         endsAt: expect.any(Date),
-        reference: 'AMC-TEST01'
-      });
+        reference: 'AMC-TEST01',location:'https://meet.google.com/abc-defg-hij',outcome:'SCHEDULED'
+      }));
       expect(dbMock.booking.update).toHaveBeenCalledWith({
         where: {id: 'bk-1'},
         data: {hubspotContactId: 'hs-contact-99', hubspotMeetingId: 'hs-meeting-88'}
@@ -187,8 +192,8 @@ describe('PublicBookingController unit tests', () => {
           findUnique: vi.fn().mockResolvedValue({
             id: 'bk-2',
             reference: 'AMC-CANCEL01',
-            hubspotMeetingId: 'hs-meeting-88'
-          })
+            hubspotMeetingId: 'hs-meeting-88',hubspotContactId:'hs-contact-99',status:'CANCELLED',meetingType:'ONLINE',locale:'en',timezone:'Africa/Cairo',clientName:'Fixture',email:'fixture@example.invalid',startsAt:new Date('2026-11-20T10:00:00Z'),endsAt:new Date('2026-11-20T10:30:00Z')
+          }),update:vi.fn().mockResolvedValue({})
         },
         bookingOutbox: {
           update: vi.fn().mockResolvedValue({})
@@ -197,6 +202,7 @@ describe('PublicBookingController unit tests', () => {
 
       const hubspotMock = {
         enabled: true,
+        updateBookingContact:vi.fn().mockResolvedValue('hs-contact-99'),
         updateMeeting: vi.fn().mockResolvedValue(undefined)
       };
 
@@ -204,7 +210,7 @@ describe('PublicBookingController unit tests', () => {
       const res = await service.drainCrm();
 
       expect(res).toEqual({processed: 1, succeeded: 1, failed: 0});
-      expect(hubspotMock.updateMeeting).toHaveBeenCalledWith('hs-meeting-88', {outcome: 'CANCELED'});
+      expect(hubspotMock.updateMeeting).toHaveBeenCalledWith('hs-meeting-88', expect.objectContaining({outcome:'CANCELED',location:'Online - link pending',startsAt:expect.any(Date),endsAt:expect.any(Date)}));
       expect(dbMock.bookingOutbox.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {id: 'outbox-2'},

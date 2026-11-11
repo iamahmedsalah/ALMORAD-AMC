@@ -21,3 +21,21 @@ describe.sequential('conflict-safe booking and staff-reviewed client changes',()
  it('enforces receptionist permissions and CSRF at the HTTP API',async()=>{const agent=request.agent(app.getHttpServer());const login=await agent.post('/staff/auth/login').set('Origin','http://localhost:3000').send({email:receptionist+'@example.invalid',password:'Isolated fixture password 123'}).expect(200);expect(login.body.csrfToken).toBeTruthy();await agent.get('/staff/booking-settings').expect(403);await agent.get('/staff/booking-analytics?from=2026-01-01&to=2026-01-10').expect(403);const from=localDate(new Date(),'Africa/Cairo');await agent.get('/staff/appointments?from='+from+'&to='+from).expect(200);await agent.post('/staff/appointments/action').set('Origin','http://localhost:3000').send({}).expect(403);await request(app.getHttpServer()).post('/booking/create').set('Origin','https://wrong.invalid').send(input(12)).expect(403);await request(app.getHttpServer()).get('/staff/appointments?from='+from+'&to='+from).expect(401);});
  it('aggregates real creation cohorts and does not invent conversion/revenue',async()=>{const today=localDate(new Date(),'Africa/Cairo');const metrics=await api.analytics({from:today,to:today});expect(metrics.total).toBe(await db.booking.count({where:{email}}));expect(metrics.cancelled).toBe(1);expect(metrics.cancellationRate).toBe(1/metrics.total);expect(metrics).not.toHaveProperty('conversionRate');expect(metrics).not.toHaveProperty('revenue');});
 });
+
+// Real PostgreSQL claim serialization; providers are mocked and require no account.
+it('serializes HubSpot intents for one booking across independent drains',async()=>{
+ const created=asClient(await api.create(input(55)));
+ await db.bookingOutbox.deleteMany({where:{bookingId:created.booking.id,kind:{endsWith:':HUBSPOT'}}});
+ const firstEvent=await db.bookingEvent.create({data:{bookingId:created.booking.id,kind:'BOOKING_CREATED'}});
+ const nextEvent=await db.bookingEvent.create({data:{bookingId:created.booking.id,kind:'BOOKING_EDIT'}});
+ await db.bookingOutbox.createMany({data:[{bookingId:created.booking.id,eventId:firstEvent.id,kind:'BOOKING_CREATED:HUBSPOT',status:'PENDING',createdAt:new Date(Date.now()-2000)},{bookingId:created.booking.id,eventId:nextEvent.id,kind:'BOOKING_EDIT:HUBSPOT',status:'PENDING'}]});
+ let release!:()=>void,entered!:()=>void;
+ const gate=new Promise<void>(resolve=>{release=resolve;}),started=new Promise<void>(resolve=>{entered=resolve;});
+ const provider={enabled:true,upsertBookingContact:vi.fn().mockResolvedValue('42'),updateBookingContact:vi.fn().mockResolvedValue('42'),createMeeting:vi.fn(async()=>{entered();await gate;return '88';}),updateMeeting:vi.fn().mockResolvedValue(undefined)};
+ const left=new BookingsService(db as unknown as PrismaService,provider as unknown as import('../contact/hubspot.client.js').HubSpotClient),right=new BookingsService(db as unknown as PrismaService,provider as unknown as import('../contact/hubspot.client.js').HubSpotClient);
+ const first=left.drainCrm(1);
+ try {await Promise.race([started,first.then(()=>{throw new Error('CRM create was not entered');})]);expect(await right.drainCrm(1)).toEqual({processed:0,succeeded:0,failed:0});}finally{release();await first;}
+ expect(await first).toEqual({processed:1,succeeded:1,failed:0});
+ expect(await right.drainCrm(1)).toEqual({processed:1,succeeded:1,failed:0});expect(provider.createMeeting).toHaveBeenCalledTimes(1);expect(provider.updateMeeting).toHaveBeenCalledTimes(1);
+ expect((await db.booking.findUniqueOrThrow({where:{id:created.booking.id}})).hubspotMeetingId).toBe('88');
+});

@@ -55,7 +55,7 @@ export class ContactService {
   }
 
   /** Runs every step that has not succeeded yet. Safe to call repeatedly. */
-  async deliver(id: string): Promise<void> {
+  async deliver(id: string, claimed = false): Promise<void> {
     const notifications = this.notifications;
     if (!notifications) return;
     const row = await this.prisma.contactInquiry.findUnique({where: {id}});
@@ -98,7 +98,9 @@ export class ContactService {
       if (!this.hubspot?.enabled) patch.hubspotStatus = 'SKIPPED';
       else {
         try {
-          patch.hubspotContactId = (await this.hubspot.upsertContact(mail)) || null;
+          const contactId=await this.hubspot.upsertContact(mail);
+          if(!contactId)throw new Error('HubSpot returned no contact ID');
+          patch.hubspotContactId = contactId;
           patch.hubspotStatus = 'SENT';
         } catch (error) {
           patch.hubspotStatus = 'FAILED';
@@ -118,7 +120,7 @@ export class ContactService {
 
     await this.prisma.contactInquiry.update({
       where: {id},
-      data: {...patch, attempts: {increment: 1}, lastError: errors.length ? errors.join(' | ').slice(0, 1000) : null}
+      data: {...patch,...(claimed?{}:{attempts:{increment:1}}), lastError: errors.length ? errors.join(' | ').slice(0, 1000) : null}
     });
   }
 
@@ -154,7 +156,7 @@ export class ContactService {
     }
 
     for (const row of claimedRows) {
-      await this.deliver(row.id).catch(error => this.logger.error(`Contact retry failed for ${row.id}: ${this.safe(error)}`));
+      await this.deliver(row.id,true).catch(error => this.logger.error(`Contact retry failed for ${row.id}: ${this.safe(error)}`));
     }
     return {processed: claimedRows.length};
   }

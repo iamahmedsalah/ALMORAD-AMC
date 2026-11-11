@@ -18,6 +18,21 @@ function setup(stored = row(), env: Record<string, string> = {CONTACT_INBOX_EMAI
 }
 
 describe('contact delivery', () => {
+  it('syncs the inquiry phone to HubSpot even when both email deliveries are rejected',async()=>{
+    const {service,notifications,hubspot,prisma}=setup(row({phone:'+1 202 555 0100'}));
+    notifications.sendEmail.mockRejectedValue(new Error('Resend validation_error'));
+    await service.deliver('row-1');
+    expect(hubspot.upsertContact).toHaveBeenCalledWith(expect.objectContaining({phone:'+1 202 555 0100'}));
+    expect(prisma.contactInquiry.update.mock.calls[0]?.[0].data).toMatchObject({ownerEmailStatus:'FAILED',visitorEmailStatus:'FAILED',hubspotStatus:'SENT',hubspotContactId:'hs-42'});
+  });
+  it('does not claim a sync succeeded without a returned contact ID',async()=>{
+    const {service,hubspot,prisma}=setup();hubspot.upsertContact.mockResolvedValue('');await service.deliver('row-1');
+    expect(prisma.contactInquiry.update.mock.calls[0]?.[0].data).toMatchObject({hubspotStatus:'FAILED'});
+  });
+  it('counts a claimed retry once instead of incrementing the lease and delivery attempts twice',async()=>{
+    const {service,prisma}=setup();await service.deliver('row-1',true);
+    expect(prisma.contactInquiry.update.mock.calls[0]?.[0].data).not.toHaveProperty('attempts');
+  });
   it('emails the studio and the visitor and syncs HubSpot, recording each step', async () => {
     const {prisma, notifications, hubspot, service} = setup();
     await service.deliver('row-1');

@@ -3,6 +3,7 @@ import {z} from 'zod';
 import {PrismaService} from '../../prisma/prisma.service.js';
 import {SessionGuard} from '../auth/session.guard.js';
 import {PermissionGuard, RequirePermission} from '../auth/permission.guard.js';
+import {hubspotContactUrl} from './hubspot-links.js';
 
 @Controller('staff/inquiries')
 @UseGuards(SessionGuard, PermissionGuard)
@@ -18,9 +19,9 @@ export class InquiriesController {
     const where = search ? {OR:['name','email','phone'].map(field=>({[field]:{contains:search,mode:'insensitive' as const}}))} : {};
     const [items,total] = await this.db.$transaction([
       this.db.contactInquiry.findMany({where,orderBy:[{createdAt:'desc'},{id:'desc'}],skip:page*25,take:25,
-        select:{id:true,name:true,email:true,phone:true,message:true,locale:true,createdAt:true,ownerEmailStatus:true,visitorEmailStatus:true}}),
+        select:{id:true,name:true,email:true,phone:true,message:true,locale:true,createdAt:true,ownerEmailStatus:true,visitorEmailStatus:true,hubspotStatus:true,hubspotContactId:true}}),
       this.db.contactInquiry.count({where})
     ]);
-    return {items,total,page};
+    return {items:items.map(item=>({...item,hubspotContactUrl:hubspotContactUrl(item.hubspotContactId)})),total,page};
   }
 }

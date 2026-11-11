@@ -1,3 +1,4 @@
+import {hubspotContactUrl} from '../contact/hubspot-links.js';
 import {BadRequestException,ConflictException,Inject,Injectable,NotFoundException,Optional,ServiceUnavailableException,UnauthorizedException} from '@nestjs/common';
 import {createHash,createHmac,randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
 import {z} from 'zod';
@@ -5,11 +6,11 @@ import {activeChanges,bookingDurations,createBookingInput,clientActionInput,mana
 import {PrismaService} from '../../prisma/prisma.service.js';
 import type {Booking,BookingSettings,Prisma} from '../../generated/prisma/client.js';
 import {analyticsBounds,calendarSlots,dayBounds,localDate,overlaps} from './schedule.js';
-import {HubSpotClient, HubSpotRateLimitError} from '../contact/hubspot.client.js';
+import {HubSpotClient, HubSpotRateLimitError,HubSpotAmbiguousCreateError,type HubSpotOutcome} from '../contact/hubspot.client.js';
 
 type Tx=Prisma.TransactionClient;
 const hash=(v:string)=>createHash('sha256').update(v).digest('hex');
-const visible={id:true,reference:true,serviceSlug:true,meetingType:true,status:true,clientName:true,email:true,phone:true,company:true,notes:true,meetingUrl:true,locale:true,timezone:true,startsAt:true,endsAt:true,createdAt:true,version:true,isDemo:true,hubspotContactId:true,hubspotMeetingId:true,changes:{orderBy:{createdAt:'desc' as const},take:50}} as const;
+const visible={id:true,reference:true,serviceSlug:true,meetingType:true,status:true,clientName:true,email:true,phone:true,company:true,notes:true,meetingUrl:true,locale:true,timezone:true,startsAt:true,endsAt:true,createdAt:true,version:true,isDemo:true,changes:{orderBy:{createdAt:'desc' as const},take:50}} as const;
 const detail={...visible,events:{orderBy:{createdAt:'desc' as const},take:100,select:{id:true,kind:true,details:true,createdAt:true}},notifications:{orderBy:{createdAt:'desc' as const},take:20,select:{kind:true,status:true,createdAt:true}}} as const;
 const active=[...activeChanges];
 const bookingDuration=(booking:Booking)=>(booking.endsAt.getTime()-booking.startsAt.getTime())/60000;
@@ -74,7 +75,7 @@ export class BookingsService {
    await this.event(tx,booking.id,eventKind,undefined,{reason:data.reason,previousStartAt:booking.startsAt.toISOString(),previousEndAt:booking.endsAt.toISOString(),startsAt:changed.startsAt.toISOString(),endsAt:changed.endsAt.toISOString(),changeRequestId:changeId,previousChangeStatus:ticket?.status||null,changeStatus:finalChange?.status||null,requestedStartAt:finalChange?.requestedStartAt?.toISOString()||null,previousProposedStartAt:ticket?.proposedStartAt?.toISOString()||null,proposedStartAt:finalChange?.proposedStartAt?.toISOString()||null},outboxStatus);await tx.bookingCommand.create({data:{id:data.idempotencyKey,bookingId:booking.id,actorKey,requestHash,resultVersion:booking.version+1}});return this.result(tx,booking.id,true);
   }));}
  async list(input:Record<string,unknown>){const query=parse(z.object({from:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),to:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),page:z.coerce.number().int().min(0).max(1000).default(0),search:z.string().trim().max(120).default(''),status:z.enum(['ALL','PENDING','CONFIRMED','CANCELLED','COMPLETED','NO_SHOW']).default('ALL'),changes:z.enum(['all','open']).default('all'),service:z.string().max(80).optional(),format:z.enum(['ONLINE','IN_PERSON']).optional()}),input);const settings=await this.getSettings();if(!settings)return {items:[],total:0,page:query.page,timezone:'Africa/Cairo',isDemo:false};let range:ReturnType<typeof analyticsBounds>;try{range=analyticsBounds(query.from,query.to,settings.timezone);}catch{throw new BadRequestException('Invalid date range');}const where:Prisma.BookingWhereInput={startsAt:range,status:query.status==='ALL'?undefined:query.status,serviceSlug:query.service,meetingType:query.format,changes:query.changes==='open'?{some:{status:{in:active}}}:undefined,OR:query.search?[{reference:{contains:query.search,mode:'insensitive'}},{clientName:{contains:query.search,mode:'insensitive'}},{email:{contains:query.search,mode:'insensitive'}}]:undefined};const [items,total]=await this.db.$transaction([this.db.booking.findMany({where,select:visible,orderBy:[{startsAt:'asc'},{id:'asc'}],skip:query.page*25,take:25}),this.db.booking.count({where})]);return {items,total,page:query.page,timezone:settings.timezone,isDemo:settings.isDemo};}
- async staffDetail(id:string){parse(z.uuid(),id);const booking=await this.db.booking.findUnique({where:{id},select:detail});if(!booking)throw new NotFoundException();return {booking};}
+ async staffDetail(id:string){parse(z.uuid(),id);const booking=await this.db.booking.findUnique({where:{id},select:{...detail,hubspotContactId:true,hubspotMeetingId:true}});if(!booking)throw new NotFoundException();return {booking:{...booking,hubspotContactUrl:hubspotContactUrl(booking.hubspotContactId)}};}
  async staffAction(input:unknown,actorId:string){const data=parse(staffActionInput,input),requestHash=hash(JSON.stringify(data)),actorKey='staff:'+actorId;return this.guarded(()=>this.db.$transaction(async tx=>{const booking=await this.lock(tx,data.id);const replay=await tx.bookingCommand.findUnique({where:{id:data.idempotencyKey}});if(replay){if(replay.bookingId!==booking.id||replay.actorKey!==actorKey||replay.requestHash!==requestHash||replay.resultVersion!==booking.version)throw new ConflictException('Action already used');return this.result(tx,booking.id);}if(booking.version!==data.version)throw new ConflictException('Appointment changed; refresh');this.mutable(booking);const row=await this.config(tx,false);const ticket=await tx.bookingChangeRequest.findFirst({where:{bookingId:booking.id,status:{in:active}}});let kind='BOOKING_'+data.action;let update:Prisma.BookingUpdateInput={version:{increment:1}};let closeChanges=false;
    if(data.meetingUrl&&booking.meetingType!=='ONLINE')throw new BadRequestException('Meeting links are for online appointments');
    if(data.action==='EDIT'){update={...update,clientName:data.clientName,email:data.email?.toLowerCase(),phone:data.phone,company:data.company,notes:data.notes,meetingUrl:data.meetingUrl};}
@@ -101,23 +102,28 @@ export class BookingsService {
   */
  async drainCrm(batchSize = 10): Promise<{processed: number; succeeded: number; failed: number}> {
    if (!this.hubspot?.enabled) return {processed: 0, succeeded: 0, failed: 0};
-   const claimed = await this.db.$queryRaw<{id: string; bookingId: string; kind: string; attempts: number}[]>`
+   const claimed = await this.db.$queryRaw<{id: string; bookingId: string; kind: string; attempts: number;lastError?:string|null}[]>`
      WITH claimable AS (
-       SELECT "id" FROM "BookingOutbox"
+       SELECT current."id" FROM "BookingOutbox" current
        WHERE (
          "status" = 'PENDING'
          OR ("status" = 'PROCESSING' AND "updatedAt" < NOW() - INTERVAL '5 minutes')
        )
        AND ("nextRetryAt" IS NULL OR "nextRetryAt" <= NOW())
        AND "kind" LIKE '%:HUBSPOT'
-       ORDER BY "createdAt" ASC
+       -- One oldest unresolved intent per booking, even across parallel drains.
+       AND NOT EXISTS (SELECT 1 FROM "BookingOutbox" earlier
+         WHERE earlier."bookingId"=current."bookingId" AND earlier."kind" LIKE '%:HUBSPOT'
+           AND earlier."status" IN ('PENDING','PROCESSING')
+           AND (earlier."createdAt",earlier."id") < (current."createdAt",current."id"))
+       ORDER BY "createdAt" ASC,"id" ASC
        LIMIT ${batchSize}
        FOR UPDATE SKIP LOCKED
      )
      UPDATE "BookingOutbox"
      SET "status" = 'PROCESSING', "attempts" = "attempts" + 1, "updatedAt" = NOW()
      WHERE "id" IN (SELECT "id" FROM claimable)
-     RETURNING "id", "bookingId", "kind", "attempts";
+     RETURNING "id", "bookingId", "kind", "attempts", "lastError";
    `;
 
    if (!claimed || claimed.length === 0) return {processed: 0, succeeded: 0, failed: 0};
@@ -125,48 +131,51 @@ export class BookingsService {
    let failed = 0;
 
    for (const item of claimed) {
+     let remoteCreateAttempted=false;
      try {
-       const booking = await this.db.booking.findUnique({where: {id: item.bookingId}});
+       const booking = await this.db.booking.findUnique({where: {id: item.bookingId},include:{calendar:true}});
        if (!booking) {
          await this.db.bookingOutbox.update({where: {id: item.id}, data: {status: 'FAILED', lastError: 'Booking not found'}});
          failed++;
          continue;
        }
 
-       if (item.kind.includes('CREATED')) {
-         const contactId = await this.hubspot.upsertBookingContact({
+       if(booking.isDemo||item.kind.startsWith('CHANGE_')){
+         await this.db.bookingOutbox.update({where:{id:item.id},data:{status:'SKIPPED',lastError:null}});succeeded++;continue;
+       }
+       const contactInput={
            email: booking.email,
            name: booking.clientName,
            phone: booking.phone,
            company: booking.company,
            locale: booking.locale
-         });
-         const meetingId = await this.hubspot.createMeeting({
-           contactId,
+       };
+       const contactId=booking.hubspotContactId
+         ? await this.hubspot.updateBookingContact(booking.hubspotContactId,contactInput)
+         : await this.hubspot.upsertBookingContact(contactInput);
+       if(!contactId)throw new Error('HubSpot returned no contact ID');
+       if(!booking.hubspotContactId)await this.db.booking.update({where:{id:booking.id},data:{hubspotContactId:contactId}});
+       const outcome:HubSpotOutcome=booking.status==='CANCELLED'?'CANCELED':booking.status==='COMPLETED'?'COMPLETED':booking.status==='NO_SHOW'?'NO_SHOW':item.kind.startsWith('BOOKING_RESCHEDULED')?'RESCHEDULED':'SCHEDULED';
+       const origin=process.env.WEB_ORIGIN;
+       const externalUrl=origin?new URL(`/${booking.locale}/staff/calendar?appointment=${encodeURIComponent(booking.id)}`,origin).href:undefined;
+       const location=booking.meetingType==='ONLINE'?(booking.meetingUrl||'Online - link pending'):(booking.locale==='ar'?booking.calendar?.officeAddressAr:booking.calendar?.officeAddressEn)||'';
+       const currentMeeting={startsAt:booking.startsAt,endsAt:booking.endsAt,outcome,location,externalUrl,description:`ALMORAD AMC - ${booking.reference}\n${booking.meetingType}\n${booking.timezone}`};
+       let meetingId=booking.hubspotMeetingId;
+       if(!meetingId&&item.attempts>1)meetingId=await this.hubspot.findMeetingByReference(booking.reference);
+       if(!meetingId){
+         if(item.lastError?.includes('CRM_MEETING_RECONCILE_REQUIRED'))throw new Error('CRM_MEETING_RECONCILE_REQUIRED: no indexed match; staff reconciliation required');
+         if(!item.kind.startsWith('BOOKING_CREATED'))throw new Error('CRM_MEETING_NOT_LINKED: resolve creation before updating');
+         // Persist before the provider call so a process crash cannot lose uncertainty.
+         await this.db.bookingOutbox.update({where:{id:item.id},data:{lastError:'CRM_MEETING_RECONCILE_REQUIRED'}});
+         remoteCreateAttempted=true;
+         meetingId = await this.hubspot.createMeeting({contactId,
            title: `ALMORAD AMC Consultation - ${booking.reference}`,
-           startsAt: booking.startsAt,
-           endsAt: booking.endsAt,
-           reference: booking.reference
+           reference: booking.reference,...currentMeeting
          });
-         await this.db.booking.update({
-           where: {id: booking.id},
-           data: {hubspotContactId: contactId, hubspotMeetingId: meetingId}
-         });
-       } else if (item.kind.includes('RESCHEDULE')) {
-         if (booking.hubspotMeetingId) {
-           await this.hubspot.updateMeeting(booking.hubspotMeetingId, {
-             startsAt: booking.startsAt,
-             endsAt: booking.endsAt,
-             outcome: 'RESCHEDULED'
-           });
-         }
-       } else if (item.kind.includes('CANCEL')) {
-         if (booking.hubspotMeetingId) {
-           await this.hubspot.updateMeeting(booking.hubspotMeetingId, {
-             outcome: 'CANCELED'
-           });
-         }
-       }
+       }else await this.hubspot.updateMeeting(meetingId,currentMeeting);
+       if(!meetingId)throw new HubSpotAmbiguousCreateError();
+       await this.db.booking.update({where:{id:booking.id},data:{hubspotContactId:contactId,hubspotMeetingId:meetingId}});
+       remoteCreateAttempted=false;
 
        await this.db.bookingOutbox.update({
          where: {id: item.id},
@@ -176,11 +185,12 @@ export class BookingsService {
      } catch (error: unknown) {
        failed++;
        const msg = error instanceof Error ? error.message : String(error);
-       const isClientError = /400|401|403|422/i.test(msg);
+       const isClientError = /400|401|403|404|422|CRM_MEETING_NOT_LINKED|staff reconciliation required|multiple matching meetings/i.test(msg);
        const maxAttempts = item.attempts >= 5;
-       const sanitized = msg.replace(/[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/g, '[REDACTED_EMAIL]').slice(0, 1000);
+       const uncertain=Boolean(item.lastError?.includes('CRM_MEETING_RECONCILE_REQUIRED'))||error instanceof HubSpotAmbiguousCreateError||(remoteCreateAttempted&&!isClientError&&!(error instanceof HubSpotRateLimitError));
+       const sanitized = (uncertain?'CRM_MEETING_RECONCILE_REQUIRED: ':'')+msg.replace(/[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/g, '[REDACTED_EMAIL]').slice(0, 850);
 
-       if (error instanceof HubSpotRateLimitError) {
+       if (error instanceof HubSpotRateLimitError&&!maxAttempts) {
          const nextRetryAt = new Date(Date.now() + error.retryAfterSeconds * 1000);
          await this.db.bookingOutbox.update({
            where: {id: item.id},

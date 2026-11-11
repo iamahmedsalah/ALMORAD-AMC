@@ -58,10 +58,11 @@ export class OperationsController {
    if (!supplied || !timingSafeEqual(Buffer.from(tokenHash(secret), 'hex'), Buffer.from(tokenHash(supplied), 'hex'))) {
      throw new UnauthorizedException();
    }
+   const [email,crm,contacts]=await Promise.allSettled([this.notifications.drain(),this.bookings.drainCrm(),this.contacts.drain()]);
    return {
-     ...(await this.notifications.drain()),
-     crm: await this.bookings?.drainCrm(),
-     contacts: await this.contacts?.drain()
+     ...(email.status==='fulfilled'?email.value:{emailError:'drain_failed'}),
+     crm:crm.status==='fulfilled'?crm.value:{error:'drain_failed'},
+     contacts:contacts.status==='fulfilled'?contacts.value:{error:'drain_failed'}
    };
  }
 }

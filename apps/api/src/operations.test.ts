@@ -49,3 +49,10 @@ it('drains notifications, CRM events, and contacts with valid CRON_SECRET', asyn
   expect(bookingsMock.drainCrm).toHaveBeenCalledTimes(1);
   expect(contactMock.drain).toHaveBeenCalledTimes(1);
 });
+it('continues CRM and contact retries when the email drain crashes',async()=>{
+ const notifications={drain:vi.fn().mockRejectedValue(new Error('Synthetic provider failure'))};
+ const contacts={drain:vi.fn().mockResolvedValue({processed:1})},bookings={drainCrm:vi.fn().mockResolvedValue({processed:1,succeeded:1,failed:0})};
+ const controller=new OperationsController({} as PrismaService,notifications as unknown as NotificationsService,contacts as unknown as ContactService,bookings as unknown as BookingsService);
+ vi.stubEnv('CRON_SECRET','test-only-cron-value-'.repeat(4));
+ expect(await controller.drainNotifications({get:()=>`Bearer ${process.env.CRON_SECRET}`} as unknown as Request)).toMatchObject({emailError:'drain_failed',crm:{succeeded:1},contacts:{processed:1}});
+});

@@ -13,6 +13,7 @@ describe('HubSpotClient', () => {
 
   afterEach(() => {
     process.env = originalEnv;
+    vi.unstubAllGlobals();
   });
 
   describe('Arabic Name Formatting', () => {
@@ -83,6 +84,7 @@ describe('HubSpotClient', () => {
       expect(body.properties.hs_meeting_outcome).toBe('SCHEDULED');
       expect(body.associations[0].to.id).toBe('contact-en-1');
       expect(body.associations[0].types[0].associationTypeId).toBe(200);
+      expect(body.properties.hs_timestamp).toBe('2026-11-15T10:00:00.000Z');
     });
 
     it('updates meeting with RESCHEDULED or CANCELED outcome', async () => {
@@ -123,5 +125,37 @@ describe('HubSpotClient', () => {
         reference: 'AMC-RATE'
       })).rejects.toThrow(HubSpotRateLimitError);
     });
+  });
+  it('maps inquiry phone and message to the same normalized-email contact',async()=>{
+    const fetchMock=vi.fn().mockResolvedValue({ok:true,status:200,json:async()=>({results:[{id:'42'}]})});vi.stubGlobal('fetch',fetchMock);
+    await client.upsertContact({email:'TEST@EXAMPLE.INVALID',name:'Test Visitor',phone:'+1 202 555 0100',message:'Website inquiry',locale:'en'});
+    const body=JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.inputs[0]).toMatchObject({id:'test@example.invalid',idProperty:'email',properties:{phone:'+1 202 555 0100',message:'Website inquiry'}});
+  });
+  it('rejects a partial batch failure without a contact ID',async()=>{
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,status:207,json:async()=>({results:[],errors:[{message:'not logged'}]})}));
+    await expect(client.upsertBookingContact({email:'test@example.invalid',name:'Test Visitor',locale:'en'})).rejects.toThrow('no contact ID');
+  });
+  it('carries a real video link and website staff URL into the meeting',async()=>{
+    const fetchMock=vi.fn().mockResolvedValue({ok:true,status:201,json:async()=>({id:'88'})});vi.stubGlobal('fetch',fetchMock);
+    await client.createMeeting({contactId:'42',title:'Test',startsAt:new Date('2026-11-20T10:00:00Z'),endsAt:new Date('2026-11-20T10:30:00Z'),reference:'TEST-ONLY',location:'https://meet.google.com/abc-defg-hij',externalUrl:'https://studio.example.invalid/en/staff/calendar?appointment=fixture'});
+    const body=JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.properties.hs_meeting_location).toBe('https://meet.google.com/abc-defg-hij');
+    expect(body.properties.hs_meeting_external_url).toContain('/staff/calendar?appointment=');expect(JSON.stringify(body)).not.toContain('token=');
+  });
+  it('keeps timestamp and meeting start aligned when rescheduled',async()=>{
+    const fetchMock=vi.fn().mockResolvedValue({ok:true,status:200});vi.stubGlobal('fetch',fetchMock);
+    await client.updateMeeting('88',{startsAt:new Date('2026-11-21T10:00:00Z'),location:''});
+    const properties=JSON.parse(fetchMock.mock.calls[0]![1].body).properties;
+    expect(properties.hs_timestamp).toBe(properties.hs_meeting_start_time);expect(properties.hs_meeting_location).toBe('');
+  });
+  it('reconciles uncertain meeting creation by exact booking reference',async()=>{
+    const fetchMock=vi.fn().mockResolvedValue({ok:true,status:200,json:async()=>({results:[{id:'88'}]})});vi.stubGlobal('fetch',fetchMock);
+    expect(await client.findMeetingByReference('TEST-ONLY')).toBe('88');
+    expect(JSON.parse(fetchMock.mock.calls[0]![1].body).filterGroups[0].filters[0]).toMatchObject({operator:'EQ',value:'Booking reference: TEST-ONLY'});
+  });
+  it('classifies a timed out creation as uncertain so the worker cannot blindly retry it',async()=>{
+    vi.stubGlobal('fetch',vi.fn().mockRejectedValue(new Error('Synthetic network failure')));
+    await expect(client.createMeeting({contactId:'42',title:'Test',startsAt:new Date(),endsAt:new Date(),reference:'TEST-ONLY'})).rejects.toThrow('CRM_MEETING_RECONCILE_REQUIRED');
   });
 });
