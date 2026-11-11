@@ -1,0 +1,74 @@
+name: Browser E2E - manual
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Browser suite to run without deploying
+        type: choice
+        default: all
+        options: [all, staff, public]
+permissions:
+  contents: read
+concurrency:
+  group: browser-e2e-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    name: Browser tests (${{ inputs.suite }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      TURBO_TELEMETRY_DISABLED: '1'
+      DATABASE_URL: postgresql://amc_ci:ci_ephemeral_only@127.0.0.1:55432/amc_test
+      TEST_DATABASE_URL: postgresql://amc_ci:ci_ephemeral_only@127.0.0.1:55432/amc_test
+      DIRECT_URL: postgresql://amc_ci:ci_ephemeral_only@127.0.0.1:55432/amc_test
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v5
+        with:
+          version: 11.11.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup-postgres
+        if: inputs.suite != 'public'
+        with:
+          database: amc_test
+          user: amc_ci
+          password: ci_ephemeral_only
+      - name: Prepare isolated staff browser database
+        if: inputs.suite != 'public'
+        run: pnpm db:generate && pnpm db:validate && pnpm db:migrate
+      - name: Build staff browser runtimes
+        if: inputs.suite != 'public'
+        run: pnpm build
+      - name: Build public website only
+        if: inputs.suite == 'public'
+        run: pnpm exec turbo run build --filter=@amc/web
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Staff authentication, permissions and booking browsers
+        if: inputs.suite != 'public'
+        run: pnpm test:e2e:staff
+      - name: Public browser suite
+        if: inputs.suite != 'staff'
+        run: pnpm test:e2e
+      - uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: browser-results-${{ inputs.suite }}
+          path: |
+            playwright-report/
+            playwright-staff-report/
+            test-results/
+          retention-days: 7
+      - name: Stop the isolated browser database
+        if: always() && inputs.suite != 'public'
+        shell: bash
+        run: |
+          if test -f "$RUNNER_TEMP/amc-ci-postgres/data/postmaster.pid"; then
+            pg_ctl --pgdata="$RUNNER_TEMP/amc-ci-postgres/data" --mode=fast --wait stop
+          fi
