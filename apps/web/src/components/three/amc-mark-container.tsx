@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { createPortal } from 'react-dom';
 import { useScrollTimeline } from '@/hooks/use-scroll-timeline';
 import { CHAPTER_METADATA } from '@/hooks/chapter-timeline';
 import type { AmcMarkSceneProps, ScrollTimelineState } from './amc-mark-scene';
@@ -81,7 +82,8 @@ export function AmcMarkContainer({ dir = 'ltr' }: AmcMarkContainerProps) {
         <div ref={progressBarRef} className="scroll-hud-progress-bar" />
       </div>
 
-      {/* 6-Chapter Interactive Scroll Rail */}
+      {/* Keep chapter navigation above the footer, outside the landing stacking context. */}
+      {mediaReady && createPortal(<div className="amc-landing chapter-navigation-overlay">
       <nav
         className="scroll-hud-rail"
         aria-label={isRtl ? 'فصول الصفحة' : 'Story Chapters'}
@@ -112,6 +114,7 @@ export function AmcMarkContainer({ dir = 'ltr' }: AmcMarkContainerProps) {
           </button>
         ))}
       </nav>
+      </div>, document.body)}
 
       {/* Active Chapter Pill Indicator */}
       <div className="scroll-hud-chapter-pill rounded-squircle-md" aria-hidden="true">

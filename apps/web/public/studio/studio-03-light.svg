@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FCF8F3"/>
+      <stop offset="100%" stop-color="#EDE2D4"/>
+    </linearGradient>
+    <filter id="shadow3" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="20" stdDeviation="20" flood-color="#F5F1E7" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg3)"/>
+  <!-- Editorial Grid Lines -->
+  <g stroke="#DDCFBD" stroke-width="1.5">
+    <line x1="100" y1="0" x2="100" y2="800"/>
+    <line x1="600" y1="0" x2="600" y2="800"/>
+    <line x1="1100" y1="0" x2="1100" y2="800"/>
+    <line x1="0" y1="120" x2="1200" y2="120"/>
+    <line x1="0" y1="680" x2="1200" y2="680"/>
+  </g>
+  <!-- Typography & Web Specimen Frame -->
+  <g filter="url(#shadow3)" transform="translate(140, 110)">
+    <rect width="920" height="580" rx="28" fill="#F5F1E7"/>
+    <rect x="24" y="24" width="872" height="44" rx="12" fill="#EDE2D4"/>
+    <circle cx="52" cy="46" r="7" fill="#F7761E"/>
+    <circle cx="74" cy="46" r="7" fill="#FFA666"/>
+    <circle cx="96" cy="46" r="7" fill="#93A3C6"/>
+    <text x="410" y="51" fill="#354A78" font-family="monospace" font-size="13">almorad-amc.studio · 1440px</text>
+    <!-- Hero Split Inside Mockup -->
+    <rect x="56" y="108" width="440" height="416" rx="20" fill="#EDE2D4"/>
+    <rect x="88" y="144" width="140" height="26" rx="8" fill="#FBE3CC"/>
+    <text x="104" y="162" fill="#8F410F" font-family="monospace" font-size="12" font-weight="700">DIGITAL CRAFT 03</text>
+    <text x="88" y="232" fill="#0B1F44" font-family="sans-serif" font-size="44" font-weight="800">Aa Bb Cc</text>
+    <text x="88" y="292" fill="#F7761E" font-family="sans-serif" font-size="38" font-weight="700">أ ب ج د هـ</text>
+    <text x="88" y="346" fill="#354A78" font-family="sans-serif" font-size="16">Fira Sans · Cairo · Rock Salt</text>
+    <rect x="88" y="392" width="180" height="48" rx="14" fill="#F7761E"/>
+    <text x="118" y="422" fill="#061430" font-family="sans-serif" font-size="15" font-weight="700">LAUNCH PREVIEW</text>
+    <!-- 3D Ring Stage Preview -->
+    <circle cx="696" cy="316" r="154" fill="none" stroke="#354A78" stroke-width="2" stroke-dasharray="8 8"/>
+    <circle cx="696" cy="316" r="108" fill="#EDE2D4" stroke="#F7761E" stroke-width="3"/>
+    <path d="M636 360 L674 260 L696 306 L718 260 L756 360 Z" fill="#0B1F44"/>
+  </g>
+</svg>

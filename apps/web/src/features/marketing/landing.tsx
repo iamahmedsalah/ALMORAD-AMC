@@ -209,7 +209,7 @@ export function Landing({ locale }: { locale: Locale }) {
                     data-stack-card
                     style={{ '--stack-index': i } as React.CSSProperties}
                   >
-                    <div className="lp-cap-visual rounded-squircle-lg">
+                    <div className="lp-cap-visual">
                       <ServiceMotionStage scene={p.id} locale={locale} label={p[locale]} fallback={pillarPhotos[i]}/>
 
                     </div>
