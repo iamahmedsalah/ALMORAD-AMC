@@ -10,7 +10,7 @@ const disciplines = {
 
 export function BrandTicker({locale}: {locale: Locale}) {
   const labels = disciplines[locale];
-  return <div className="brand-ticker" role="region" aria-label={locale === 'ar' ? 'مجالات عمل المراد AMC' : 'ALMORAD AMC disciplines'}>
+  return <div className="brand-ticker" role="region" tabIndex={0} aria-label={locale === 'ar' ? 'مجالات عمل المراد AMC' : 'ALMORAD AMC disciplines'}>
     <div className="brand-ticker-track">
       {[0, 1].map((copy) => <div className="brand-ticker-set" key={copy} aria-hidden={copy === 1}>
         {labels.map((label, index) => <div className="brand-ticker-item" key={label}>

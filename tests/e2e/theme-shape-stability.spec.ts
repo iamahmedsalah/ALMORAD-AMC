@@ -48,8 +48,9 @@ for (const preference of ['dark', 'system']) for (const width of [390, 1440]) {
       requestAnimationFrame(sample);
     }, preference);
     const html = await (await request.get('/en')).text();
-    expect(html.indexOf('id="amc-theme-init"')).toBeGreaterThan(0);
-    expect(html.indexOf('id="amc-theme-init"')).toBeLessThan(html.indexOf('<body'));
+    // Next serializes beforeInteractive scripts into its head queue.
+    expect(html.indexOf('amc-theme-init')).toBeGreaterThan(0);
+    expect(html.indexOf('amc-theme-init')).toBeLessThan(html.indexOf('<body'));
     await page.goto('/en');
     await expect(page.locator('.site-header .theme-cycle-button')).toHaveAttribute('data-theme-ready', 'true');
     for (const locale of ['ar', 'en']) {

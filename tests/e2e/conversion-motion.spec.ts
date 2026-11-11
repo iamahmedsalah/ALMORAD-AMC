@@ -71,6 +71,19 @@ test('company strip moves from left to right when motion is enabled',async({page
  const first=await track.evaluate(element=>new DOMMatrix(getComputedStyle(element).transform).m41);
  await expect.poll(()=>track.evaluate(element=>new DOMMatrix(getComputedStyle(element).transform).m41)).toBeGreaterThan(first+2);
 });
+test('company strip pauses and scrolls with the keyboard',async({page})=>{
+ await page.setViewportSize({width:390,height:900});
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.goto('/en');
+ const ticker=page.locator('.brand-ticker');
+ await ticker.focus();
+ await expect(ticker).toBeFocused();
+ await expect(ticker).toHaveCSS('overflow-x','auto');
+ expect(await ticker.evaluate(element=>element.scrollWidth>element.clientWidth)).toBe(true);
+ const before=await ticker.evaluate(element=>element.scrollLeft);
+ await page.keyboard.press('ArrowRight');
+ await expect.poll(()=>ticker.evaluate(element=>element.scrollLeft)).toBeGreaterThan(before);
+});
 test('removed Credits route returns 404',async({page})=>{
  expect((await page.goto('/en/credits'))?.status()).toBe(404);
  expect((await page.goto('/ar/credits'))?.status()).toBe(404);
