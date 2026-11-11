@@ -47,6 +47,13 @@ describe('contact delivery', () => {
     expect(data.lastError).not.toContain('studio@example.invalid');
   });
 
+  it('keeps unconfigured mail available for delivery after a provider is added', async () => {
+    const {prisma,notifications,service}=setup();
+    notifications.sendEmail.mockRejectedValue(new Error('Email delivery is not configured'));
+    await service.deliver('row-1');
+    expect(prisma.contactInquiry.update.mock.calls[0]?.[0].data).toMatchObject({ownerEmailStatus:'UNCONFIGURED',visitorEmailStatus:'UNCONFIGURED'});
+  });
+
   it('skips the studio alert and HubSpot when they are not configured', async () => {
     vi.unstubAllEnvs();
     vi.stubEnv('CONTACT_INBOX_EMAIL', '');
@@ -70,7 +77,7 @@ describe('reusable email layout', () => {
     const en = renderContactVisitorEmail({locale: 'en', name: 'Sara', email: 's@example.invalid', message: 'Brand refresh please'});
     expect(ar.html).toContain('dir="rtl"');
     expect(en.html).toContain('dir="ltr"');
-    for (const mail of [ar, en]) { expect(mail.html).toContain('#0B0A08'); expect(mail.html).toContain('#BE9D5B'); expect(mail.html).toContain('almorad-amc.com'); }
+    for (const mail of [ar, en]) { expect(mail.html).toContain('#0B1F44'); expect(mail.html).toContain('#F7761E'); expect(mail.html).toContain('footer-logo-on-dark@2x.png'); }
   });
 
   it('shows contact details in the footer only when the owner supplied them', () => {

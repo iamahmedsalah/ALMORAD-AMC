@@ -30,6 +30,8 @@ export class NotificationsService {
   private readonly webOrigin: string;
   private readonly tokenSecret: string;
 
+  get configured(): boolean { return this.resend !== null; }
+
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {
     const apiKey = process.env.RESEND_API_KEY;
     if (apiKey && apiKey !== 'mock') {
@@ -67,13 +69,13 @@ export class NotificationsService {
   }
 
   /**
-   * Sends one transactional email through Resend (or logs it when no API key is set).
+   * Sends one transactional email through Resend. Missing configuration fails explicitly.
    * Returns the provider message id. The idempotency key makes retries safe.
    */
   async sendEmail(message: {to: string; subject: string; text: string; html: string; idempotencyKey: string; replyTo?: string; from?: string}): Promise<string> {
     if (!this.resend) {
-      this.logger.warn(`[MOCK_DISPATCH] Email "${message.subject.slice(0, 60)}" not sent: RESEND_API_KEY is not configured`);
-      return 'mock-resend-id';
+      this.logger.warn('Email not sent: RESEND_API_KEY is not configured');
+      throw new Error('Email delivery is not configured');
     }
     const response = await this.resend.emails.send(
       {from: message.from || this.fromEmail, to: message.to, subject: message.subject, text: message.text, html: message.html, replyTo: message.replyTo || this.replyTo},

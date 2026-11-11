@@ -1,8 +1,10 @@
 import {Body,Controller,Get,Header,Inject,Post,Query,Req,UseGuards,ForbiddenException,Injectable,type CanActivate,type ExecutionContext} from '@nestjs/common';
+import {waitUntil} from '@vercel/functions';
 import {Throttle} from '@nestjs/throttler';
 import {ApiTags, ApiOperation, ApiResponse, ApiQuery} from '@nestjs/swagger';
 import type {Request} from 'express';
 import {BookingsService} from './bookings.service.js';
+import {NotificationsService} from '../notifications/notifications.service.js';
 import {SessionGuard,type StaffRequest} from '../auth/session.guard.js';
 import {PermissionGuard,RequirePermission} from '../auth/permission.guard.js';
 import {CsrfGuard} from '../auth/csrf.js';
@@ -21,7 +23,7 @@ export class BookingOriginGuard implements CanActivate {
 @Controller('booking')
 @UseGuards(BookingOriginGuard)
 export class PublicBookingController {
-  constructor(@Inject(BookingsService) private readonly bookings:BookingsService){}
+  constructor(@Inject(BookingsService) private readonly bookings:BookingsService,@Inject(NotificationsService) private readonly notifications:NotificationsService){}
 
   @ApiOperation({ summary: 'Get public booking configuration', description: 'Returns business days, working hours, services, and formats.' })
   @ApiResponse({ status: 200, description: 'Public booking configuration' })
@@ -39,7 +41,14 @@ export class PublicBookingController {
   @ApiOperation({ summary: 'Create appointment reservation', description: 'Books an appointment slot with client contact info.' })
   @ApiResponse({ status: 201, description: 'Booking created successfully' })
   @Post('create') @Header('Cache-Control','no-store') @Throttle({default:{limit:5,ttl:60000}})
-  create(@Body() input:unknown){return this.bookings.create(input);}
+  async create(@Body() input:unknown){
+    const result=await this.bookings.create(input);
+    if(process.env.RESEND_API_KEY&&process.env.RESEND_API_KEY!=='mock'){
+      const delivery=this.notifications.drain(10).catch(error=>console.error('Booking email delivery failed',error));
+      if(process.env.VERCEL)waitUntil(delivery);else void delivery;
+    }
+    return result;
+  }
 
   @ApiOperation({ summary: 'Manage client booking', description: 'Fetches booking by confirmation access code/token.' })
   @Post('manage') @Header('Cache-Control','no-store')

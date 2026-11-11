@@ -16,14 +16,14 @@ export interface EmailLayoutInput {
 }
 
 export const brand = {
-  navy: '#0B0A08',
-  navyDeep: '#14120E',
-  orange: '#BE9D5B',
-  orangeText: '#7A5F28',
-  cream: '#F5F1E7',
-  creamSoft: '#FAF7F0',
-  muted: '#625D52',
-  line: '#CFCBC0'
+  navy: '#0B1F44',
+  navyDeep: '#061430',
+  orange: '#F7761E',
+  orangeText: '#A74200',
+  cream: '#FBF1E6',
+  creamSoft: '#FFF9F2',
+  muted: '#465676',
+  line: '#D9C8B7'
 } as const;
 
 export function escapeHtml(value: string): string {
@@ -61,6 +61,7 @@ export function renderEmailLayout(input: EmailLayoutInput): string {
   const align = ar ? 'right' : 'left';
   const font = ar ? "'Cairo', Tahoma, Arial, sans-serif" : "'Fira Sans', 'Segoe UI', Arial, sans-serif";
   const origin = siteOrigin();
+  const logo = `${origin}/brand/footer-logo-on-dark@2x.png`;
   const contact = footerContact();
   const tagline = ar ? 'استوديو النمو والعلامة التجارية' : 'Growth & Brand Studio';
   const visit = ar ? 'زيارة الموقع' : 'Visit website';
@@ -90,7 +91,7 @@ export function renderEmailLayout(input: EmailLayoutInput): string {
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#FFFFFF;border:1px solid ${brand.line};border-radius:20px;overflow:hidden;">
     <tr><td style="background:${brand.navy};padding:26px 32px;text-align:${align};">
       <a href="${escapeHtml(origin)}" style="text-decoration:none;color:${brand.cream};">
-        <span style="font-size:22px;font-weight:800;letter-spacing:${ar ? '0' : '0.14em'};color:${brand.cream};">ALMORAD <span style="color:${brand.orange};">AMC</span></span><br>
+        <img src="${escapeHtml(logo)}" width="180" height="38" alt="ALMORAD AMC" style="display:block;width:180px;height:auto;max-width:100%;border:0;margin:0 0 10px;"/><br>
         <span style="font-size:12px;color:#BCC7DE;">${escapeHtml(tagline)}</span>
       </a>
     </td></tr>
@@ -102,6 +103,7 @@ export function renderEmailLayout(input: EmailLayoutInput): string {
     ${cta}
     ${input.footerNote ? `<tr><td style="padding:0 32px 24px;text-align:${align};font-size:13px;line-height:1.6;color:${brand.muted};">${escapeHtml(input.footerNote)}</td></tr>` : ''}
     <tr><td style="background:${brand.navy};padding:22px 32px;text-align:${align};font-size:13px;line-height:1.7;color:#BCC7DE;">
+      <a href="${escapeHtml(origin)}" style="display:inline-block;margin-bottom:12px;"><img src="${escapeHtml(logo)}" width="120" height="25" alt="ALMORAD AMC" style="display:block;width:120px;height:auto;max-width:100%;border:0;"/></a><br>
       <a href="${escapeHtml(origin)}" style="color:${brand.cream};text-decoration:underline;">${escapeHtml(visit)}</a>
       ${contactLine ? `<br>${contactLine}` : ''}
       <br><span style="color:#93A3C6;">© ${new Date().getFullYear()} ALMORAD AMC. ${escapeHtml(rights)}.</span>

@@ -8,7 +8,7 @@ import {renderContactOwnerEmail, renderContactVisitorEmail} from './contact-emai
 import {HubSpotClient, HubSpotRateLimitError} from './hubspot.client.js';
 
 const MAX_ATTEMPTS = 5;
-const open = ['PENDING', 'FAILED'];
+const open = ['PENDING', 'FAILED', 'UNCONFIGURED'];
 
 @Injectable()
 export class ContactService {
@@ -75,8 +75,9 @@ export class ContactService {
           await notifications.sendEmail({to: inbox, subject: email.subject, text: email.text, html: email.html, replyTo: row.email, idempotencyKey: `contact-${row.id}-owner`});
           patch.ownerEmailStatus = 'SENT';
         } catch (error) {
-          patch.ownerEmailStatus = 'FAILED';
-          errors.push(`owner: ${this.safe(error, row.email)}`);
+          const unconfigured=error instanceof Error&&error.message==='Email delivery is not configured';
+          patch.ownerEmailStatus = unconfigured?'UNCONFIGURED':'FAILED';
+          if(!unconfigured)errors.push(`owner: ${this.safe(error, row.email)}`);
         }
       }
     }
@@ -87,8 +88,9 @@ export class ContactService {
         await notifications.sendEmail({to: row.email, subject: email.subject, text: email.text, html: email.html, idempotencyKey: `contact-${row.id}-visitor`});
         patch.visitorEmailStatus = 'SENT';
       } catch (error) {
-        patch.visitorEmailStatus = 'FAILED';
-        errors.push(`visitor: ${this.safe(error, row.email)}`);
+        const unconfigured=error instanceof Error&&error.message==='Email delivery is not configured';
+        patch.visitorEmailStatus = unconfigured?'UNCONFIGURED':'FAILED';
+        if(!unconfigured)errors.push(`visitor: ${this.safe(error, row.email)}`);
       }
     }
 
@@ -134,6 +136,7 @@ export class ContactService {
           AND (
             "ownerEmailStatus" IN ('PENDING', 'FAILED')
             OR "visitorEmailStatus" IN ('PENDING', 'FAILED')
+            OR (${this.notifications.configured} AND ("ownerEmailStatus" = 'UNCONFIGURED' OR "visitorEmailStatus" = 'UNCONFIGURED'))
             OR "hubspotStatus" IN ('PENDING', 'FAILED')
           )
         ORDER BY "createdAt" ASC

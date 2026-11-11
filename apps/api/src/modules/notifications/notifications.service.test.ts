@@ -45,6 +45,13 @@ describe('NotificationsService', () => {
     });
   });
 
+  it('does not report an email as sent without a provider', async () => {
+    vi.stubEnv('RESEND_API_KEY', '');
+    const unconfigured = new NotificationsService(mockPrisma as unknown as PrismaService);
+    await expect(unconfigured.sendEmail({to:'visitor@example.invalid',subject:'Receipt',text:'Receipt',html:'<p>Receipt</p>',idempotencyKey:'test-receipt'})).rejects.toThrow('not configured');
+    vi.unstubAllEnvs();
+  });
+
   describe('sanitizeError', () => {
     it('redacts explicit client email address', () => {
       const sanitized = service.sanitizeError('Failed delivery to client@example.com: mailbox full', 'client@example.com');

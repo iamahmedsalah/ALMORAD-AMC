@@ -25,15 +25,15 @@ export function renderBookingCancelledEmail(input: BookingCancelledTemplateInput
 
   const detailsRow = (label: string, value: string) => `
     <tr>
-      <td style="padding: 8px 12px 8px 0; font-weight: 700; color: #7A5F28; vertical-align: top; white-space: nowrap;">${escapeHtml(label)}</td>
-      <td style="padding: 8px 0; color: #14120E;">${value}</td>
+      <td style="padding: 8px 12px 8px 0; font-weight: 700; color: #A74200; vertical-align: top; white-space: nowrap;">${escapeHtml(label)}</td>
+      <td style="padding: 8px 0; color: #0B1F44;">${value}</td>
     </tr>`;
 
   const bodyHtml = `
     <p style="margin: 0 0 16px;">
       ${isAr ? `مرحباً <strong>${escapeHtml(input.clientName)}</strong>، نؤكد لك أنه قد تم إلغاء موعد استشارتك لدى استوديو المراد AMC.` : `Hello <strong>${escapeHtml(input.clientName)}</strong>, this email confirms that your consultation appointment with ALMORAD AMC has been cancelled.`}
     </p>
-    <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #FAF7F0; border-radius: 12px; padding: 12px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #FFF9F2; border-radius: 12px; padding: 12px;">
       ${detailsRow(isAr ? 'رقم المرجع' : 'Reference', `<code>${escapeHtml(input.reference)}</code>`)}
       ${detailsRow(isAr ? 'الخدمة' : 'Service', escapeHtml(input.serviceTitle))}
       ${input.reason ? detailsRow(isAr ? 'السبب' : 'Reason', escapeHtml(input.reason)) : ''}

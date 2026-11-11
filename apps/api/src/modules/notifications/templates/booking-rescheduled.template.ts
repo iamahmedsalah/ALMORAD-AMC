@@ -40,20 +40,20 @@ export function renderBookingRescheduledEmail(input: BookingRescheduledTemplateI
 
   const detailsRow = (label: string, value: string) => `
     <tr>
-      <td style="padding: 8px 12px 8px 0; font-weight: 700; color: #7A5F28; vertical-align: top; white-space: nowrap;">${escapeHtml(label)}</td>
-      <td style="padding: 8px 0; color: #14120E;">${value}</td>
+      <td style="padding: 8px 12px 8px 0; font-weight: 700; color: #A74200; vertical-align: top; white-space: nowrap;">${escapeHtml(label)}</td>
+      <td style="padding: 8px 0; color: #0B1F44;">${value}</td>
     </tr>`;
 
   const bodyHtml = `
     <p style="margin: 0 0 16px;">
       ${isAr ? `مرحباً <strong>${escapeHtml(input.clientName)}</strong>، نؤكد لك أن موعد استشارتك مع استوديو المراد AMC قد تم تحديثه إلى التوقيت الجديد أدناه.` : `Hello <strong>${escapeHtml(input.clientName)}</strong>, this confirms that your consultation with ALMORAD AMC has been successfully rescheduled to the updated time below.`}
     </p>
-    <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #FAF7F0; border-radius: 12px; padding: 12px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #FFF9F2; border-radius: 12px; padding: 12px;">
       ${detailsRow(isAr ? 'رقم المرجع' : 'Reference', `<code>${escapeHtml(input.reference)}</code>`)}
       ${detailsRow(isAr ? 'الخدمة' : 'Service', escapeHtml(input.serviceTitle))}
       ${detailsRow(isAr ? 'الموعد الجديد' : 'New Schedule', `<strong>${escapeHtml(formattedTime)} (${escapeHtml(input.timezone)})</strong>`)}
       ${detailsRow(isAr ? 'المكان' : 'Location', escapeHtml(locationText))}
-      ${input.directionsUrl ? detailsRow(isAr ? 'الاتجاهات' : 'Directions', `<a href="${escapeHtml(input.directionsUrl)}" style="color: #BE9D5B; text-decoration: underline;">${isAr ? 'عرض على خرائط جوجل' : 'View on Google Maps'}</a>`) : ''}
+      ${input.directionsUrl ? detailsRow(isAr ? 'الاتجاهات' : 'Directions', `<a href="${escapeHtml(input.directionsUrl)}" style="color: #F7761E; text-decoration: underline;">${isAr ? 'عرض على خرائط جوجل' : 'View on Google Maps'}</a>`) : ''}
     </table>
     <p style="margin: 16px 0 0; font-size: 14px; color: #625D52;">
       ${isAr ? 'تم إرفاق ملف تقويم (.ics) محدث لتعديل الموعد على تقويمك.' : 'An updated calendar invite (.ics) is attached to update this on your calendar.'}

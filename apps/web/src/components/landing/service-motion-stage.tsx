@@ -21,7 +21,7 @@ export function ServiceMotionStage({scene,locale,label,fallback='/studio/studio-
   const [failed,setFailed]=useState(false);
   const [failedPoster,setFailedPoster]=useState<string|null>(null);
   const reduced=useSyncExternalStore(subscribeMotion,snapshot,()=>true);
-  const eligible=visible&&!hidden&&!paused&&!reduced&&!failed;
+  const eligible=visible&&!hidden&&!reduced&&!failed;
   const [ready,setReady]=useState(false);
 
   useEffect(()=>{
@@ -58,7 +58,8 @@ export function ServiceMotionStage({scene,locale,label,fallback='/studio/studio-
     const element=ref.current,canvas=canvasRef.current;if(!element||!canvas)return;
     let dead=false,engine:SceneEngine|undefined,raf=0,last=0,seconds=0,first=true;
     let resize:ResizeObserver|undefined;
-    const stop=()=>{cancelAnimationFrame(raf);resize?.disconnect();engine?.destroy();engine=undefined;};
+    const themeObserver=new MutationObserver(()=>{if(paused&&engine)engine.render(seconds);});
+    const stop=()=>{cancelAnimationFrame(raf);resize?.disconnect();themeObserver.disconnect();engine?.destroy();engine=undefined;};
     const fail=()=>{if(dead)return;stop();setReady(false);setFailed(true);};
     const lost=(event:Event)=>{event.preventDefault();fail();};
     canvas.addEventListener('webglcontextlost',lost);
@@ -67,10 +68,10 @@ export function ServiceMotionStage({scene,locale,label,fallback='/studio/studio-
     element.addEventListener('pointermove',pointer);element.addEventListener('pointerleave',leave);
     const frame=(now:number)=>{
       if(dead||document.hidden)return;
-      if(now-last>=1000/30){seconds+=Math.min(.1,(now-last)/1000);last=now;
+      if(paused||now-last>=1000/30){if(!paused)seconds+=Math.min(.1,(now-last)/1000);last=now;
         try{engine?.render(seconds);if(first){setReady(true);first=false;}}catch{fail();return;}
       }
-      raf=requestAnimationFrame(frame);
+      if(!paused)raf=requestAnimationFrame(frame);
     };
     const start=async()=>{
       setReady(false);
@@ -84,18 +85,19 @@ export function ServiceMotionStage({scene,locale,label,fallback='/studio/studio-
         }
         const fit=()=>{if(!engine||dead)return;engine.resize(element.clientWidth,element.clientHeight,Math.min(devicePixelRatio||1,1.5));};
         resize=new ResizeObserver(fit);resize.observe(element);fit();
+        themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class','data-theme']});
         last=performance.now();raf=requestAnimationFrame(frame);
       }catch{fail();}
     };
     void start();
     return()=>{dead=true;setReady(false);canvas.removeEventListener('webglcontextlost',lost);stop();element.removeEventListener('pointermove',pointer);element.removeEventListener('pointerleave',leave);};
-  },[selected,eligible,scene,locale]);
+  },[selected,eligible,scene,locale,paused]);
   const running=selected&&eligible&&ready;
   const poster=scene==='devices'?fallback:`/studio/services/${scene}.webp`;
   const posterSource=failedPoster===poster?fallback:poster;
   return <div ref={ref} className={`service-motion-stage ${scene==='devices'?'service-device-scene':''}`} data-scene={scene} data-active={running?'true':'false'} data-failed={failed?'true':'false'}>
     <Image className="service-motion-poster" src={posterSource} width={1000} height={800} sizes="(max-width: 767px) 100vw, 50vw" unoptimized={posterSource.endsWith('.svg')} alt="" loading="lazy" decoding="async" onError={()=>{if(posterSource!==fallback)setFailedPoster(poster);}}/>
-    <canvas key={`${scene}-${selected}-${eligible}`} ref={canvasRef} className="service-motion-canvas" aria-hidden="true" style={{opacity:running?1:0}}/>
+    <canvas key={`${scene}-${selected}-${eligible}-${paused}`} ref={canvasRef} className="service-motion-canvas" aria-hidden="true" style={{opacity:ready&&selected&&eligible?1:0}}/>
     <button type="button" className="service-motion-toggle" aria-label={`${locale==='ar'?(paused?'تشغيل الحركة':'إيقاف الحركة'):(paused?'Play motion':'Pause motion')}: ${label}`} aria-pressed={paused||reduced} disabled={reduced||failed} onClick={()=>setPaused(value=>!value)}>
       {locale==='ar'?(reduced||failed?'معاينة ثابتة':paused?'تشغيل الحركة':'إيقاف الحركة'):(reduced||failed?'Still preview':paused?'Play motion':'Pause motion')}
     </button>

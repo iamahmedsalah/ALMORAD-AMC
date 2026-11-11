@@ -19,7 +19,7 @@ export const createBookingInput=z.object({
   locale:z.enum(['en','ar']),
   clientName:z.string().trim().min(2, {message: 'Name must be at least 2 characters'}).max(120),
   email:z.string().trim().toLowerCase().regex(emailRegex, {message: 'Please provide a valid email address'}).max(254),
-  phone:z.string().trim().regex(phoneRegex, {message: 'Please provide a valid phone number'}).max(40).optional().or(z.literal('')),
+  phone:z.string().trim().regex(phoneRegex, {message: 'Please provide a valid phone number'}).max(40),
   company:z.string().trim().max(120).optional(),
   notes:z.string().trim().max(1500).optional(),
   consent:z.literal(true, {message: 'Consent is required'})
