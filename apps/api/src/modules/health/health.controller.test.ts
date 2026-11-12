@@ -22,3 +22,13 @@ it('readiness returns only a bounded category for a missing schema',async()=>{
   expect(JSON.stringify(response)).not.toContain('private table');
  }
 });
+it.each(['b."meetingUrl"','ci."phone"'])('readiness rejects a database missing %s before promotion',async(column)=>{
+ const query=vi.fn().mockImplementation(async(parts:TemplateStringsArray)=>{
+  if(parts.join('').includes(column))throw {code:'P2010',meta:{code:'42703',message:'private column details'}};
+  return [];
+ });
+ const controller=new HealthController({$queryRaw:query} as unknown as PrismaService);
+ await expect(controller.ready()).rejects.toMatchObject({
+  status:503,response:{status:'unavailable',database:'down',category:'schema_missing'}
+ });
+});
