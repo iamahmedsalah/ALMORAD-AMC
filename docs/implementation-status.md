@@ -1430,6 +1430,12 @@ Validation PASS: web TypeScript, focused ESLint,64-page production web build, gi
 
 No database, DNS, provider, deployment, commit or push. Changes require normal CI/CD publication. Existing unrelated working changes preserved.
 
+### 2026-11-12: Simplified team titles and CEO portrait
+
+Owner-requested presentation change: removed decorative icon overlays from the CEO portrait and duplicate orange discipline lines from team cards, including the redundant CEO role line. Names, existing team role descriptions, supplied portraits, other team decorations and profile links are preserved. All nine title badges now use neutral semantic foreground/surface colors and explicit rounded-squircle geometry (10px rounded fallback, 14px squircle where supported), scoped to team titles to override the shared pill-like radius. Current navy/orange semantic tokens are retained; historical gold palette discrepancy is not changed by this task.
+
+Validation: git diff --check PASS after source edits. Focused ESLint, web TypeScript and production build were attempted; command processes stalled without a completed result, including a build and focused lint retry outside the sandbox. Stopped the stalled commands; no lint/typecheck/build PASS claimed. Browser validation was not completed. No new tests added for this reversible presentation change. No database, account, provider, deployment, commit or push action.
+
 ### 2026-11-12: Named staff agenda and manager assignment
 
 Implemented agenda landing after staff login, named initials avatar/account/signout controls across staff screens, bounded first/last name administration, receptionist manager selection at creation, approved active default Manager mo.khaledmorad@almorad-amc.com for new shared bookings, and assigned-manager names in client confirmation/update emails. Preserved API Manager ownership isolation, canonical staff email protections, version/idempotency controls, outbox/ICS, demo mail guards and database slot constraints. Added unassigned-only review filter for Receptionist/Admin and Admin page-selection/bulk confirm/cancel/audit-preserving removal with required reason/review and honest partial-failure reporting. No historical booking assignment backfill. Staff access removal remains deactivation with audit preservation.

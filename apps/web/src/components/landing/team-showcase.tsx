@@ -148,7 +148,7 @@ const CORE_TEAM: readonly TeamMember[] = [
       "ar": "\u0639\u0645\u0631 \u0639\u0644\u0627\u0645"
     },
     "role": {
-      "en": "Marketing Specialist",
+      "en": "Digital Marketing Specialist",
       "ar": "\u0623\u062e\u0635\u0627\u0626\u064a \u062a\u0633\u0648\u064a\u0642"
     },
     "discipline": {
@@ -174,7 +174,7 @@ const CORE_TEAM: readonly TeamMember[] = [
       "en": "Web Platforms, Engineering & E-Commerce",
       "ar": "\u0645\u0646\u0635\u0627\u062a \u0627\u0644\u0648\u064a\u0628 \u0648\u0627\u0644\u0647\u0646\u062f\u0633\u0629 \u0648\u0627\u0644\u062a\u062c\u0627\u0631\u0629 \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a\u0629"
     },
-    "badge": "DIGITAL ENGINEERING",
+    "badge": "SOFTWARE ENGINEERING",
     "avatarType": "tech",
     "photo": "/images/team/ahmed-soliman.webp",
     "linkedinUrl": "https://www.linkedin.com/in/iamahmedsoliman/",
@@ -187,7 +187,7 @@ const CORE_TEAM: readonly TeamMember[] = [
       "ar": "\u0645\u064a\u0627\u0631 \u0639\u0644\u0627\u0621"
     },
     "role": {
-      "en": "Moderation & Social Media Specialist",
+      "en": "Front office receptionist & Social Media Moderation",
       "ar": "\u0623\u062e\u0635\u0627\u0626\u064a\u0629 \u0645\u0648\u0627\u0642\u0639 \u0627\u0644\u062a\u0648\u0627\u0635\u0644 \u0648\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u062a\u0641\u0627\u0639\u0644"
     },
     "discipline": {
@@ -428,7 +428,6 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
       >
         <div className="lp-team-ceo-portrait rounded-squircle-lg">
           <MemberPortrait member={ceo} locale={locale} featured/>
-          <CareerAccents type="ceo" />
           {!ceo.photo && <span className="lp-team-verified-pill">
             <span className="badge-dot" aria-hidden="true" />
             <span>{isAr ? 'رسم توضيحي مؤقت · CEO' : 'ILLUSTRATION PLACEHOLDER · CEO'}</span>
@@ -437,14 +436,11 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
 
         <div className="lp-team-ceo-content">
           <div className="flex flex-wrap items-center gap-3 mb-4">
-            <span className="badge badge-accent rounded-squircle-sm">{ceo.badge}</span>
-            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-muted)]">
-              {ceo.discipline[locale]}
-            </span>
+            <span className="team-title-badge badge rounded-squircle-sm">{ceo.badge}</span>
           </div>
 
           <h3 className="lp-team-ceo-name">{ceo.name[locale]}</h3>
-          <p className="lp-team-ceo-role">{ceo.role[locale]}</p><MemberLinkedIn member={ceo} locale={locale}/>
+          <MemberLinkedIn member={ceo} locale={locale}/>
 
           <div className="lp-team-ceo-actions">
             <Link href="/booking" className="button button-primary rounded-squircle-md">
@@ -480,8 +476,7 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
             </div>
 
             <div className="lp-team-card-body">
-              <span className="lp-team-card-badge director-card-kicker badge rounded-squircle-sm">{member.badge}</span>
-              <small className="lp-team-card-discipline">{member.discipline[locale]}</small>
+              <span className="team-title-badge lp-team-card-badge director-card-kicker badge rounded-squircle-sm">{member.badge}</span>
               <h4 className="lp-team-card-title">{member.name[locale]}</h4>
               <p className="lp-team-card-role">{member.role[locale]}</p><MemberLinkedIn member={member} locale={locale}/>
             </div>
@@ -507,8 +502,7 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
             </div>
 
             <div className="lp-team-card-body">
-              <span className="lp-team-card-badge director-card-kicker badge rounded-squircle-sm">{member.badge}</span>
-              <small className="lp-team-card-discipline">{member.discipline[locale]}</small>
+              <span className="team-title-badge lp-team-card-badge director-card-kicker badge rounded-squircle-sm">{member.badge}</span>
               <h4 className="lp-team-card-title text-lg">{member.name[locale]}</h4>
               <p className="lp-team-card-role text-xs">{member.role[locale]}</p><MemberLinkedIn member={member} locale={locale}/>
             </div>

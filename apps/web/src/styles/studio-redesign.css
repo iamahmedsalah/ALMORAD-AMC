@@ -2680,6 +2680,19 @@ html[lang='ar'] .lp-team-portrait-card .lp-team-card-title { letter-spacing: 0; 
   max-width: calc(100% - 24px);
   overflow-wrap: anywhere;
 }
+html body .lp-team-section .team-title-badge {
+  align-self: center;
+  border-radius: 10px !important;
+  background: var(--surface);
+  color: var(--foreground);
+  border-color: var(--glass-border);
+}
+@supports (corner-shape: squircle) {
+  html body .lp-team-section .team-title-badge {
+    border-radius: 14px !important;
+    corner-shape: squircle !important;
+  }
+}
 .lp-team-section :is(h2, h3, h4, p, small) {
   overflow-wrap: anywhere;
 }
