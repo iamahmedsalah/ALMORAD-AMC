@@ -16,6 +16,9 @@ export interface BookingConfirmationTemplateInput {
   directionsUrl?: string | null;
   meetingUrl?: string | null;
   status?: string;
+  email?:string;
+  phone?:string|null;
+  company?:string|null;
 }
 
 export interface EmailContent {
@@ -51,7 +54,7 @@ export function renderBookingConfirmationEmail(input: BookingConfirmationTemplat
 
   const detailsRow = (label: string, value: string) => `
     <tr>
-      <td style="padding:8px 12px;color:#0B1F44;overflow-wrap:anywhere;">
+      <td style="padding:12px;text-align:center;color:#0B1F44;overflow-wrap:anywhere;border-bottom:1px solid #D9C8B7;">
         <span style="display:block;font-weight:700;color:#A74200;">${escapeHtml(label)}</span>
         <span style="display:block;margin-top:3px;">${value}</span>
       </td>
@@ -63,6 +66,9 @@ export function renderBookingConfirmationEmail(input: BookingConfirmationTemplat
     </p>
     <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #FFF9F2; border-radius: 12px; padding: 12px;">
       ${detailsRow(isAr ? 'رقم المرجع' : 'Reference', `<code dir="ltr" style="unicode-bidi:isolate;">${escapeHtml(input.reference)}</code>`)}
+      ${input.email?detailsRow(isAr?'✉ البريد الإلكتروني':'✉ Email',escapeHtml(input.email)):''}
+      ${input.phone?detailsRow(isAr?'☎ الهاتف':'☎ Phone',`<span dir="ltr">${escapeHtml(input.phone)}</span>`):''}
+      ${input.company?detailsRow(isAr?'الشركة':'Company',escapeHtml(input.company)):''}
       ${detailsRow(isAr ? 'الخدمة' : 'Service', escapeHtml(input.serviceTitle))}
       ${detailsRow(isAr ? 'الموعد' : 'Schedule', `${escapeHtml(formattedTime)} (${escapeHtml(input.timezone)})`)}
       ${detailsRow(isAr ? 'المكان' : 'Location', escapeHtml(locationText))}

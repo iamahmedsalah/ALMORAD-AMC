@@ -41,6 +41,19 @@
 .inquiry-delivery dt { color:var(--muted-foreground); font-size:.8rem; }
 .inquiry-delivery dd { margin:0; font-size:.9rem; }
 .booking-settings > fieldset { display:grid; gap:1.25rem; }
+.booking-loading { display:flex; align-items:center; flex-wrap:wrap; gap:.75rem; padding:1.25rem; color:var(--muted-foreground); }
+.booking-spinner { animation:booking-spin 1s linear infinite; }
+.booking-skeleton { flex-basis:100%; height:3rem; border-radius:var(--radius-md); background:var(--muted); opacity:.55; }
+.appointment-facts p { display:flex; align-items:center; gap:.65rem; }
+.appointment-facts .solar-icon { flex-shrink:0; }
+.appointment-recovery h2,.appointment-recovery [role=status] { display:flex; align-items:center; gap:.75rem; }
+.booking-recovery-disclosure { margin-block-start:2rem; }
+.booking-recovery-disclosure summary { cursor:pointer; padding:1rem; }
+.footer-contact { font-style:normal; font-size:.9rem; margin-block-start:1.5rem; }
+.footer-contact p,.footer-contact a { display:flex; align-items:center; gap:.6rem; margin-block:.6rem; }
+.footer-contact .solar-icon { flex-shrink:0; }
+@keyframes booking-spin { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { .booking-spinner { animation:none; } }
 @media(max-width:600px) {
  .booking-choice-grid.booking-choice-grid,.booking-details-grid.booking-details-grid,.appointment-facts,.change-choices { grid-template-columns:minmax(0,1fr); }
  .agenda-toolbar .button { flex:1 1 44%; }

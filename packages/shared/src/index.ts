@@ -2,13 +2,14 @@ import {z} from 'zod';
 export const locales = ['en', 'ar'] as const;
 export type Locale = (typeof locales)[number];
 export const localeSchema = z.enum(locales);
-export const roles = ['RECEPTIONIST', 'MANAGER', 'CEO'] as const;
+export const roles = ['RECEPTIONIST', 'MANAGER', 'ADMIN'] as const;
 export type StaffRole = (typeof roles)[number];
-export const permissions = ['appointments:read', 'appointments:write', 'analytics:read', 'settings:write', 'staff:manage'] as const;
+export const permissions = ['appointments:read', 'appointments:write', 'appointments:assign', 'appointments:delete', 'inquiries:read', 'analytics:read', 'settings:write', 'staff:manage'] as const;
 export type Permission = (typeof permissions)[number];
 export function can(role: StaffRole, permission: Permission): boolean {
-  if(permission==='staff:manage')return role==='CEO';
-  return role === 'MANAGER' || role === 'CEO' || (role === 'RECEPTIONIST' && (permission === 'appointments:read' || permission === 'appointments:write'));
+  if(role==='ADMIN')return true;
+  if(role==='MANAGER')return permission==='appointments:read'||permission==='appointments:write';
+  return role==='RECEPTIONIST'&&['appointments:read','appointments:write','appointments:assign','inquiries:read'].includes(permission);
 }
 // Shared validation boundary for bilingual contact forms with production-grade email verification.
 export const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
@@ -50,4 +51,5 @@ export const services = [
 export * from './booking.js';
 export * from './banner.js';
 export * from './calendar.js';
+export * from './office.js';
 

@@ -7,7 +7,7 @@ import {hubspotContactUrl} from './hubspot-links.js';
 
 @Controller('staff/inquiries')
 @UseGuards(SessionGuard, PermissionGuard)
-@RequirePermission('appointments:read')
+@RequirePermission('inquiries:read')
 export class InquiriesController {
   constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
 

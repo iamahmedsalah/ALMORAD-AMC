@@ -1,6 +1,6 @@
 ---
 name: almorad-amc-full-stack-engineer
-description: Senior production full-stack engineering skill for ALMORAD AMC Growth & Brand Studio. Use for building, reviewing, securing, debugging, refactoring or planning the bilingual Next.js/NestJS website, SEO-first service pages, Three.js/GSAP 3D landing experience, PostgreSQL/Prisma bookings, office directions, receptionist/CEO dashboards, Google integrations, Slack, Redis/BullMQ, Resend, and technical Codex prompts.
+description: Senior production full-stack engineering skill for ALMORAD AMC Growth & Brand Studio. Use for building, reviewing, securing, debugging, refactoring or planning the bilingual Next.js/NestJS website, SEO-first service pages, Three.js/GSAP 3D landing experience, PostgreSQL/Prisma bookings, office directions, receptionist/admin dashboards, Google integrations, Slack, Redis/BullMQ, Resend, and technical Codex prompts.
 ---
 
 # ALMORAD AMC — Full-Stack Engineer
@@ -17,7 +17,7 @@ Operate as a cross-functional senior engineering team: technical lead, frontend/
 
 ## Core product
 
-One agency website, not multi-tenant SaaS. Public English and Arabic site (`/en`, `/ar`), premium 3D landing, four pillars/11 service detail pages, approved portfolio case studies, verified office location, online/in-office booking, secure client management links, receptionist operations and CEO/manager analytics. Booking-change requests are **staff reviewed**, not automatic client reschedules. Resend emails, Slack notifications, optional authorized Google Calendar/Meet; Google Search Console/GA4/Business Profile at release.
+One agency website, not multi-tenant SaaS. Public English and Arabic site (`/en`, `/ar`), premium 3D landing, four pillars/11 service detail pages, approved portfolio case studies, verified office location, online/in-office booking, secure client management links, receptionist operations and admin analytics and manager-owned agendas. Booking-change requests are **staff reviewed**, not automatic client reschedules. Resend emails, Slack notifications, optional authorized Google Calendar/Meet; Google Search Console/GA4/Business Profile at release.
 
 ## Default technology contract
 
@@ -59,7 +59,7 @@ One agency website, not multi-tenant SaaS. Public English and Arabic site (`/en`
 - The browser may display available slots but **only** the committed database transaction confirms a booking.
 - Booking types `IN_PERSON` and `ONLINE` are independent of status; online Google Meet link only when created via an authorized integration.
 - A client reschedule request creates a ticket (`OPEN` → review/alternative/approved/declined); existing confirmed appointment time remains unchanged until staff approval and atomic recheck. `RESCHEDULED` is an event; current operational state generally stays `CONFIRMED`.
-- Receptionist can handle appointment operations/change requests; CEO/Manager additionally controls system settings, permissions and analytics. Enforce API policies, not menu visibility.
+- Receptionist can handle appointment operations/change requests; Admin controls system settings, permissions and analytics. Managers create, read and edit only their assigned meetings. Enforce API policies, not menu visibility.
 - Queue notification intents in a transactional outbox, then deliver Resend/Slack via retries. Slack/email failure must not corrupt or undo a committed booking; duplicate jobs must not create duplicate business side effects.
 
 ## SEO and production UX invariants
@@ -83,3 +83,27 @@ One agency website, not multi-tenant SaaS. Public English and Arabic site (`/en`
 ## Future companion skills (separate skills, not bundled into this one)
 
 Create later as dedicated independently triggerable skills: `almorad-amc-ci-cd`, `almorad-amc-seo-engineer`, and `almorad-amc-ui-ux-designer`. Engineering skill invokes their documented gates when installed and should not duplicate their full playbooks.
+
+
+## Current staff contract (owner approved 12 November 2026)
+
+Roles are ADMIN, MANAGER and RECEPTIONIST; CEO is a historical role migrated to ADMIN, not a current assignable role. Admin manages staff/settings and all appointment CRUD, including auditable deletion. Manager reads, creates and edits only their assigned appointments; enforce the assignment scope in API list/detail/create/action paths, not only navigation. Receptionist manages the shared agenda, assignments, inquiries and staff-reviewed change requests, without admin deletion or account/settings privileges. Never invent ownership for legacy unassigned meetings.
+
+
+## Icons and client state
+
+Use the existing Solar icon system for meaningful actions and facts (calendar, time, phone, email, location, refresh, edit/delete and access). Keep concise labels for navigation, unfamiliar categories and critical actions; universally clear small actions may be icon-only with an accessible name, hover tooltip, focus state and minimum 44×44px target. Decorative icons are aria-hidden. Preserve official artwork and current inspected semantic brand tokens.
+
+Model client requests with explicit idle/loading/success/error states using existing React state/reducers or the installed query tooling. Show visible spinners or skeletons as well as pending labels, aria-busy/status feedback, duplicate-submit prevention and recoverable errors. Refresh must indicate progress and retain the last successful data. Respect reduced motion. Do not add a state library merely to manage a small form.
+
+Appointment confirmation must offer a direct Your appointment action. Recovery by email/phone must deliver a private link to the stored email, return non-enumerating responses and rate-limit requests. Email receipt acknowledges delivery intent/provider state accurately; a contact acknowledgement must not quote the visitor's message. Use the owner-approved office address in website and transactional email footers, and embed the original email logo to avoid broken public image URLs.
+
+## Responsive interaction implementation (owner approved 12 November 2026)
+
+Use the actual UI/UX skill's current icon/motion contract and `apps/web/src/components/ui/animated-icon.tsx`. Solar is the installed consistent SVG system; do not add a second set. `AnimatedIcon` takes name/alternate/active/size (16/20/24/32), `IconButton` adds a required action label and tooltip, and `MenuToggle` takes open/label/controls/onClick/buttonRef. Password closed-eye means hidden and open-eye visible; the accessible name describes Show/Hide as the next action.
+
+Motion constants in `apps/web/src/lib/motion.ts` match `styles/responsive-interactions.css`: micro160/disclosure260/entrance560ms, stagger50ms, distance12px, shared enter/exit/move curves. Match panel and icon durations. Animate transform/opacity, never frame-by-frame layout dimensions. Cancel timers/animations on teardown, handle rapid toggles, and instantly settle under reduced motion. CSS/WAAPI for simple state; retain scoped existing GSAP for complex storytelling. Motion/Framer Motion is not installed and is not required for these fixes.
+
+Inspect DOM children versus grid tracks before fixing wrapping. Text gets minmax(0,1fr), icons get fixed tracks; use min-width:0 and native RTL composition. Keep tablet layouts deliberate. Test 320/360/390/430, 768/834/1024 portrait/landscape, 1280/1440; screen reader names, 44px targets, keyboard, reduced motion, both themes/locales. Preserve current approved semantic tokens and report historical palette conflicts rather than recoloring incidentally.
+
+Retain last successful agenda records while refreshing, guard against stale responses and show progress/error/empty state. Date navigation uses the applied filter range; loaded page counts are not global metrics. Sort/group in the business timezone; preserve API assignment and conflict-safe staff-reviewed actions. HubSpot refresh reads status, never implies retry or success; CRM and email delivery stay independent. No fabricated integration logos/connections or real QA sends.

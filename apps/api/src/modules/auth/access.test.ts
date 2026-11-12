@@ -24,7 +24,7 @@ describe('staff HTTP authentication and authorization', () => {
     expect(lookup).not.toHaveBeenCalled();
   });
   it('rejects unknown, expired and disabled sessions', async () => {
-    for (const session of [null,{expiresAt:new Date(0),user:{active:true,role:'CEO'}},{expiresAt:new Date(Date.now()+60000),user:{active:false,role:'CEO'}}]) {
+    for (const session of [null,{expiresAt:new Date(0),user:{active:true,role:'ADMIN'}},{expiresAt:new Date(Date.now()+60000),user:{active:false,role:'ADMIN'}}]) {
       lookup.mockResolvedValueOnce(session);
       await request(app.getHttpServer()).get('/staff/me').set('Authorization',`Bearer ${token}`).expect(401);
     }
@@ -35,8 +35,8 @@ describe('staff HTTP authentication and authorization', () => {
     expect(lookup).toHaveBeenLastCalledWith({where:{tokenHash:createHash('sha256').update(token).digest('hex')},include:{user:true}});
     await request(app.getHttpServer()).get('/staff/access/settings').set('Authorization',`Bearer ${token}`).expect(403);
   });
-  it('allows manager settings permission', async () => {
-    lookup.mockResolvedValue({expiresAt:new Date(Date.now()+60000),user:{id:'manager-test',active:true,role:'MANAGER'}});
+  it('allows admin settings permission', async () => {
+    lookup.mockResolvedValue({expiresAt:new Date(Date.now()+60000),user:{id:'admin-test',active:true,role:'ADMIN'}});
     await request(app.getHttpServer()).get('/staff/access/settings').set('Authorization',`Bearer ${token}`).expect(200,{allowed:true});
   });
   it('allows receptionist inquiry access with phone details and rejects invalid pagination',async()=>{

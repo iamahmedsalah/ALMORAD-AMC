@@ -18,7 +18,7 @@ This is a **standalone** ALMORAD AMC skill: it works independently and does not 
 - Public localized URLs: `/ar`, `/en`; RTL Cairo Arabic, LTR IBM Plex Sans English, selective Redaction 100 English display.
 - Exact swatches: `#0B0A08`, `#14120E`, `#BE9D5B`, `#D8BE86`, `#F5F1E7`, `#CFCBC0`, `#A6A39B`, `#7A5F28`. Two fully developed themes.
 - Stack intent: Next.js 16 App Router, React 19, NestJS 12, PostgreSQL + Prisma ORM and Migrate, Redis/BullMQ, Resend, Docker/VPS; conditional Google Search Console/Analytics/Business Profile/Maps/Calendar and Slack connections.
-- Client meetings in-office or online, secure booking management links, reschedule tickets reviewed by reception, CEO/Manager analytics. Do not invent office details, contact numbers, team members, reviews or client results.
+- Client meetings in-office or online, secure booking management links, reschedule tickets reviewed by reception, Admin/Manager analytics. Do not invent office details, contact numbers, team members, reviews or client results.
 - Inspect actual project manifests, architecture/design docs, schemas, CI and code before applying a change; documentation describes target behavior, not proof of implementation.
 
 
@@ -56,3 +56,12 @@ Include release SHA/image digests, migrations reviewed/applied, backup/restore r
 
 ## Request protocol
 Classify the task, inspect relevant files, consult the needed bundled references, propose file-by-file changes and acceptance criteria, implement only authorized actions, run actual checks where tools allow, and report results separately from proposed checks. Never claim tests, deployment, rankings, Google connection, or interactions succeeded without evidence.
+
+
+## Current staff contract (owner approved 12 November 2026)
+
+Roles are ADMIN, MANAGER and RECEPTIONIST; CEO is a historical role migrated to ADMIN, not a current assignable role. Admin manages staff/settings and all appointment CRUD, including auditable deletion. Manager reads, creates and edits only their assigned appointments; enforce the assignment scope in API list/detail/create/action paths, not only navigation. Receptionist manages the shared agenda, assignments, inquiries and staff-reviewed change requests, without admin deletion or account/settings privileges. Never invent ownership for legacy unassigned meetings.
+
+## Current development release policy
+
+The owner has authorized AMC_RELEASE_MIGRATIONS=1 and AMC_MIGRATION_POLICY=development for the current testing phase without hosted backup prerequisites. Keep CI isolated migration/permission tests and candidate readiness before promotion; never replace failed readiness with a passing stub. Default guarded production release remains available for launch. Include icon/accessibility, loading, secure client recovery and cross-manager ownership checks when these flows change.

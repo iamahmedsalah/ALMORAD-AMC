@@ -9,7 +9,7 @@
       "outputDirectory": "dist/apps/api/src",
       "functions": {
         "dist/apps/api/src/main.js": {
-          "includeFiles": "{dist/apps/api/src/node_modules/**,dist/apps/api/src/package.json}"
+          "includeFiles": "{dist/apps/api/src/node_modules/**,dist/apps/api/src/package.json,dist/apps/api/src/modules/notifications/assets/**}"
         }
       }
     },

@@ -5,14 +5,14 @@ import {StaffAccountsService} from './staff-accounts.service.js';
 import {StaffAccountsController} from './staff-accounts.controller.js';
 import type {PrismaService} from '../../prisma/prisma.service.js';
 
-it('requires the CEO-only staff management permission at the API boundary',()=>{
+it('requires the ADMIN-only staff management permission at the API boundary',()=>{
   expect(Reflect.getMetadata('permission',StaffAccountsController)).toBe('staff:manage');
 });
-it('refuses to update or deactivate a CEO account',async()=>{
-  const id=randomUUID();const tx={$queryRaw:vi.fn().mockResolvedValue([]),staffUser:{findUnique:vi.fn().mockResolvedValue({id,role:'CEO'})},staffSession:{deleteMany:vi.fn()},staffAuditEvent:{create:vi.fn()}};
+it('preserves the last active admin account',async()=>{
+  const id=randomUUID();const tx={$queryRaw:vi.fn().mockResolvedValue([]),staffUser:{findUnique:vi.fn().mockResolvedValue({id,role:'ADMIN',active:true}),count:vi.fn().mockResolvedValue(1)},staffSession:{deleteMany:vi.fn()},staffAuditEvent:{create:vi.fn()}};
   const service=new StaffAccountsService({$transaction:async(fn:(value:typeof tx)=>unknown)=>fn(tx)} as unknown as PrismaService);
-  await expect(service.update(randomUUID(),{id,role:'MANAGER'})).rejects.toMatchObject({status:404});
-  await expect(service.deactivate(randomUUID(),{id})).rejects.toMatchObject({status:404});
+  await expect(service.update(randomUUID(),{id,role:'MANAGER'})).rejects.toMatchObject({status:409});
+  await expect(service.deactivate(randomUUID(),{id})).rejects.toMatchObject({status:409});
   expect(tx.staffSession.deleteMany).not.toHaveBeenCalled();
   expect(tx.staffAuditEvent.create).not.toHaveBeenCalled();
 });

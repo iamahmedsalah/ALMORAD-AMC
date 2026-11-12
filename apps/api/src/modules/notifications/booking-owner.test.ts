@@ -22,7 +22,7 @@ describe('separate booking inbox',()=>{
     expect(client.to).toBe(booking.email);expect(client.replyTo).toBe('bookings@example.invalid');
     expect(owner.to).toBe('bookings@example.invalid');expect(owner.replyTo).toBe(booking.email);
     expect(owner.html).toContain('/en/staff/calendar');expect(owner.html).not.toContain('#id=');expect(owner.html).not.toContain('token=');
-    expect(owner.html).toContain('&lt;script&gt;fixture&lt;/script&gt;');expect(owner.attachments).toBeUndefined();
+    expect(owner.html).toContain('&lt;script&gt;fixture&lt;/script&gt;');expect(owner.attachments).toEqual(expect.arrayContaining([expect.objectContaining({contentId:'almorad-logo'})]));expect(owner.attachments.some((file:{filename:string})=>file.filename.endsWith('.ics'))).toBe(false);
     expect(send.mock.calls[0]![1]).not.toEqual(send.mock.calls[1]![1]);
     expect(db.bookingEvent.create).toHaveBeenCalledWith(expect.objectContaining({data:expect.objectContaining({kind:'OWNER_EMAIL_DELIVERED'})}));
   });
@@ -47,4 +47,14 @@ describe('separate booking inbox',()=>{
     expect(result.html).toContain('Branding &lt;test&gt;');expect(result.html).not.toContain('<script>');
     expect(result.text).toContain('TEST-ONLY');expect(result.html).toContain('/en/staff/calendar');
   });
+});
+
+it('keeps a provider response without a message ID retryable rather than claiming delivery',async()=>{
+ const {db,service,send}=fixture();db.$queryRaw.mockResolvedValue([{id:'missing-ack',bookingId:booking.id,kind:'BOOKING_CREATED:EMAIL',attempts:1}]);send.mockResolvedValue({data:{id:''},error:null});
+ expect(await service.drain()).toEqual({processed:1,succeeded:0,failed:1});
+ expect(db.bookingOutbox.update).toHaveBeenCalledWith(expect.objectContaining({where:{id:'missing-ack'},data:expect.objectContaining({status:'PENDING'})}));
+});
+it('skips obsolete receipts for archived appointments without sending a message',async()=>{
+ const {db,service,send}=fixture();db.$queryRaw.mockResolvedValue([{id:'obsolete',bookingId:booking.id,kind:'BOOKING_CREATED:EMAIL',attempts:1}]);db.booking.findUnique.mockResolvedValue(Object.assign({},booking,{deletedAt:new Date()}));
+ await service.drain();expect(send).not.toHaveBeenCalled();expect(db.bookingOutbox.update).toHaveBeenCalledWith({where:{id:'obsolete'},data:{status:'SKIPPED',lastError:null,nextRetryAt:null}});
 });

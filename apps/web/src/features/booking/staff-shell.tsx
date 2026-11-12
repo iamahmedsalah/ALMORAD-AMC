@@ -6,12 +6,13 @@ import {bookingCopy} from './copy';
 import {deskCopy} from './desk-copy';
 import {BookingError,bookingFetch} from './helpers';
 import {SolarIcon} from '@/components/ui/solar-icon';
+import {BookingLoading} from './loading-state';
 export type StaffIdentity={staff:{id:string;email:string;role:StaffRole};csrfToken:string};
 export function OperationsNavigation({locale,role,view}:{locale:Locale;role?:StaffRole;view:'calendar'|'inquiries'|'analytics'|'settings'|'account'}) {
  const c=deskCopy(locale);
  return <nav className="staff-tabs operations-nav" aria-label={c.title}>
   <a href={'/'+locale+'/staff/calendar'} aria-current={view==='calendar'?'page':undefined}><SolarIcon name="calendar-linear"/>{c.agenda}</a>
-  <a href={'/'+locale+'/staff/inquiries'} aria-current={view==='inquiries'?'page':undefined}><SolarIcon name="users-group-rounded-linear"/>{locale==='ar'?'الاستفسارات':'Meeting inquiries'}</a>
+  {role&&can(role,'inquiries:read')&&<a href={'/'+locale+'/staff/inquiries'} aria-current={view==='inquiries'?'page':undefined}><SolarIcon name="users-group-rounded-linear"/>{locale==='ar'?'الاستفسارات':'Meeting inquiries'}</a>}
   {role&&can(role,'analytics:read')&&<a href={'/'+locale+'/staff/analytics'} aria-current={view==='analytics'?'page':undefined}><SolarIcon name="chart-2-linear"/>{c.analytics}</a>}
   {role&&can(role,'settings:write')&&<a href={'/'+locale+'/staff/settings'} aria-current={view==='settings'?'page':undefined}><SolarIcon name="widget-2-linear"/>{c.settings}</a>}
   <a href={'/'+locale+'/staff'} aria-current={view==='account'?'page':undefined}><SolarIcon name="users-group-rounded-linear"/>{c.account}</a>
@@ -25,7 +26,7 @@ export function StaffBookingShell({locale,view,children}:{locale:Locale;view:'ca
   <div className="operations-layout">
    <OperationsNavigation locale={locale} role={identity?.staff.role} view={view}/>
    <div className="operations-content">
-    {!identity?<p role={error?'alert':'status'}>{error||b.loading}</p>:(view==='analytics'&&!can(identity.staff.role,'analytics:read'))||(view==='settings'&&!can(identity.staff.role,'settings:write'))?<p role="alert">{c.permission}</p>:children(identity)}
+    {!identity?error?<p role="alert">{error}</p>:<BookingLoading label={b.loading}/>:(view==='inquiries'&&!can(identity.staff.role,'inquiries:read'))||(view==='analytics'&&!can(identity.staff.role,'analytics:read'))||(view==='settings'&&!can(identity.staff.role,'settings:write'))?<p role="alert">{c.permission}</p>:children(identity)}
    </div>
   </div>
  </section>;

@@ -15,7 +15,7 @@ afterAll(async () => {await client.staffUser.deleteMany({where:{id}});await clie
 it('migration supports relational staff sessions and unique identities', async () => {
   expect(await client.$queryRaw`SELECT 1 AS ok`).toEqual([{ok:1}]);
   await client.staffUser.create({data:{id,email:`${id}@example.invalid`,role:'RECEPTIONIST'}});
-  await expect(client.staffUser.create({data:{email:`${id}@example.invalid`,role:'CEO'}})).rejects.toThrow();
+  await expect(client.staffUser.create({data:{email:`${id}@example.invalid`,role:'ADMIN'}})).rejects.toThrow();
   const session = await client.staffSession.create({data:{userId:id,tokenHash:'f'.repeat(64),expiresAt:new Date(Date.now()+60000)}});
   expect(session.userId).toBe(id);
   await client.staffUser.delete({where:{id}});

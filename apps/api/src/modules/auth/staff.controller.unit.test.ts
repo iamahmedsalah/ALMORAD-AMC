@@ -10,8 +10,8 @@ describe('StaffController unit tests', () => {
       staff: {
         id: 'usr_1',
         email: 'ceo@almorad.amc',
-        name: 'CEO',
-        role: 'CEO',
+        name: 'ADMIN',
+        role: 'ADMIN',
         permissions: ['appointments:read', 'appointments:write', 'analytics:read', 'settings:write']
       }
     } as unknown as StaffRequest;

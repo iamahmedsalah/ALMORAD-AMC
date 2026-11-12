@@ -3,7 +3,7 @@ import {z} from 'zod';
 import {PrismaService} from '../../prisma/prisma.service.js';
 import {hashPassword} from './security.js';
 
-const role=z.enum(['RECEPTIONIST','MANAGER']);
+const role=z.enum(['RECEPTIONIST','MANAGER','ADMIN']);
 const email=z.email().max(254).transform(value=>value.trim().toLowerCase());
 const password=z.string().min(12).max(128);
 const createInput=z.object({email,role,password}).strict();
@@ -14,7 +14,7 @@ const publicAccount={id:true,email:true,role:true,active:true,createdAt:true} as
 @Injectable()
 export class StaffAccountsService {
   constructor(@Inject(PrismaService) private readonly prisma:PrismaService){}
-  list(){return this.prisma.staffUser.findMany({where:{role:{in:['RECEPTIONIST','MANAGER']}},select:publicAccount,orderBy:[{createdAt:'desc'},{id:'desc'}],take:200});}
+  list(){return this.prisma.staffUser.findMany({select:publicAccount,orderBy:[{createdAt:'desc'},{id:'desc'}],take:200});}
   async create(actorId:string,input:unknown){
     const parsed=createInput.safeParse(input);if(!parsed.success)throw new BadRequestException('Invalid staff account');
     const passwordHash=await hashPassword(parsed.data.password);
@@ -29,9 +29,11 @@ export class StaffAccountsService {
     const {id,role,active,password:nextPassword}=parsed.data;
     const passwordHash=nextPassword?await hashPassword(nextPassword):undefined;
     return this.prisma.$transaction(async tx=>{
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(1201200)`;
       await tx.$queryRaw`SELECT "id" FROM "StaffUser" WHERE "id"=${id}::uuid FOR UPDATE`;
       const current=await tx.staffUser.findUnique({where:{id}});
-      if(!current||current.role==='CEO')throw new NotFoundException();
+      if(!current)throw new NotFoundException();
+      if(current.active&&current.role==='ADMIN'&&(active===false||role&&role!=='ADMIN')&&await tx.staffUser.count({where:{role:'ADMIN',active:true}})<=1)throw new ConflictException('Keep at least one active admin');
       const account=await tx.staffUser.update({where:{id},data:{role,active,passwordHash},select:publicAccount});
       await tx.staffSession.deleteMany({where:{userId:id}});
       await tx.staffAuditEvent.create({data:{actorId,subjectId:id,action:'STAFF_ACCOUNT_UPDATED'}});
@@ -42,9 +44,11 @@ export class StaffAccountsService {
     const parsed=idInput.safeParse(input);if(!parsed.success)throw new BadRequestException('Invalid staff account');
     const {id}=parsed.data;
     return this.prisma.$transaction(async tx=>{
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(1201200)`;
       await tx.$queryRaw`SELECT "id" FROM "StaffUser" WHERE "id"=${id}::uuid FOR UPDATE`;
       const current=await tx.staffUser.findUnique({where:{id}});
-      if(!current||current.role==='CEO')throw new NotFoundException();
+      if(!current)throw new NotFoundException();
+      if(current.active&&current.role==='ADMIN'&&await tx.staffUser.count({where:{role:'ADMIN',active:true}})<=1)throw new ConflictException('Keep at least one active admin');
       const account=await tx.staffUser.update({where:{id},data:{active:false},select:publicAccount});
       await tx.staffSession.deleteMany({where:{userId:id}});
       await tx.staffAuditEvent.create({data:{actorId,subjectId:id,action:'STAFF_ACCOUNT_DEACTIVATED'}});

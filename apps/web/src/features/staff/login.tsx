@@ -4,6 +4,7 @@ import {useEffect, useRef, useState, useSyncExternalStore, type FormEvent} from 
 import {useRouter} from 'next/navigation';
 import {emailRegex, type Locale} from '@amc/shared';
 import {staffCopy} from './copy';
+import {AnimatedIcon} from '@/components/ui/animated-icon';
 import {SolarIcon} from '@/components/ui/solar-icon';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 
@@ -75,14 +76,14 @@ export function StaffLogin({locale}: {locale: Locale}) {
       <div className="staff-password-field"><label htmlFor="staff-password">{c.password}</label><div className="staff-password-wrap" dir="ltr">
         <input id="staff-password" disabled={!hydrated || pending || signedIn} name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" dir="ltr" required maxLength={128}/>
         <button type="button" className="staff-password-toggle" disabled={!hydrated || pending || signedIn}
-          aria-label={showPassword ? feedback.hidePassword : feedback.showPassword} aria-pressed={showPassword}
+          aria-label={showPassword ? feedback.hidePassword : feedback.showPassword} title={showPassword ? feedback.hidePassword : feedback.showPassword} aria-pressed={showPassword}
           onClick={() => setShowPassword(value => !value)}>
-          <span key={showPassword ? 'visible' : 'hidden'} className="staff-password-icon"><SolarIcon name={showPassword ? 'eye-closed-linear' : 'eye-linear'} /></span>
+          <AnimatedIcon name="eye-closed-linear" alternate="eye-linear" active={showPassword}/>
         </button>
       </div></div>
       <Alert variant="destructive" open={Boolean(error)}><AlertTitle>{feedback.problem}</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>
       <Alert variant="success" open={signedIn}><AlertTitle>{feedback.success}</AlertTitle><AlertDescription>{feedback.continuing}</AlertDescription></Alert>
-      <button className="button button-primary" disabled={!hydrated || pending || signedIn} type="submit">{pending ? c.pending : c.submit}</button>
+      <button className="button button-primary" disabled={!hydrated || pending || signedIn} type="submit">{pending && <SolarIcon name="refresh-linear" className="booking-spinner"/>}{pending ? c.pending : c.submit}</button>
     </form>
     <noscript>{locale === 'ar' ? 'يلزم تفعيل جافاسكريبت لتسجيل الدخول الآمن.' : 'JavaScript is required for secure sign in.'}</noscript>
   </section>;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
+import {usePathname} from 'next/navigation';
 
 export type SocialProfile = { name: string; href: string | null; demo?: boolean; icon: 'linkedin' | 'facebook' | 'instagram' | 'x' | 'tiktok' | 'youtube' };
 
@@ -17,11 +18,13 @@ function SocialIcon({ name }: { name: SocialProfile['icon'] }) {
 }
 
 export function SocialDisclosure({ profiles, locale, variant = 'footer' }: { profiles: SocialProfile[]; locale: string; variant?: 'footer' | 'sidebar' }) {
+  const pathname=usePathname();
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const id = useId();
   const ar = locale === 'ar';
+  const toggleLabel=open?(ar?'إغلاق روابط التواصل':'Close social links'):(ar?'تابعنا':'Follow us');
   useEffect(() => {
     if (!open) return;
     const outside = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };
@@ -30,10 +33,11 @@ export function SocialDisclosure({ profiles, locale, variant = 'footer' }: { pro
     document.addEventListener('keydown', escape);
     return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape); };
   }, [open]);
+  if(variant==='sidebar'&&/^\/(en|ar)\/staff(?:\/|$)/.test(pathname))return null;
   return <div ref={root} className={`social-disclosure social-disclosure-${variant}`} data-open={open} onBlur={event => {
     if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
   }}>
-    <button ref={trigger} type="button" className="social-trigger" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+    <button ref={trigger} type="button" className="social-trigger" aria-label={toggleLabel} title={toggleLabel} aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
       {variant === 'sidebar' && <svg className="social-sidebar-symbol" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" focusable="false">
         <g className="social-symbol-share"><circle cx="6" cy="12" r="3" /><circle cx="18" cy="5" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.5 10.5 7-4m-7 7 7 4" /></g>
         <g className="social-symbol-close" strokeLinecap="round"><path d="m6 6 12 12M18 6 6 18" /></g>

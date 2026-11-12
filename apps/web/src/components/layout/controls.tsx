@@ -24,7 +24,7 @@ export function Controls() {
   return (
     <div className="controls">
       <Link href={pathname} locale={nextLocale} lang={nextLocale} data-locale={nextLocale}
-        aria-label={t('language')} className="locale-link locale-switch-btn rounded-squircle-md"
+        aria-label={t('language')} title={t('language')} className="locale-link locale-switch-btn rounded-squircle-md"
         onClick={() => window.dispatchEvent(new CustomEvent('amc:locale-switch', { detail: { nextLocale } }))}>
         <SolarIcon name="global-linear" /><span>{t('language')}</span>
       </Link>

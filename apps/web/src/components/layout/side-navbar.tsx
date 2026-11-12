@@ -5,6 +5,7 @@ import { Link, usePathname } from '@/i18n/navigation';
 import { Controls } from './controls';
 import { BrandSignature } from './brand-signature';
 import { createPortal } from 'react-dom';
+import {MenuToggle} from '@/components/ui/animated-icon';
 import { SolarIcon, type SolarName } from '@/components/ui/solar-icon';
 
 const subscribeMount = () => () => {};
@@ -40,6 +41,8 @@ function SideNavbarContent({
   const drawerRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const closeLabel=locale==='ar'?'إغلاق القائمة':'Close menu';
+  const openLabel=locale==='ar'?'فتح القائمة':'Open menu';
 
   useEffect(() => {
     if (!open) return;
@@ -74,23 +77,8 @@ function SideNavbarContent({
 
   return (
     <>
-      <button
-        type="button"
-        ref={triggerRef}
-        className="side-nav-trigger burger-trigger rounded-squircle-md"
-        data-open={open ? 'true' : 'false'}
-        aria-expanded={open}
-        aria-controls="amc-side-drawer"
-        aria-label={menuLabel}
-        onClick={() => setOpen((prev) => !prev)}
-      >
-        <span className="burger-bars" aria-hidden="true">
-          <span className="burger-bar burger-bar-1" />
-          <span className="burger-bar burger-bar-2" />
-          <span className="burger-bar burger-bar-3" />
-        </span>
-        <span className="side-nav-trigger-label">{menuLabel}</span>
-      </button>
+      <MenuToggle buttonRef={triggerRef} className="side-nav-trigger burger-trigger rounded-squircle-md" open={open}
+        label={open?closeLabel:openLabel} controls="amc-side-drawer" onClick={()=>setOpen(value=>!value)}/>
 
       {mounted && createPortal(<>
       <div
@@ -117,14 +105,8 @@ function SideNavbarContent({
             <Link href="/" className="brand" aria-label={brandName} onClick={() => setOpen(false)}>
               <BrandSignature locale={locale} />
             </Link>
-            <button
-              type="button"
-              className="side-nav-trigger rounded-squircle-md"
-              aria-label={menuLabel === 'Menu' ? 'Close menu' : 'إغلاق القائمة'}
-              onClick={() => setOpen(false)}
-            >
-              <SolarIcon name="close-linear" />
-            </button>
+            <MenuToggle className="side-nav-trigger rounded-squircle-md" open={open} label={closeLabel}
+              controls="amc-side-drawer" onClick={()=>setOpen(false)}/>
           </div>
 
           <nav className="side-drawer-links" aria-label={menuLabel}>
@@ -134,16 +116,14 @@ function SideNavbarContent({
                 href={item.href}
                 aria-current={pathname === item.href ? 'page' : undefined}
                 className="side-drawer-link rounded-squircle-md"
-                style={{ transitionDelay: open ? `${110 + idx * 45}ms` : '0ms' }}
+                style={{ transitionDelay: open ? `${idx * 40}ms` : '0ms' }}
                 onClick={() => setOpen(false)}
               >
                 <span className="side-drawer-link-content">
                   <SolarIcon name={navigationIcons[idx] ?? 'widget-2-linear'} />
                   <span className="side-drawer-link-label">{item.label}</span>
                 </span>
-                <span className="arrow" aria-hidden="true">
-                  →
-                </span>
+                <SolarIcon name="arrow-right-linear" className="directional-icon"/>
               </Link>
             ))}
           </nav>
@@ -158,9 +138,7 @@ function SideNavbarContent({
             onClick={() => setOpen(false)}
           >
             <span>{ctaLabel}</span>
-            <span className="arrow" aria-hidden="true">
-              →
-            </span>
+            <SolarIcon name="arrow-right-linear" className="directional-icon"/>
           </Link>
         </div>
       </aside>

@@ -29,10 +29,11 @@ test('closed appointments hide calendar and change actions',async({page})=>{
  await page.goto(`/en/booking/manage#id=${booking.id}&token=${'a'.repeat(64)}`);
  await expect(page.locator('.appointment-status')).toHaveText('Cancelled');
  await expect(page.locator('.calendar-actions')).toHaveCount(0);await expect(page.locator('.change-choices')).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Email appointment details',exact:true})).toHaveCount(0);
 });
 test('format filtering reaches the API and staff can add an online meeting link',async({page})=>{
  await mockOperations(page);await page.goto('/en/staff/calendar');
- await page.getByRole('combobox',{name:'Meeting format',exact:true}).click();await page.getByRole('option',{name:'Online',exact:true}).click();
+ await page.locator('.agenda-filter-panel > summary').click();await page.getByRole('combobox',{name:'Meeting format',exact:true}).click();await page.getByRole('option',{name:'Online',exact:true}).click();
  const filtered=page.waitForRequest(r=>r.url().includes('/staff/appointments?')&&new URL(r.url()).searchParams.get('format')==='ONLINE');
  await page.getByRole('button',{name:'Apply filters',exact:true}).click();await filtered;
  await page.locator('.calendar-appointment').click();await expect(page.locator('input[name="meetingUrl"]')).toBeVisible();

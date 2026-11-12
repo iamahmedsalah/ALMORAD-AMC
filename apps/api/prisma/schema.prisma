@@ -32,7 +32,7 @@ model ContactInquiry {
 enum StaffRole {
   RECEPTIONIST
   MANAGER
-  CEO
+  ADMIN
 }
 
 model StaffUser {
@@ -45,6 +45,7 @@ model StaffUser {
   auditEvents StaffAuditEvent[]
   bookingEvents BookingEvent[]
   sessions  StaffSession[]
+  assignedBookings Booking[] @relation("AssignedBookings")
 }
 
 model StaffSession {
@@ -144,6 +145,9 @@ model Booking {
  company String? @db.VarChar(120)
  notes String? @db.VarChar(1500)
  meetingUrl String? @db.VarChar(1000)
+ assignedToId String? @db.Uuid
+ assignedTo StaffUser? @relation("AssignedBookings", fields:[assignedToId], references:[id], onDelete:SetNull)
+ deletedAt DateTime? @db.Timestamptz(3)
  locale String @db.VarChar(2)
  timezone String @db.VarChar(80)
  startsAt DateTime @db.Timestamptz(3)
@@ -169,6 +173,7 @@ model Booking {
  @@index([startsAt,status])
  @@index([createdAt,serviceSlug])
  @@index([email])
+ @@index([assignedToId,startsAt])
 }
 model BookingChangeRequest {
  id String @id @default(uuid()) @db.Uuid

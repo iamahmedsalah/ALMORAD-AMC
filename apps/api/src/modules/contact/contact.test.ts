@@ -42,7 +42,7 @@ describe('contact storage contract', () => {
   });
   it('rejects invalid/extra input, discards honeypots and propagates storage failures', async () => {
     const db = database(); const service = new ContactService(db as unknown as PrismaService);
-    for (const body of [{...payload(),consent:false}, {...payload(),message:'short'}, {...payload(),email:'invalid'}, {...payload(),role:'CEO'}]) await expect(service.submit(body)).rejects.toMatchObject({status:400});
+    for (const body of [{...payload(),consent:false}, {...payload(),message:'short'}, {...payload(),email:'invalid'}, {...payload(),role:'ADMIN'}]) await expect(service.submit(body)).rejects.toMatchObject({status:400});
     await expect(service.submit({...payload(),website:'https://spam.invalid'})).resolves.toEqual({accepted:true});
     expect(db.contactInquiry.create).not.toHaveBeenCalled();
     db.contactInquiry.create.mockRejectedValueOnce(new Error('Synthetic database unavailable'));

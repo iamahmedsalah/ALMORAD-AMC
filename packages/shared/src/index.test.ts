@@ -10,9 +10,14 @@ describe('foundation contracts', () => {
     expect(can('RECEPTIONIST', 'analytics:read')).toBe(false);
     expect(can('RECEPTIONIST', 'settings:write')).toBe(false);
     expect(can('RECEPTIONIST', 'appointments:write')).toBe(true);
-    expect(can('CEO', 'analytics:read')).toBe(true);
-    expect(can('MANAGER', 'settings:write')).toBe(true);
-    expect(can('CEO', 'staff:manage')).toBe(true);
+    expect(can('ADMIN', 'analytics:read')).toBe(true);
+    expect(can('MANAGER', 'settings:write')).toBe(false);
+    expect(can('MANAGER', 'appointments:write')).toBe(true);
+    expect(can('MANAGER', 'appointments:assign')).toBe(false);
+    expect(can('MANAGER', 'appointments:read')).toBe(true);
+    expect(can('ADMIN', 'appointments:delete')).toBe(true);
+    expect(can('RECEPTIONIST', 'appointments:delete')).toBe(false);
+    expect(can('ADMIN', 'staff:manage')).toBe(true);
     expect(can('MANAGER', 'staff:manage')).toBe(false);
     expect(can('RECEPTIONIST', 'staff:manage')).toBe(false);
   });

@@ -45,6 +45,7 @@ for(const name of Object.keys(apiManifest.dependencies)){
   }
 }
 for(const name of Object.keys(apiManifest.dependencies))await materialize(name,rootRequire,output);
+await cp(join(apiRoot,'src/modules/notifications/assets'),join(runtimeRoot,'modules/notifications/assets'),{recursive:true});
 // Vercel relocates this directory to /var/task. Everything needed by Node must
 // live inside it, including the ESM boundary and real dependency directories.
 await writeFile(join(runtimeRoot,'package.json'),JSON.stringify({private:true,type:'module'})+'\n');

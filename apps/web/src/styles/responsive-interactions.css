@@ -1,0 +1,133 @@
+/* Shared control feedback: preserve readable text; animate state, never layout. */
+:root:root {
+ --motion-micro:160ms; --motion-disclosure:260ms; --motion-entrance:560ms;
+ --motion-stagger:50ms; --motion-distance:12px;
+ --ease-enter:cubic-bezier(.22,1,.36,1); --ease-exit:cubic-bezier(.4,0,1,1);
+ --ease-move:cubic-bezier(.4,0,.2,1); --ease-disclosure:var(--ease-enter);
+}
+.icon-button { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; min-width:44px; min-height:44px; flex-shrink:0; cursor:pointer; }
+.icon-button:disabled { cursor:default; opacity:.55; }
+.icon-button:focus-visible,.menu-toggle:focus-visible { outline:2px solid var(--ring); outline-offset:3px; }
+.animated-icon { position:relative; display:inline-grid; flex:none; }
+.animated-icon > span { position:absolute; inset:0; display:grid; place-items:center; transition:transform var(--motion-disclosure) var(--ease-enter),opacity var(--motion-disclosure) var(--ease-enter); }
+.animated-icon .solar-icon { width:100%; height:100%; }
+.animated-icon .animated-icon-alternate { opacity:0; transform:rotate(-15deg) scale(.85); }
+.animated-icon[data-active="true"] .animated-icon-default { opacity:0; transform:rotate(15deg) scale(.85); }
+.animated-icon[data-active="true"] .animated-icon-alternate { opacity:1; transform:none; }
+.menu-toggle svg path { transform-origin:center; transition:transform var(--motion-disclosure) var(--ease-enter),opacity var(--motion-disclosure) var(--ease-enter); }
+.menu-toggle.menu-toggle > svg { width:24px; height:24px; }
+.menu-toggle[data-open="true"] .menu-line-top { transform:translateY(6px) rotate(45deg); transform-origin:12px 6px; }
+.menu-toggle[data-open="true"] .menu-line-middle { opacity:0; transform:scaleX(.5); }
+.menu-toggle[data-open="true"] .menu-line-bottom { transform:translateY(-6px) rotate(-45deg); transform-origin:12px 18px; }
+.icon-button:active:not(:disabled) > :is(svg,.animated-icon) { transform:scale(.94); }
+html[dir="rtl"] :is(.directional-icon,.directional-control > .animated-icon) { transform:scaleX(-1); }
+.side-drawer .side-drawer-link { display:flex; gap:12px; align-items:center; }
+.side-drawer .side-drawer-link-content { flex:1; min-width:0; grid-template-columns:24px minmax(0,1fr); gap:12px; }
+.side-drawer .side-drawer-link-label { min-width:0; line-height:1.4; overflow-wrap:normal; word-break:normal; }
+.side-drawer .side-drawer-link > .solar-icon { width:20px; height:20px; flex:none; }
+.side-drawer.side-drawer { padding:clamp(16px,4vw,28px); padding-block-end:max(20px,env(safe-area-inset-bottom)); }
+.side-drawer .side-drawer-links { margin-block:12px; gap:4px; }
+.side-drawer .side-drawer-link { min-height:56px; padding:12px; }
+.side-drawer .side-drawer-link-label { font-size:clamp(1rem,2.8vw,1.35rem); }
+.side-drawer .side-drawer-header { gap:12px; padding-block-end:12px; }
+.side-drawer .side-drawer-header .brand { min-width:0; }
+.side-drawer .side-drawer-header .side-nav-trigger { flex:none; }
+.side-drawer .side-drawer-footer { gap:12px; padding-block-start:12px; }
+.faq-accordion .faq-accordion-item > summary { grid-template-columns:minmax(0,1fr) 44px; gap:12px; min-height:64px; }
+.faq-accordion .faq-accordion-question { min-width:0; width:auto; overflow-wrap:normal; word-break:normal; }
+.faq-accordion .faq-accordion-toggle { width:44px; height:44px; }
+.faq-accordion .faq-accordion-toggle svg { width:20px; height:20px; transition:transform var(--motion-disclosure) var(--ease-enter); }
+.faq-accordion .faq-accordion-item[data-expanded="false"] .faq-accordion-toggle svg { transform:none; }
+.faq-accordion .faq-accordion-item[data-expanded="true"] .faq-accordion-toggle svg { transform:rotate(180deg); }
+.faq-accordion .faq-accordion-item[open]:not([data-expanded]) .faq-accordion-toggle svg { transform:rotate(180deg); }
+.agenda-intro { margin-block-end:1.5rem; }
+.agenda-intro > p { color:var(--muted-foreground); font-size:.9rem; line-height:1.7; max-width:70ch; }
+.agenda-scope { display:inline-flex; align-items:center; gap:.6rem; font-weight:600; }
+.staff-workspace .agenda-create { display:flex; align-items:center; gap:.6rem; min-height:44px; cursor:pointer; list-style:none; }
+.agenda-create::-webkit-details-marker { display:none; }
+.agenda-create .disclosure-chevron { margin-inline-start:auto; transition:transform var(--motion-disclosure) var(--ease-enter); }
+details[open] > .agenda-create .disclosure-chevron { transform:rotate(180deg); }
+.staff-workspace .agenda-toolbar { display:flex; flex-wrap:wrap; }
+.staff-workspace .agenda-toolbar .agenda-refresh { margin-inline-start:auto; }
+.agenda-refresh[aria-busy="true"] .animated-icon { animation:booking-spin 1s linear infinite; }
+.agenda-date-navigation { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-block:1rem; }
+.agenda-date-navigation p { display:flex; align-items:center; justify-content:center; gap:.5rem; margin:0; font-size:.85rem; font-variant-numeric:tabular-nums; }
+.agenda-result-summary { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-block-end:1rem; }
+.agenda-result-summary p { margin:0; font-size:.9rem; }
+.agenda-result-summary strong { font-size:1.4rem; }
+.agenda-result-summary > span { display:flex; align-items:center; gap:.5rem; font-size:.8rem; color:var(--muted-foreground); }
+.staff-workspace .appointment-agenda { grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); align-items:start; }
+.staff-workspace .agenda-day > h2 { display:flex; align-items:center; gap:.5rem; margin:0 0 1rem; font-size:.95rem; }
+.staff-workspace .agenda-day > h2 svg { width:20px; height:20px; flex:none; }
+.staff-workspace .calendar-appointment { min-width:0; overflow-wrap:anywhere; transition:transform var(--motion-micro) var(--ease-move); box-shadow:none; }
+.staff-workspace .calendar-appointment[aria-pressed="true"] { outline:2px solid var(--ring); outline-offset:2px; }
+.calendar-appointment .agenda-time { display:flex; align-items:center; gap:.4rem; font-variant-numeric:tabular-nums; }
+.calendar-appointment .agenda-time svg { width:16px; height:16px; }
+.calendar-appointment .agenda-card-footer { display:flex; align-items:center; justify-content:space-between; width:100%; gap:.75rem; margin-block-start:.3rem; }
+.calendar-appointment .appointment-status { font-size:.75rem; padding:.25rem .5rem; }
+.calendar-appointment .agenda-request { display:flex; align-items:center; gap:.4rem; color:var(--accent-text); }
+.agenda-request svg { width:16px; height:16px; flex:none; }
+.staff-workspace .appointment-agenda-list { grid-template-columns:minmax(0,1fr); }
+.appointment-agenda-list .calendar-appointment { display:grid; grid-template-columns:minmax(130px,.7fr) minmax(0,1fr); gap:.65rem 1.5rem; }
+.appointment-agenda-list .agenda-card-footer,.appointment-agenda-list .agenda-request { grid-column:1/-1; }
+.agenda-empty { display:grid; justify-items:center; text-align:center; padding:2.5rem 1rem; color:var(--muted-foreground); }
+.agenda-empty > svg { width:32px; height:32px; }
+.appointment-detail-panel { overflow-wrap:anywhere; scroll-margin-block-start:7rem; animation:disclosure-enter var(--motion-disclosure) var(--ease-enter); }
+.appointment-detail-panel .staff-heading { display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:1rem; }
+.appointment-detail-panel .staff-heading h2 { margin:0; }
+.appointment-detail-meta { display:flex; align-items:center; justify-content:space-between; gap:.75rem; flex-wrap:wrap; margin-block:1.5rem; font-size:.85rem; }
+.appointment-detail-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; margin-block:1.5rem 2rem; }
+.appointment-detail-facts > div { min-width:0; padding:1rem; background:var(--background); border:1px solid var(--border); border-radius:var(--radius-md); }
+.appointment-detail-facts dt { display:flex; align-items:center; gap:.5rem; color:var(--muted-foreground); font-size:.8rem; margin-block-end:.5rem; }
+.appointment-detail-facts dt svg { width:20px; height:20px; flex:none; }
+.appointment-detail-facts dd { margin:0; font-size:.95rem; line-height:1.7; }
+.appointment-detail-facts a { display:inline-flex; align-items:center; min-height:44px; text-decoration:underline; max-width:100%; }
+.appointment-detail-facts .appointment-detail-notes { grid-column:1/-1; white-space:pre-wrap; }
+.staff-workspace .booking-filters .booking-check { display:flex; flex-direction:row; align-items:center; gap:.75rem; }
+.staff-workspace .booking-filters input[type="checkbox"] { width:20px; min-width:20px; height:20px; min-height:20px; flex:none; }
+.staff-workspace .agenda-filter-panel .booking-filters { padding:0; border:0; margin-block:1.5rem .25rem; }
+.hubspot-sync .hubspot-sync-heading { display:flex; gap:.75rem; align-items:center; }
+.hubspot-sync-heading h3 { margin:0; font-size:1.15rem; }
+.hubspot-sync-emblem { display:grid; place-items:center; width:44px; height:44px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); }
+.hubspot-sync .hubspot-sync-status { display:flex; align-items:center; gap:.6rem; font-weight:600; }
+.hubspot-sync[data-sync="DELIVERED"] .hubspot-sync-status,.hubspot-sync[data-sync="SENT"] .hubspot-sync-status { color:var(--success); }
+.hubspot-sync[data-sync="FAILED"] .hubspot-sync-status { color:var(--destructive); }
+.hubspot-sync .hubspot-sync-hint { color:var(--muted-foreground); line-height:1.7; font-size:.85rem; max-width:65ch; }
+@media(hover:hover) and (pointer:fine) {
+ .icon-button:hover:not(:disabled) { background:var(--surface-2); }
+ .staff-workspace .calendar-appointment:hover:not(:disabled) { transform:translateY(-2px); box-shadow:none; }
+}
+@media(max-width:900px) {
+ .staff-workspace .booking-filters { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:end; gap:1rem; }
+ .booking-filters > label { min-width:0; }
+ .booking-filters input { min-width:0; }
+ .booking-filters > label:has(input[type="search"]),.booking-filters .booking-check { grid-column:1/-1; }
+ .booking-filters > .button { grid-column:1/-1; }
+ .staff-workspace .staff-table-wrap { max-width:100%; overflow:auto; overscroll-behavior-inline:contain; }
+}
+@media(max-width:600px) {
+ .appointment-detail-facts { grid-template-columns:minmax(0,1fr); }
+ .staff-workspace .agenda-toolbar .button { flex:1 1 calc(50% - .5rem); padding-inline:.65rem; font-size:.8rem; }
+ .agenda-date-navigation .icon-button { padding:.5rem; }
+ .agenda-date-navigation p { font-size:.75rem; }
+ .agenda-date-navigation p > svg { display:none; }
+ .appointment-agenda-list .calendar-appointment { grid-template-columns:minmax(0,1fr); }
+ .agenda-refresh .agenda-refresh-text { display:inline; }
+ .hubspot-sync .booking-actions .button { width:100%; white-space:normal; }
+ .side-drawer .brand-wording strong { font-size:1rem; }
+}
+@media(max-height:600px) and (orientation:landscape) {
+ .side-drawer.side-drawer { inset-block:6px; height:calc(100dvh - 12px); }
+ .side-drawer .side-drawer-links { margin-block:6px; }
+ .side-drawer .side-drawer-link { min-height:48px; padding-block:8px; }
+}
+@media(prefers-reduced-motion:reduce) {
+ .animated-icon > span,.menu-toggle svg path,.faq-accordion .faq-accordion-toggle svg,.disclosure-chevron { transition:none!important; }
+ .animated-icon .animated-icon-alternate,.animated-icon[data-active="true"] .animated-icon-default { transform:none; }
+ .menu-toggle[data-open="true"] .menu-line-top { transform:none; opacity:0; }
+ .menu-toggle[data-open="true"] .menu-line-middle { transform:rotate(45deg); opacity:1; }
+ .menu-toggle[data-open="true"] .menu-line-bottom { transform:translateY(-6px) rotate(-45deg); }
+ .staff-workspace .calendar-appointment { transition:none; }
+ .staff-workspace .calendar-appointment:hover:not(:disabled) { transform:none; }
+ .appointment-detail-panel,.agenda-refresh[aria-busy="true"] .animated-icon { animation:none; }
+}

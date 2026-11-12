@@ -57,7 +57,7 @@ test('FAQ answers remain available without JavaScript', async ({ browser }) => {
   await context.close();
 });
 
-test('FAQ height animation survives rapid toggles and live reduced motion', async ({ page }) => {
+test('FAQ state animation survives rapid toggles and live reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' }); await page.goto('/en/faq');
   const item = page.locator('.faq-accordion details').first(); const summary = item.locator('summary');
   await summary.click(); await summary.click(); await summary.click();

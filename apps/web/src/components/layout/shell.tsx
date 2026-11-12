@@ -1,6 +1,8 @@
 import Image from 'next/image';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { type Locale } from '@amc/shared';
+import {officeAddress,type Locale} from '@amc/shared';
+import {SolarIcon} from '@/components/ui/solar-icon';
+import {publicContact} from '@/lib/public-contact';
 import { Link } from '@/i18n/navigation';
 import { bookingCopy } from '@/features/booking/copy';
 import { copyFor } from '@/features/marketing/copy';
@@ -70,7 +72,7 @@ export async function Header() {
             menuLabel={t('menu')}
             brandName={locale === 'ar' ? '\u0627\u0644\u0645\u0631\u0627\u062f AMC' : 'ALMORAD AMC'}
             locale={locale}
-            ctaLabel={c.cta}
+            ctaLabel={bCopy.title}
             links={links}
           />
         </Container>
@@ -86,6 +88,7 @@ export async function Footer() {
   const locale = (await getLocale()) as Locale;
   const c = copyFor(locale);
   const b = bookingCopy(locale);
+  const contact=publicContact(locale);
   return (
     <footer className="studio-footer">
       <Container>
@@ -93,6 +96,7 @@ export async function Footer() {
           <div className="footer-identity">
             <Link href="/" aria-label="ALMORAD AMC"><LogoLockup /></Link>
             <p>{c.footer}</p>
+            <address className="footer-contact"><p><SolarIcon name="map-point-linear"/>{officeAddress[locale]}</p>{contact.phone&&<a href={'tel:'+contact.phone.replace(/[^+0-9]/g,'')}><SolarIcon name="phone-linear"/><bdi>{contact.phone}</bdi></a>}{contact.email&&<a href={'mailto:'+contact.email}><SolarIcon name="letter-linear"/><bdi>{contact.email}</bdi></a>}</address>
           </div>
           <div className="footer-quick-actions">
             <Link href="/booking" className="button button-primary rounded-squircle-md">{b.title}<span aria-hidden="true">&#8599;</span></Link>
@@ -106,6 +110,7 @@ export async function Footer() {
             <Link href="/work">{c.nav.work}</Link>
             <Link href="/team">{locale === 'ar' ? 'الفريق' : 'Team'}</Link>
             <Link href="/contact">{c.nav.contact}</Link>
+            <Link href="/booking/manage">{locale==='ar'?'موعدك':'Your appointment'}</Link>
             <Link href="/faq">{t('faq')}</Link>
             <Link href="/staff/login" rel="nofollow">{locale === 'ar' ? 'دخول الفريق' : 'Staff sign in'}</Link>
           </nav>

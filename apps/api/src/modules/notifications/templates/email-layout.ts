@@ -1,3 +1,4 @@
+import {officeAddress} from '@amc/shared';
 /**
  * Reusable ALMORAD AMC email shell: branded header + footer shared by every
  * transactional email (contact, booking, reminders). Table layout and inline
@@ -58,10 +59,10 @@ export function footerContact(): {email?: string; phone?: string} {
 export function renderEmailLayout(input: EmailLayoutInput): string {
   const ar = input.locale === 'ar';
   const dir = ar ? 'rtl' : 'ltr';
-  const align = ar ? 'right' : 'left';
+  const align = 'center';
   const font = ar ? "'Cairo', Tahoma, Arial, sans-serif" : "'Fira Sans', 'Segoe UI', Arial, sans-serif";
   const origin = siteOrigin();
-  const logo = `${origin}/brand/footer-logo-on-dark@2x.png`;
+  const logo = 'cid:almorad-logo';
   const contact = footerContact();
   const tagline = ar ? 'استوديو النمو والعلامة التجارية' : 'Growth & Brand Studio';
   const visit = ar ? 'زيارة الموقع' : 'Visit website';
@@ -91,7 +92,7 @@ export function renderEmailLayout(input: EmailLayoutInput): string {
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#FFFFFF;border:1px solid ${brand.line};border-radius:20px;overflow:hidden;">
     <tr><td style="background:${brand.navy};padding:26px 32px;text-align:${align};">
       <a href="${escapeHtml(origin)}" style="text-decoration:none;color:${brand.cream};">
-        <img src="${escapeHtml(logo)}" width="180" height="38" alt="ALMORAD AMC" style="display:block;width:180px;height:auto;max-width:100%;border:0;margin:0 0 10px;"/><br>
+        <img src="${escapeHtml(logo)}" width="180" height="38" alt="ALMORAD AMC" style="display:block;width:180px;height:auto;max-width:100%;border:0;margin:0 auto 10px;"/><br>
         <span style="font-size:12px;color:#BCC7DE;">${escapeHtml(tagline)}</span>
       </a>
     </td></tr>
@@ -106,6 +107,7 @@ export function renderEmailLayout(input: EmailLayoutInput): string {
       <a href="${escapeHtml(origin)}" style="display:inline-block;margin-bottom:12px;"><img src="${escapeHtml(logo)}" width="120" height="25" alt="ALMORAD AMC" style="display:block;width:120px;height:auto;max-width:100%;border:0;"/></a><br>
       <a href="${escapeHtml(origin)}" style="color:${brand.cream};text-decoration:underline;">${escapeHtml(visit)}</a>
       ${contactLine ? `<br>${contactLine}` : ''}
+      <p style="margin:14px 0 0;color:${brand.cream};"><span aria-hidden="true">&#8982;</span> ${escapeHtml(officeAddress[ar?'ar':'en'])}</p>
       <br><span style="color:#93A3C6;">© ${new Date().getFullYear()} ALMORAD AMC. ${escapeHtml(rights)}.</span>
     </td></tr>
   </table>

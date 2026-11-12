@@ -20,15 +20,12 @@ export function renderContactVisitorEmail(input: ContactEmailInput): EmailConten
   const intro = ar
     ? `مرحبًا ${escapeHtml(name)}، استلم فريق المراد رسالتك وسيرد عليك قريبًا على هذا البريد الإلكتروني.`
     : `Hello ${escapeHtml(name)}, the ALMORAD AMC team received your message and will reply to this email address.`;
-  const copyLabel = ar ? 'نسخة من رسالتك' : 'A copy of your message';
-  const bodyHtml = `<p style="margin:0 0 16px;">${intro}</p>
-<p style="margin:0 0 8px;font-weight:700;color:#B84A05;">${copyLabel}</p>
-<div style="border-${ar ? 'right' : 'left'}:4px solid #F7761E;background:#FCF8F3;padding:14px 16px;border-radius:12px;">${paragraphs(input.message)}</div>`;
+  const bodyHtml = `<p aria-hidden="true" style="font-size:32px;margin:0 0 14px;">&#10003;</p><p style="margin:0 0 16px;">${intro}</p><p>${ar?'سنراجع استفسارك ونرد عليك قريبًا. شكرًا لاختيارك المراد AMC.':'We will review your inquiry and reply soon. Thank you for choosing ALMORAD AMC.'}</p>`;
   const footerNote = ar
     ? 'وصلتك هذه الرسالة لأن هذا البريد استُخدم في نموذج التواصل على almorad-amc.com. إذا لم تكن أنت، يمكنك تجاهلها.'
     : 'You received this email because this address was used in the contact form on almorad-amc.com. If that was not you, you can ignore it.';
   const html = renderEmailLayout({locale: input.locale, heading, bodyHtml, footerNote, preheader: intro});
-  const text = `${heading}\n\n${ar ? `مرحبًا ${name}،` : `Hello ${name},`}\n${ar ? 'استلمنا رسالتك وسنرد عليك قريبًا.' : 'We received your message and will reply soon.'}\n\n${copyLabel}:\n${input.message}\n\nALMORAD AMC\nhttps://almorad-amc.com`;
+  const text = `${heading}\n\n${ar ? `مرحبًا ${name}،` : `Hello ${name},`}\n${ar ? 'استلمنا رسالتك وسنرد عليك قريبًا.' : 'We received your message and will reply soon.'}\n\nALMORAD AMC`;
   return {subject, text, html};
 }
 
@@ -36,11 +33,11 @@ export function renderContactVisitorEmail(input: ContactEmailInput): EmailConten
 export function renderContactOwnerEmail(input: ContactEmailInput & {id: string}): EmailContent {
   const name = singleLine(input.name);
   const subject = `New website inquiry from ${name}`;
-  const row = (label: string, value: string) => `<tr><td style="padding:6px 12px 6px 0;color:#354A78;font-weight:700;vertical-align:top;white-space:nowrap;">${label}</td><td style="padding:6px 0;">${value}</td></tr>`;
+  const row = (label: string, value: string) => `<tr><td style="padding:12px;text-align:center;border-bottom:1px solid #D9C8B7;"><strong style="display:block;color:#A74200;">${label}</strong><span style="display:block;margin-top:4px;overflow-wrap:anywhere;">${value}</span></td></tr>`;
   const bodyHtml = `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:15px;">
-${row('Name', escapeHtml(name))}
-${row('Email', `<a href="mailto:${escapeHtml(input.email)}" style="color:#B84A05;">${escapeHtml(input.email)}</a>`)}
-${input.phone ? row('Phone', escapeHtml(input.phone)) : ''}
+${row('&#9673; Name', escapeHtml(name))}
+${row('&#9993; Email', `<a href="mailto:${escapeHtml(input.email)}" style="color:#B84A05;">${escapeHtml(input.email)}</a>`)}
+${input.phone ? row('&#9742; Phone', `<a href="tel:${escapeHtml(input.phone.replace(/[^+0-9]/g,''))}">${escapeHtml(input.phone)}</a>`) : ''}
 ${row('Language', input.locale === 'ar' ? 'Arabic' : 'English')}
 ${row('Reference', escapeHtml(input.id))}
 </table>

@@ -92,7 +92,7 @@ describe('reusable email layout', () => {
     const en = renderContactVisitorEmail({locale: 'en', name: 'Sara', email: 's@example.invalid', message: 'Brand refresh please'});
     expect(ar.html).toContain('dir="rtl"');
     expect(en.html).toContain('dir="ltr"');
-    for (const mail of [ar, en]) { expect(mail.html).toContain('#0B1F44'); expect(mail.html).toContain('#F7761E'); expect(mail.html).toContain('footer-logo-on-dark@2x.png'); }
+    for (const mail of [ar, en]) { expect(mail.html).toContain('#0B1F44'); expect(mail.html).toContain('#F7761E'); expect(mail.html).toContain('cid:almorad-logo'); }
   });
 
   it('shows contact details in the footer only when the owner supplied them', () => {

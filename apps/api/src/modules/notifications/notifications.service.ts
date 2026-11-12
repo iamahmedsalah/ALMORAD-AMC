@@ -1,10 +1,11 @@
 import {emailSender} from './sender.js';
+import {emailArtwork} from './email-artwork.js';
 import {renderBookingUpdateEmail} from './templates/booking-update.template.js';
 import {Injectable, Logger, Inject} from '@nestjs/common';
 import {createHmac, randomBytes} from 'node:crypto';
 import {Resend} from 'resend';
 import {PrismaService} from '../../prisma/prisma.service.js';
-import {generateIcs,services} from '@amc/shared';
+import {generateIcs,services,officeAddress} from '@amc/shared';
 import {renderBookingConfirmationEmail} from './templates/booking-confirmation.template.js';
 import {renderBookingRescheduledEmail} from './templates/booking-rescheduled.template.js';
 import {renderBookingOwnerEmail} from './templates/booking-owner.template.js';
@@ -47,7 +48,7 @@ export class NotificationsService {
     this.fromEmail = emailSender(process.env.RESEND_FROM_EMAIL,'contact');
     this.bookingFromEmail = emailSender(process.env.RESEND_BOOKING_FROM_EMAIL,'booking');
     this.replyTo = process.env.REPLY_TO_EMAIL || 'hello@almorad-amc.com';
-    this.webOrigin = process.env.WEB_ORIGIN || vercelOrigin || 'http://localhost:3000';
+    this.webOrigin = (process.env.VERCEL?vercelOrigin:undefined) || process.env.WEB_ORIGIN || vercelOrigin || 'http://localhost:3000';
     this.tokenSecret = process.env.BOOKING_TOKEN_SECRET || randomBytes(32).toString('hex');
   }
 
@@ -83,11 +84,12 @@ export class NotificationsService {
       throw new Error('Email delivery is not configured');
     }
     const response = await this.resend.emails.send(
-      {from: message.from || this.fromEmail, to: message.to, subject: message.subject, text: message.text, html: message.html, replyTo: message.replyTo || this.replyTo},
+      {from: message.from || this.fromEmail, to: message.to, subject: message.subject, text: message.text+'\n\n'+officeAddress.en, html: message.html, replyTo: message.replyTo || this.replyTo,attachments:message.html.includes('cid:almorad-logo')?emailArtwork():undefined},
       {headers: {'Idempotency-Key': message.idempotencyKey}}
     );
     if (response.error) throw new Error(`Resend error: ${response.error.name} - ${response.error.message}`);
-    return response.data?.id || '';
+    if(!response.data?.id)throw new Error('Email provider did not acknowledge the message');
+    return response.data.id;
   }
 
   /**
@@ -137,6 +139,12 @@ export class NotificationsService {
           continue;
         }
 
+        // Do not send an obsolete receipt after an admin has archived the meeting.
+        if(booking.deletedAt&&item.kind.split(':')[0]!=='BOOKING_CANCELLED'){
+          await this.prisma.bookingOutbox.update({where:{id:item.id},data:{status:'SKIPPED',lastError:null,nextRetryAt:null}});
+          succeeded++;continue;
+        }
+
         // If Resend is not configured, do NOT falsely commit 'DELIVERED'
         if (!this.resend) {
           this.logger.warn(`Email not sent for ${booking.reference}: RESEND_API_KEY is not configured`);
@@ -166,11 +174,11 @@ export class NotificationsService {
         const isRescheduled = eventKind==='BOOKING_RESCHEDULED';
 
         let emailContent: {subject: string; text: string; html: string};
-        let attachments: {filename: string; content: Buffer}[] | undefined;
+        let attachments: {filename: string; content: Buffer;contentId?:string;contentType?:string}[] | undefined;
 
         if(ownerAlert){
-          emailContent=renderBookingOwnerEmail({eventKind,reference:booking.reference,clientName:booking.clientName,email:booking.email,phone:booking.phone,serviceTitle,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,staffUrl:`${this.webOrigin}/en/staff/calendar`});
-        } else if (!['BOOKING_CREATED','BOOKING_RESCHEDULED','BOOKING_CANCELLED'].includes(eventKind)) {
+          emailContent=renderBookingOwnerEmail({eventKind,reference:booking.reference,clientName:booking.clientName,email:booking.email,phone:booking.phone,notes:booking.notes,company:booking.company,officeAddress:booking.calendar.officeAddressEn,serviceTitle,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,staffUrl:`${this.webOrigin}/en/staff/calendar`});
+        } else if (!['BOOKING_CREATED','BOOKING_RESCHEDULED','BOOKING_CANCELLED','BOOKING_ACCESS_RECOVERY'].includes(eventKind)) {
           emailContent=renderBookingUpdateEmail({kind:eventKind,proposedStartAt,reference:booking.reference,clientName:booking.clientName,serviceTitle,locale:booking.locale,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,managementUrl,meetingUrl:booking.meetingUrl,officeAddress:booking.locale==='ar'?booking.calendar.officeAddressAr:booking.calendar.officeAddressEn});
         } else if (isCancelled) {
           emailContent = renderBookingCancelledEmail({
@@ -220,7 +228,7 @@ export class NotificationsService {
             });
           } else {
             emailContent = renderBookingConfirmationEmail({
-              status:booking.status,
+              status:booking.status,email:booking.email,phone:booking.phone,company:booking.company,
               reference: booking.reference,
               clientName: booking.clientName,
               serviceTitle,
@@ -247,10 +255,10 @@ export class NotificationsService {
             from: this.bookingFromEmail,
             to: ownerAlert ? ownerInbox! : booking.email,
             subject: emailContent.subject,
-            text: emailContent.text,
+            text: emailContent.text+'\n\n'+officeAddress[booking.locale==='ar'?'ar':'en'],
             html: emailContent.html,
             replyTo: ownerAlert ? booking.email : (ownerInbox || this.replyTo),
-            attachments
+            attachments:[...(attachments||[]),...emailArtwork()]
           },
           {
             headers: {
@@ -262,7 +270,8 @@ export class NotificationsService {
         if (resendResponse.error) {
           throw new Error(`Resend error: ${resendResponse.error.name} - ${resendResponse.error.message}`);
         }
-        const resendId = resendResponse.data?.id || '';
+        const resendId = resendResponse.data?.id;
+        if(!resendId)throw new Error('Email provider did not acknowledge the message');
 
         // Commit success atomically
         await this.prisma.$transaction([

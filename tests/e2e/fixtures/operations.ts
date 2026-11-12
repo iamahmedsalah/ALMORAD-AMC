@@ -27,7 +27,7 @@ const analytics: Analytics = {
   trend: [{ date: new Date().toISOString().slice(0, 10), count: 6 }],
 };
 
-export async function mockOperations(page: Page, role: StaffRole = 'CEO') {
+export async function mockOperations(page: Page, role: StaffRole = 'ADMIN') {
   await page.route('**/api/**', async route => {
     const url = new URL(route.request().url());
     const path = url.pathname.replace('/api/', '');
@@ -35,6 +35,8 @@ export async function mockOperations(page: Page, role: StaffRole = 'CEO') {
     if (path === 'staff/auth/session') json = { staff: { id: 'ui-fixture', email: 'ui-preview@example.invalid', role }, csrfToken: 'ui-fixture-csrf' };
     else if (path === 'booking/config') json = { enabled: true, schedule };
     else if (path === 'booking/slots') json = { timezone: 'Africa/Cairo', isDemo: true, slots: [{ startsAt: booking.startsAt, endsAt: booking.endsAt }] };
+    else if (path === 'booking/recover'||path === 'booking/resend') json={accepted:true};
+    else if (path === 'staff/appointments/assignees') json=[{id:'00000000-0000-4000-8000-000000000002',email:'manager@example.invalid'}];
     else if (path === 'booking/create') json = { booking, token: 'a'.repeat(64) };
     else if (path === 'booking/manage') json = { booking, schedule };
     else if (path === 'staff/appointments') json = { items: [booking], total: 1, page: 0, timezone: 'Africa/Cairo', isDemo: true };

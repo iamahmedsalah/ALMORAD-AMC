@@ -51,6 +51,12 @@ export class PublicBookingController {
   @Post('manage') @Header('Cache-Control','no-store')
   manage(@Body() input:unknown){return this.bookings.manage(input);}
 
+  @Post('recover') @Header('Cache-Control','no-store') @Throttle({default:{limit:3,ttl:60000}})
+  async recover(@Body() input:unknown){const result=await this.bookings.recover(input);this.deliver();return result;}
+
+  @Post('resend') @Header('Cache-Control','no-store') @Throttle({default:{limit:3,ttl:60000}})
+  async resend(@Body() input:unknown){const result=await this.bookings.resendConfirmation(input);this.deliver();return result;}
+
   @ApiOperation({ summary: 'Client booking action', description: 'Request reschedule or cancellation by client.' })
   @Post('action') @Header('Cache-Control','no-store') @Throttle({default:{limit:10,ttl:60000}})
   async action(@Body() input:unknown){const result=await this.bookings.clientAction(input);this.deliver();return result;}
@@ -67,20 +73,23 @@ export class StaffBookingsController {
 
   @ApiOperation({ summary: 'List appointments', description: 'Filter and paginate studio client bookings.' })
   @Get() @Header('Cache-Control','no-store')
-  list(@Query() input:Record<string,unknown>){return this.bookings.list(input);}
+  list(@Req() request:StaffRequest,@Query() input:Record<string,unknown>){return this.bookings.list(input,request.staff!);}
 
   @ApiOperation({ summary: 'Appointment detail', description: 'Get complete appointment record including audit history.' })
   @ApiQuery({ name: 'id', required: true, description: 'Booking ID' })
   @Get('detail') @Header('Cache-Control','no-store')
-  detail(@Query('id') id:string){return this.bookings.staffDetail(id);}
+  detail(@Req() request:StaffRequest,@Query('id') id:string){return this.bookings.staffDetail(id,request.staff!);}
+
+  @Get('assignees') @Header('Cache-Control','no-store') @RequirePermission('appointments:assign')
+  assignees(){return this.bookings.assignees();}
 
   @ApiOperation({ summary: 'Staff create appointment', description: 'Create an internal appointment with staff confirmation.' })
   @Post('create') @Header('Cache-Control','no-store') @RequirePermission('appointments:write')
-  async create(@Req() request:StaffRequest,@Body() input:unknown){const result=await this.bookings.create(input,request.staff!.id);this.deliver();return result;}
+  async create(@Req() request:StaffRequest,@Body() input:unknown){const result=await this.bookings.create(input,request.staff!.id,request.staff!.role);this.deliver();return result;}
 
   @ApiOperation({ summary: 'Staff update appointment action', description: 'Confirm, reschedule, complete, or cancel booking.' })
   @Post('action') @Header('Cache-Control','no-store') @RequirePermission('appointments:write')
-  async action(@Req() request:StaffRequest,@Body() input:unknown){const result=await this.bookings.staffAction(input,request.staff!.id);this.deliver();return result;}
+  async action(@Req() request:StaffRequest,@Body() input:unknown){const result=await this.bookings.staffAction(input,request.staff!.id,request.staff!.role);this.deliver();return result;}
 }
 
 @ApiTags('Staff Booking Settings')

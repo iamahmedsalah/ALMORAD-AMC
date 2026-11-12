@@ -15,7 +15,7 @@ const value=process.env.TEST_DATABASE_URL;if(!value)throw new Error('TEST_DATABA
 const url=new URL(value);if(process.env.NODE_ENV==='production'||!['127.0.0.1','localhost'].includes(url.hostname)||!url.pathname.endsWith('_test'))throw new Error('Requires isolated local *_test PostgreSQL');
 const prisma=new PrismaClient({adapter:new PrismaPg({connectionString:value})});
 const ids=[randomUUID(),randomUUID(),randomUUID()];const password='Only for isolated test 123';let app:INestApplication;let auth:AuthService;
-beforeAll(async()=>{await prisma.$connect();const passwordHash=await hashPassword(password);await prisma.staffUser.createMany({data:[{id:ids[0],email:`${ids[0]}@example.invalid`,role:'MANAGER',passwordHash},{id:ids[1],email:`${ids[1]}@example.invalid`,role:'RECEPTIONIST',passwordHash},{id:ids[2],email:`${ids[2]}@example.invalid`,role:'RECEPTIONIST',passwordHash}]});const testingModule=await Test.createTestingModule({imports:[AppModule]}).overrideProvider(PrismaService).useValue(prisma).compile();auth=testingModule.get(AuthService);app=testingModule.createNestApplication();await app.init();});
+beforeAll(async()=>{await prisma.$connect();const passwordHash=await hashPassword(password);await prisma.staffUser.createMany({data:[{id:ids[0],email:`${ids[0]}@example.invalid`,role:'ADMIN',passwordHash},{id:ids[1],email:`${ids[1]}@example.invalid`,role:'RECEPTIONIST',passwordHash},{id:ids[2],email:`${ids[2]}@example.invalid`,role:'RECEPTIONIST',passwordHash}]});const testingModule=await Test.createTestingModule({imports:[AppModule]}).overrideProvider(PrismaService).useValue(prisma).compile();auth=testingModule.get(AuthService);app=testingModule.createNestApplication();await app.init();});
 afterAll(async()=>{await app?.close();await prisma.staffAuditEvent.deleteMany({where:{OR:[{actorId:{in:ids}},{subjectId:{in:ids}}]}});await prisma.staffUser.deleteMany({where:{id:{in:ids}}});await prisma.$disconnect();});
 describe('persisted staff access and mutation security',()=>{
  it('never leaves a new session from a password being changed concurrently',async()=>{
@@ -27,23 +27,23 @@ describe('persisted staff access and mutation security',()=>{
   expect(await prisma.staffSession.count({where:{userId:ids[2]}})).toBe(0);
  });
  it('issues only HttpOnly cookies, enforces CSRF/RBAC and revokes sessions on password change',async()=>{
-  const manager=request.agent(app.getHttpServer());const receptionist=request.agent(app.getHttpServer());const origin='http://localhost:3000';
-  await manager.post('/staff/auth/login').set('Origin','https://evil.invalid').send({email:`${ids[0]}@example.invalid`,password}).expect(403);
-  const signIn=await manager.post('/staff/auth/login').set('Origin',origin).send({email:`${ids[0]}@example.invalid`,password}).expect(200);
+  const admin=request.agent(app.getHttpServer());const receptionist=request.agent(app.getHttpServer());const origin='http://localhost:3000';
+  await admin.post('/staff/auth/login').set('Origin','https://evil.invalid').send({email:`${ids[0]}@example.invalid`,password}).expect(403);
+  const signIn=await admin.post('/staff/auth/login').set('Origin',origin).send({email:`${ids[0]}@example.invalid`,password}).expect(200);
   const csrf=signIn.body.csrfToken;expect(signIn.headers['set-cookie'][0]).toContain('HttpOnly');expect(signIn.headers['set-cookie'][0]).toContain('SameSite=Strict');expect(signIn.body.token).toBeUndefined();
   const stored=await prisma.staffSession.findFirstOrThrow({where:{userId:ids[0]}});expect(signIn.headers['set-cookie'][0]).not.toContain(stored.tokenHash);
-  await manager.get('/staff/auth/session').expect(200);await manager.get('/staff/security/overview').expect(200);
-  await manager.post('/staff/auth/logout').set('Origin',origin).send({}).expect(403);
-  await manager.post('/staff/auth/logout').set('Origin','https://evil.invalid').set('X-CSRF-Token',csrf).send({}).expect(403);
+  await admin.get('/staff/auth/session').expect(200);await admin.get('/staff/security/overview').expect(200);
+  await admin.post('/staff/auth/logout').set('Origin',origin).send({}).expect(403);
+  await admin.post('/staff/auth/logout').set('Origin','https://evil.invalid').set('X-CSRF-Token',csrf).send({}).expect(403);
   await receptionist.post('/staff/auth/login').set('Origin',origin).send({email:`${ids[1]}@example.invalid`,password}).expect(200);
   await receptionist.get('/staff/security/overview').expect(403);await receptionist.get('/staff/security/audit').expect(403);
   const before=await prisma.staffSession.findFirstOrThrow({where:{userId:ids[1]}});
-  await manager.post('/staff/security/revoke').set('Origin',origin).set('X-CSRF-Token',csrf).send({id:before.id}).expect(404);
-  await manager.post('/staff/auth/password').set('Origin',origin).set('X-CSRF-Token',csrf).send({currentPassword:password,newPassword:'New isolated password 456'}).expect(200);
-  expect(await prisma.staffSession.count({where:{userId:ids[0]}})).toBe(0);await manager.get('/staff/auth/session').expect(401);
-  await manager.post('/staff/auth/login').set('Origin',origin).send({email:`${ids[0]}@example.invalid`,password}).expect(401);
-  const again=await manager.post('/staff/auth/login').set('Origin',origin).send({email:`${ids[0]}@example.invalid`,password:'New isolated password 456'}).expect(200);
-  await manager.post('/staff/auth/logout').set('Origin',origin).set('X-CSRF-Token',again.body.csrfToken).send({}).expect(200);await manager.get('/staff/auth/session').expect(401);
+  await admin.post('/staff/security/revoke').set('Origin',origin).set('X-CSRF-Token',csrf).send({id:before.id}).expect(404);
+  await admin.post('/staff/auth/password').set('Origin',origin).set('X-CSRF-Token',csrf).send({currentPassword:password,newPassword:'New isolated password 456'}).expect(200);
+  expect(await prisma.staffSession.count({where:{userId:ids[0]}})).toBe(0);await admin.get('/staff/auth/session').expect(401);
+  await admin.post('/staff/auth/login').set('Origin',origin).send({email:`${ids[0]}@example.invalid`,password}).expect(401);
+  const again=await admin.post('/staff/auth/login').set('Origin',origin).send({email:`${ids[0]}@example.invalid`,password:'New isolated password 456'}).expect(200);
+  await admin.post('/staff/auth/logout').set('Origin',origin).set('X-CSRF-Token',again.body.csrfToken).send({}).expect(200);await admin.get('/staff/auth/session').expect(401);
   expect(await prisma.staffAuditEvent.count({where:{actorId:ids[0],action:'PASSWORD_CHANGED'}})).toBe(1);
  });
 });
