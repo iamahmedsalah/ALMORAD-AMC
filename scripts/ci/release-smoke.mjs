@@ -2,7 +2,7 @@ import {setTimeout} from 'node:timers/promises';
 import {releaseOrigin,releaseHeaders} from './release-origin.mjs';
 const {origin,vercel}=releaseOrigin(process.env.RELEASE_URL);
 const headers=releaseHeaders(vercel,process.env.VERCEL_AUTOMATION_BYPASS_SECRET);
-for(const path of ['/health','/health/ready','/api/booking/config','/en','/ar','/en/contact','/ar/contact','/en/booking','/ar/booking','/robots.txt','/sitemap.xml']){
+for(const path of ['/health','/health/ready','/api/booking/config','/en','/ar','/en/contact','/ar/contact','/en/booking','/ar/booking','/robots.txt','/sitemap.xml',...['ahmed-soliman','alaa-hassen','belal-khaled-morad','gina-raafat','mayar-alaa','mohamed-khaled-morad','omar-allam'].map(name=>'/images/team/'+name+'.webp')]){
   let passed=false;
   let status=null,category=null;
   for(let attempt=0;attempt<4;attempt++){
@@ -12,6 +12,7 @@ for(const path of ['/health','/health/ready','/api/booking/config','/en','/ar','
       if(response.status===200){
         if(path==='/health/ready'){const json=await response.json();passed=json.status==='ok'&&json.database==='up';}
         else if(path==='/api/booking/config'){const json=await response.json();passed=typeof json.enabled==='boolean'&&Array.isArray(json.services);}
+        else if(path.startsWith('/images/team/')){passed=response.headers.get('content-type')?.startsWith('image/webp')===true&&(await response.arrayBuffer()).byteLength>0;}
         else{await response.body?.cancel();passed=true;}
       }else if(path==='/health/ready'){
         const json=await response.json();

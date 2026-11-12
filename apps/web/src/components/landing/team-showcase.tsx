@@ -67,7 +67,7 @@ const CEO_MEMBER: TeamMember = {
 const CO_LEADERSHIP: readonly TeamMember[] = [
   {
     "id": "coo",
-    photo: "/images/team/belal-khaled-morad.jpg",
+    photo: "/images/team/belal-khaled-morad.webp",
     "badge": "COO",
     "name": {
       "en": "Dr. Belal Khaled Morad",
@@ -86,7 +86,7 @@ const CO_LEADERSHIP: readonly TeamMember[] = [
   {
     "id": "co-ceo",
     linkedinUrl: "https://www.linkedin.com/in/mohamed-khaled-morad-97882a1b0/",
-    photo: "/images/team/mohamed-khaled-morad.png",
+    photo: "/images/team/mohamed-khaled-morad.webp",
     "badge": "CO-CEO",
     "name": {
       "en": "Eng. Mohamed Khaled Morad",
@@ -120,7 +120,7 @@ const CORE_TEAM: readonly TeamMember[] = [
     },
     "badge": "BUSINESS DEVELOPMENT",
     "avatarType": "client",
-    "photo": "/images/team/gina-raafat.jpeg",
+    "photo": "/images/team/gina-raafat.webp",
     "linkedinUrl": "https://www.linkedin.com/in/gina-raafat-a24a6a447/"
   },
   {
@@ -156,7 +156,7 @@ const CORE_TEAM: readonly TeamMember[] = [
     },
     "badge": "SOCIAL MEDIA & MODERATION",
     "avatarType": "client",
-    "photo": "/images/team/mayar-alaa.jpeg",
+    "photo": "/images/team/mayar-alaa.webp",
     "linkedinUrl": "https://www.linkedin.com/in/mayar-alaa-722523447/"
   },
   {
@@ -175,7 +175,7 @@ const CORE_TEAM: readonly TeamMember[] = [
     },
     "badge": "ACCOUNT MANAGEMENT",
     "avatarType": "client",
-    "photo": "/images/team/alaa-hassen.jpeg",
+    "photo": "/images/team/alaa-hassen.webp",
     "linkedinUrl": "https://www.linkedin.com/in/alaa-hassan-722523447/"
   },
   {
@@ -194,7 +194,7 @@ const CORE_TEAM: readonly TeamMember[] = [
     },
     "badge": "MARKETING",
     "avatarType": "growth",
-    "photo": "/images/team/omar-allam.png",
+    "photo": "/images/team/omar-allam.webp",
     "linkedinUrl": "https://www.linkedin.com/in/omar3llam/"
   },
   {
@@ -213,14 +213,14 @@ const CORE_TEAM: readonly TeamMember[] = [
     },
     "badge": "DIGITAL ENGINEERING",
     "avatarType": "tech",
-    "photo": "/images/team/ahmed-soliman.jpg",
+    "photo": "/images/team/ahmed-soliman.webp",
     "linkedinUrl": "https://www.linkedin.com/in/iamahmedsoliman/",
     "photoPosition": "50% 80%"
   }
 ];
 
 function MemberPortrait({member, locale, featured=false}: {member: TeamMember; locale: Locale; featured?: boolean}) {
-  return member.photo ? <Image src={member.photo} alt={member.name[locale]} fill sizes="(max-width: 767px) 70vw, 260px" style={{objectFit: 'cover', objectPosition: member.photoPosition || '50% 25%'}}/> : <ExecutivePortraitSvg type={member.avatarType} isFeatured={featured}/>;
+  return member.photo ? <Image unoptimized src={member.photo} alt={member.name[locale]} fill sizes="(max-width: 767px) 70vw, 260px" style={{objectFit: 'cover', objectPosition: member.photoPosition || '50% 25%'}}/> : <ExecutivePortraitSvg type={member.avatarType} isFeatured={featured}/>;
 }
 
 function MemberLinkedIn({member, locale}: {member: TeamMember; locale: Locale}) {
