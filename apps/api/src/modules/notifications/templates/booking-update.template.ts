@@ -19,7 +19,7 @@ export function renderBookingUpdateEmail(input:BookingConfirmationTemplateInput&
  const location=input.meetingType==='IN_PERSON'?input.officeAddress:input.meetingUrl;
  const proposed=input.proposedStartAt?`${ar?'الموعد المقترح':'Proposed time'}: ${format(new Date(input.proposedStartAt))}`:'';
  const fallback=input.meetingType==='ONLINE'?(ar?'سيضيف الفريق رابط الاجتماع بعد تجهيزه.':'Our team will add the meeting link when ready.'):(ar?'في المكتب':'In person');
- const details=[input.reference,input.serviceTitle,`${format(input.startsAt)} – ${format(input.endsAt)} (${input.timezone})`,location||fallback,proposed].filter(Boolean);
+ const details=[input.managerName?(ar?'\u0645\u0639: ':'Meeting with: ')+input.managerName:null,input.reference,input.serviceTitle,`${format(input.startsAt)} – ${format(input.endsAt)} (${input.timezone})`,location||fallback,proposed].filter(Boolean);
  const text=`${heading}\n\n${intro}\n\n${details.join('\n')}\n\n${input.managementUrl}`;
  const html=renderEmailLayout({locale:input.locale,heading,preheader:intro,bodyHtml:`<p>${escapeHtml(intro)}</p>${details.map(value=>`<p>${escapeHtml(value!)}</p>`).join('')}`,cta:{label:ar?'إدارة الموعد':'Manage appointment',url:input.managementUrl}});
  return {subject:`${heading} | ${input.reference}`,text,html};

@@ -19,3 +19,9 @@ it('embeds original PNG artwork with the Content-ID used in every email shell',(
  expect(artwork.contentId).toBe('almorad-logo');expect(artwork.content.subarray(1,4).toString()).toBe('PNG');
  expect(renderContactVisitorEmail({...input,locale:'ar'}).html).toContain(officeAddress.ar);
 });
+
+it('identifies the assigned manager in confirmed client emails and escapes the name',async()=>{
+ const {renderBookingConfirmationEmail}=await import('./templates/booking-confirmation.template.js');
+ const result=renderBookingConfirmationEmail({managerName:'Mohamed <Khaled>',reference:'FIXTURE',clientName:'Client',serviceTitle:'Branding',locale:'en',meetingType:'ONLINE',startsAt:new Date('2026-11-15T10:00:00Z'),endsAt:new Date('2026-11-15T10:30:00Z'),timezone:'Africa/Cairo',managementUrl:'https://example.invalid/private',status:'CONFIRMED'});
+ expect(result.html).toContain('Mohamed &lt;Khaled&gt;');expect(result.html).not.toContain('Mohamed <Khaled>');expect(result.text).toContain('Meeting with: Mohamed <Khaled>');expect(result.subject).toContain('confirmed');
+});

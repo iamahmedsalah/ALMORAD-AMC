@@ -3,6 +3,7 @@ import {escapeHtml, renderEmailLayout} from './email-layout.js';
 export type MeetingType = 'ONLINE' | 'IN_PERSON';
 
 export interface BookingConfirmationTemplateInput {
+  managerName?: string;
   reference: string;
   clientName: string;
   serviceTitle: string;
@@ -74,6 +75,7 @@ export function renderBookingConfirmationEmail(input: BookingConfirmationTemplat
       ${detailsRow(isAr ? 'المكان' : 'Location', escapeHtml(locationText))}
       ${input.meetingType === 'ONLINE' && input.meetingUrl ? detailsRow(isAr ? 'رابط الاجتماع' : 'Join meeting', `<a href="${escapeHtml(input.meetingUrl)}">${escapeHtml(input.meetingUrl)}</a>`) : ''}
       ${input.meetingType === 'IN_PERSON' && input.directionsUrl ? detailsRow(isAr ? 'الاتجاهات' : 'Directions', `<a href="${escapeHtml(input.directionsUrl)}" style="color: #F7761E; text-decoration: underline;">${isAr ? 'عرض على خرائط جوجل' : 'View on Google Maps'}</a>`) : ''}
+      ${input.managerName?detailsRow(isAr?'\u0645\u0639':'Meeting with',escapeHtml(input.managerName)):''}
     </table>
     <p style="margin: 16px 0 0; font-size: 14px; color: #625D52;">
       ${isAr ? 'تم إرفاق ملف التقويم (.ics) لتثبيت الموعد على تقويمك الشخصي.' : 'A calendar invite (.ics) is attached to add this meeting to your calendar.'}
@@ -100,6 +102,7 @@ export function renderBookingConfirmationEmail(input: BookingConfirmationTemplat
     ? `مرحباً ${input.clientName}،\n\nتم حفظ طلب موعدك لدى المراد AMC. سيراجع الفريق التفاصيل.\n\nرقم المرجع: ${input.reference}\nالخدمة: ${input.serviceTitle}\nالموعد: ${formattedTime} (${input.timezone})\nالمكان: ${locationText}\n${input.directionsUrl ? `اتجاهات الوصول: ${input.directionsUrl}\n` : ''}\nإدارة موعدك:\n${input.managementUrl}\n\nفريق المراد AMC\nhttps://almorad-amc.com`
     : `Hello ${input.clientName},\n\nYour appointment request with ALMORAD AMC was saved. Our team will review the meeting details.\n\nReference: ${input.reference}\nService: ${input.serviceTitle}\nDate & Time: ${formattedTime} (${input.timezone})\nLocation: ${locationText}\n${input.directionsUrl ? `Directions: ${input.directionsUrl}\n` : ''}\nManage your booking:\n${input.managementUrl}\n\nALMORAD AMC Team\nhttps://almorad-amc.com`;
 
+  if(input.managerName)text+='\n'+(isAr?'\u0645\u0639: ':'Meeting with: ')+input.managerName;
   if(confirmed){
     const old=isAr?'تم حفظ طلب موعدك لدى المراد AMC. سيراجع الفريق التفاصيل.':'Your appointment request with ALMORAD AMC was saved. Our team will review the meeting details.';
     text=text.replace(old,isAr?'تم تأكيد موعدك لدى المراد AMC.':'Your appointment with ALMORAD AMC is confirmed.');

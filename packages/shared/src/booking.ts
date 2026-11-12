@@ -11,6 +11,7 @@ export const settingsInput=z.object({version:z.number().int().min(0),enabled:z.b
 export type ScheduleInput=z.infer<typeof settingsInput>;
 export type Schedule=ScheduleInput&{isDemo:boolean};
 export const createBookingInput=z.object({
+  assignedToId:z.uuid().optional(),
   idempotencyKey:z.uuid(),
   durationMinutes:z.number().int().refine(value=>bookingDurations.some(duration=>duration===value)).optional(),
   serviceSlug:z.string().max(80),
@@ -30,7 +31,7 @@ export const recoverBookingInput=z.object({identifier:z.string().trim().max(254)
 export const clientActionInput=manageInput.extend({idempotencyKey:z.uuid(),action:z.enum(['RESCHEDULE','CANCEL','ACCEPT_ALTERNATIVE','WITHDRAW']),reason:z.string().trim().min(3).max(1000),startsAt:z.iso.datetime().optional()}).strict();
 export const meetingUrlInput=z.url().max(1000).refine(value=>{try{const url=new URL(value);return url.protocol==='https:'&&!url.username&&!url.password&&['meet.google.com','zoom.us','teams.microsoft.com','teams.live.com'].some(host=>url.hostname===host||url.hostname.endsWith('.'+host));}catch{return false;}},'Use an HTTPS Google Meet, Zoom or Microsoft Teams link');
 export const staffActionInput=z.object({id:z.uuid(),version:z.number().int().min(1),idempotencyKey:z.uuid(),action:z.enum(['CONFIRM','CANCEL','COMPLETE','NO_SHOW','RESCHEDULE','EDIT','REVIEW','APPROVE','DECLINE','PROPOSE','DELETE']),reason:z.string().trim().min(3).max(1000),startsAt:z.iso.datetime().optional(),clientName:z.string().trim().min(2).max(120).optional(),email:z.email().max(254).optional(),phone:z.string().trim().max(40).optional(),company:z.string().trim().max(120).optional(),notes:z.string().trim().max(1500).optional(),meetingUrl:meetingUrlInput.nullable().optional(),assignedToId:z.uuid().nullable().optional()}).strict();
-export type BookingRow={id:string;reference:string;serviceSlug:string;meetingType:'ONLINE'|'IN_PERSON';status:typeof bookingStatuses[number];clientName:string;email:string;phone:string|null;company:string|null;notes:string|null;meetingUrl?:string|null;assignedToId?:string|null;locale:string;timezone:string;startsAt:string;endsAt:string;createdAt:string;version:number;isDemo:boolean;changes:ChangeRow[]};
+export type BookingRow={id:string;reference:string;serviceSlug:string;meetingType:'ONLINE'|'IN_PERSON';status:typeof bookingStatuses[number];clientName:string;email:string;phone:string|null;company:string|null;notes:string|null;meetingUrl?:string|null;assignedToId?:string|null;assignedTo?:{firstName:string;lastName:string}|null;locale:string;timezone:string;startsAt:string;endsAt:string;createdAt:string;version:number;isDemo:boolean;changes:ChangeRow[]};
 export type ChangeRow={id:string;kind:'RESCHEDULE'|'CANCEL';status:typeof changeStatuses[number];requestedStartAt:string|null;proposedStartAt:string|null;reason:string;staffResponse:string|null;createdAt:string;resolvedAt:string|null};
 export type BookingDetail=BookingRow&{events:{id:string;kind:string;details:Record<string,unknown>;createdAt:string}[];notifications:{status:string;kind:string;createdAt:string}[]};
 export type BookingList={items:BookingRow[];total:number;page:number;timezone:string;isDemo:boolean};

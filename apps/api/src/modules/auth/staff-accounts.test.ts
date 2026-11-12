@@ -45,3 +45,11 @@ it('rejects unknown fields and unsupported roles before persistence',async()=>{
  await expect(service.create(randomUUID(),{email:'staff@example.com',password:'Synthetic-test-password-73',role:'ADMIN',active:true})).rejects.toMatchObject({status:400});
  expect(prisma.$transaction).not.toHaveBeenCalled();
 });
+
+it('updates staff names while revoking sessions and rejects overlong names',async()=>{
+ const id=randomUUID();const tx={$queryRaw:vi.fn(),staffUser:{findUnique:vi.fn().mockResolvedValue({id,role:'MANAGER',active:true}),update:vi.fn().mockResolvedValue({id,firstName:'Mohamed',lastName:'Khaled Morad'})},staffSession:{deleteMany:vi.fn()},staffAuditEvent:{create:vi.fn()}};
+ const service=new StaffAccountsService({$transaction:async(fn:(value:typeof tx)=>unknown)=>fn(tx)} as unknown as PrismaService);
+ await service.update(randomUUID(),{id,firstName:' Mohamed ',lastName:' Khaled Morad '});
+ expect(tx.staffUser.update).toHaveBeenCalledWith(expect.objectContaining({data:expect.objectContaining({firstName:'Mohamed',lastName:'Khaled Morad'})}));expect(tx.staffSession.deleteMany).toHaveBeenCalledWith({where:{userId:id}});
+ await expect(service.update(randomUUID(),{id,firstName:'x'.repeat(81)})).rejects.toMatchObject({status:400});
+});

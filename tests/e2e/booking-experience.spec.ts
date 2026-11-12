@@ -39,11 +39,14 @@ test('format filtering reaches the API and staff can add an online meeting link'
  await page.locator('.calendar-appointment').click();await expect(page.locator('input[name="meetingUrl"]')).toBeVisible();
 });
 for(const locale of ['en','ar'])test(`inquiry includes the visitor phone ${locale}`,async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});
  await mockOperations(page);let submitted:Record<string,unknown>|undefined;
  await page.route('**/api/contact/submit',route=>{submitted=route.request().postDataJSON();return route.fulfill({json:{accepted:true}});});
  await page.goto(`/${locale}/contact`);
+ await expect(page.locator('.amc-preloader[data-hidden="false"]')).toHaveCount(0);
  await page.locator('#contact-name').fill('UI Fixture Inquiry');await page.locator('#contact-email').fill('inquiry@example.invalid');
  await page.locator('#contact-phone').fill('+1 202 555 0100');await page.locator('#contact-message').fill('Synthetic inquiry for browser testing only.');
+ await page.locator('#contact-message').press('Tab');await expect(page.locator('#contact-err-message')).toBeVisible();
  await page.locator('.contact-consent input').check();await page.locator('.contact-form-panel button[type="submit"]').click();
  await expect(page.locator('.contact-success')).toBeVisible();expect(submitted?.phone).toBe('+1 202 555 0100');
 });

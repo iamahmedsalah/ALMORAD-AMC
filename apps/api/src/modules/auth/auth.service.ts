@@ -8,7 +8,7 @@ import {hashPassword,tokenHash,verifyPassword} from './security.js';
 import type {StaffRequest} from './session.guard.js';
 const credentials=z.object({email:staffEmailSchema,password:z.string().min(1).max(128)}).strict();
 const change=z.object({currentPassword:z.string().min(1).max(128),newPassword:z.string().min(12).max(128)}).strict();
-const publicUser={id:true,email:true,role:true} as const;
+const publicUser={id:true,email:true,firstName:true,lastName:true,role:true} as const;
 @Injectable()
 export class AuthService {
   constructor(@Inject(PrismaService) private readonly prisma:PrismaService,@Inject(CsrfService) private readonly csrf:CsrfService){}
@@ -28,7 +28,7 @@ export class AuthService {
       await tx.staffSession.create({data:{tokenHash:tokenHash(token),userId:user.id,expiresAt}});
       await tx.staffAuditEvent.create({data:{actorId:user.id,subjectId:user.id,action:'SIGNED_IN'}});
     });
-    return {token,expiresAt,staff:{id:user.id,email:user.email,role:user.role},csrfToken:this.csrf.token(token)};
+    return {token,expiresAt,staff:{id:user.id,email:user.email,firstName:user.firstName,lastName:user.lastName,role:user.role},csrfToken:this.csrf.token(token)};
   }
   async session(request:StaffRequest) {
     const staff=await this.prisma.staffUser.findUnique({where:{id:request.staff!.id},select:publicUser});if(!staff)throw new UnauthorizedException();

@@ -38,7 +38,7 @@ it('scopes manager agenda and total counts to assigned, non-deleted meetings',as
  const db={booking:{findMany:vi.fn().mockResolvedValue([]),count:vi.fn().mockResolvedValue(0)},$transaction:async(values:Promise<unknown>[])=>Promise.all(values)};
  const service=new BookingsService(db as unknown as PrismaService);
  vi.spyOn(service,'getSettings').mockResolvedValue({timezone:'Africa/Cairo',isDemo:false} as never);
- await service.list({from:'2026-11-12',to:'2026-11-14'},{id:manager,role:'MANAGER'});
+ await service.list({from:'2026-11-12',to:'2026-11-14',assignment:'unassigned'},{id:manager,role:'MANAGER'});
  for(const call of [db.booking.findMany.mock.calls[0],db.booking.count.mock.calls[0]])expect(call?.[0]).toMatchObject({where:{assignedToId:manager,deletedAt:null}});
 });
 it('denies a manager direct detail and update access to another managers meeting',async()=>{
@@ -70,4 +70,24 @@ it('allows a manager to edit their assigned meeting and archives an admin-delete
  const archived=tx.booking.update.mock.calls.at(-1)?.[0].data;
  expect(archived).not.toHaveProperty('status');expect(archived).toHaveProperty('deletedAt');
  expect(tx.bookingOutbox.create).toHaveBeenCalledWith(expect.objectContaining({data:expect.objectContaining({kind:'BOOKING_DELETED:EMAIL',status:'SKIPPED'})}));
+});
+
+it('lets receptionists find legacy unassigned records without changing ownership',async()=>{
+ const db={booking:{findMany:vi.fn().mockResolvedValue([]),count:vi.fn().mockResolvedValue(0)},$transaction:async(values:Promise<unknown>[])=>Promise.all(values)};
+ const service=new BookingsService(db as unknown as PrismaService);vi.spyOn(service,'getSettings').mockResolvedValue({timezone:'Africa/Cairo',isDemo:false} as never);
+ await service.list({from:'2026-11-12',to:'2026-11-14',assignment:'unassigned'},{id:manager,role:'RECEPTIONIST'});
+ expect(db.booking.findMany).toHaveBeenCalledWith(expect.objectContaining({where:expect.objectContaining({assignedToId:null})}));
+});
+
+it('confirms an unassigned appointment with the approved default and refuses an inactive assignee',async()=>{
+ const original={id,assignedToId:null,version:1,status:'PENDING',startsAt:new Date(Date.now()+86400000),endsAt:new Date(Date.now()+88200000),deletedAt:null};
+ const tx={$queryRaw:vi.fn(),booking:{findUnique:vi.fn().mockResolvedValue(original),findUniqueOrThrow:vi.fn().mockResolvedValue(original),update:vi.fn().mockResolvedValue({...original,assignedToId:manager,status:'CONFIRMED'})},bookingSettings:{findUnique:vi.fn().mockResolvedValue({isDemo:true})},bookingCommand:{findUnique:vi.fn().mockResolvedValue(null),create:vi.fn()},bookingChangeRequest:{findFirst:vi.fn().mockResolvedValue(null)},bookingEvent:{create:vi.fn().mockResolvedValue({id:'event'})},bookingOutbox:{create:vi.fn()},staffUser:{findFirst:vi.fn().mockResolvedValue({id:manager})},staffAuditEvent:{create:vi.fn()}};
+ const service=new BookingsService({$transaction:async(fn:(v:typeof tx)=>unknown)=>fn(tx)} as unknown as PrismaService);
+ const input={id,version:1,idempotencyKey:randomUUID(),action:'CONFIRM',reason:'Client approved meeting'};
+ await service.staffAction(input,manager,'RECEPTIONIST');
+ expect(tx.staffUser.findFirst).toHaveBeenCalledWith({where:{email:'mo.khaledmorad@almorad-amc.com',role:'MANAGER',active:true},select:{id:true}});
+ expect(tx.booking.update).toHaveBeenCalledWith(expect.objectContaining({data:expect.objectContaining({status:'CONFIRMED',assignedTo:{connect:{id:manager}}})}));
+ tx.booking.update.mockClear();tx.staffUser.findFirst.mockResolvedValue(null);
+ await expect(service.staffAction({...input,idempotencyKey:randomUUID()},manager,'RECEPTIONIST')).rejects.toMatchObject({status:400});
+ expect(tx.booking.update).not.toHaveBeenCalled();
 });

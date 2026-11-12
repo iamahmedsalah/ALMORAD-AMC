@@ -48,6 +48,7 @@ function CareerAccents({ type, surrounding = false }: { type: TeamMember['avatar
 
 const CEO_MEMBER: TeamMember = {
   "id": "ceo",
+  photo: "/images/team/khaled-morad.webp",
   "badge": "CEO",
   "name": {
     "en": "Eng. Khaled Morad",
@@ -66,24 +67,6 @@ const CEO_MEMBER: TeamMember = {
 };
 const CO_LEADERSHIP: readonly TeamMember[] = [
   {
-    "id": "coo",
-    photo: "/images/team/belal-khaled-morad.webp",
-    "badge": "COO",
-    "name": {
-      "en": "Dr. Belal Khaled Morad",
-      "ar": "\u062f. \u0628\u0644\u0627\u0644 \u062e\u0627\u0644\u062f \u0645\u0631\u0627\u062f"
-    },
-    "role": {
-      "en": "Chief Operating Officer",
-      "ar": "\u0631\u0626\u064a\u0633 \u0627\u0644\u0639\u0645\u0644\u064a\u0627\u062a"
-    },
-    "discipline": {
-      "en": "Chief Operating Officer",
-      "ar": "\u0631\u0626\u064a\u0633 \u0627\u0644\u0639\u0645\u0644\u064a\u0627\u062a"
-    },
-    "avatarType": "coo"
-  },
-  {
     "id": "co-ceo",
     linkedinUrl: "https://www.linkedin.com/in/mohamed-khaled-morad-97882a1b0/",
     photo: "/images/team/mohamed-khaled-morad.webp",
@@ -101,6 +84,24 @@ const CO_LEADERSHIP: readonly TeamMember[] = [
       "ar": "\u0627\u0644\u0631\u0626\u064a\u0633 \u0627\u0644\u062a\u0646\u0641\u064a\u0630\u064a \u0627\u0644\u0645\u0634\u0627\u0631\u0643"
     },
     "avatarType": "co_ceo"
+  },
+  {
+    "id": "coo",
+    photo: "/images/team/belal-khaled-morad.webp",
+    "badge": "COO",
+    "name": {
+      "en": "Dr. Belal Khaled Morad",
+      "ar": "\u062f. \u0628\u0644\u0627\u0644 \u062e\u0627\u0644\u062f \u0645\u0631\u0627\u062f"
+    },
+    "role": {
+      "en": "Chief Operating Officer",
+      "ar": "\u0631\u0626\u064a\u0633 \u0627\u0644\u0639\u0645\u0644\u064a\u0627\u062a"
+    },
+    "discipline": {
+      "en": "Chief Operating Officer",
+      "ar": "\u0631\u0626\u064a\u0633 \u0627\u0644\u0639\u0645\u0644\u064a\u0627\u062a"
+    },
+    "avatarType": "coo"
   }
 ];
 const CORE_TEAM: readonly TeamMember[] = [
@@ -141,44 +142,6 @@ const CORE_TEAM: readonly TeamMember[] = [
     "avatarType": "creative"
   },
   {
-    "id": "moderation",
-    "name": {
-      "en": "Mayar Alaa",
-      "ar": "\u0645\u064a\u0627\u0631 \u0639\u0644\u0627\u0621"
-    },
-    "role": {
-      "en": "Moderation & Social Media Specialist",
-      "ar": "\u0623\u062e\u0635\u0627\u0626\u064a\u0629 \u0645\u0648\u0627\u0642\u0639 \u0627\u0644\u062a\u0648\u0627\u0635\u0644 \u0648\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u062a\u0641\u0627\u0639\u0644"
-    },
-    "discipline": {
-      "en": "Content, Community & Engagement",
-      "ar": "\u0627\u0644\u0645\u062d\u062a\u0648\u0649 \u0648\u0627\u0644\u0645\u062c\u062a\u0645\u0639 \u0648\u0627\u0644\u062a\u0641\u0627\u0639\u0644"
-    },
-    "badge": "SOCIAL MEDIA & MODERATION",
-    "avatarType": "client",
-    "photo": "/images/team/mayar-alaa.webp",
-    "linkedinUrl": "https://www.linkedin.com/in/mayar-alaa-722523447/"
-  },
-  {
-    "id": "client",
-    "name": {
-      "en": "Alaa Hassan",
-      "ar": "\u0622\u0644\u0627\u0621 \u062d\u0633\u0646"
-    },
-    "role": {
-      "en": "Account Manager",
-      "ar": "\u0645\u062f\u064a\u0631\u0629 \u062d\u0633\u0627\u0628\u0627\u062a"
-    },
-    "discipline": {
-      "en": "Account Growth, Reporting & Value",
-      "ar": "\u0646\u0645\u0648 \u0627\u0644\u062d\u0633\u0627\u0628\u0627\u062a \u0648\u0627\u0644\u062a\u0642\u0627\u0631\u064a\u0631 \u0648\u0627\u0644\u0642\u064a\u0645\u0629"
-    },
-    "badge": "ACCOUNT MANAGEMENT",
-    "avatarType": "client",
-    "photo": "/images/team/alaa-hassen.webp",
-    "linkedinUrl": "https://www.linkedin.com/in/alaa-hassan-722523447/"
-  },
-  {
     "id": "growth",
     "name": {
       "en": "Omar Allam",
@@ -216,6 +179,44 @@ const CORE_TEAM: readonly TeamMember[] = [
     "photo": "/images/team/ahmed-soliman.webp",
     "linkedinUrl": "https://www.linkedin.com/in/iamahmedsoliman/",
     "photoPosition": "50% 80%"
+  },
+  {
+    "id": "moderation",
+    "name": {
+      "en": "Mayar Alaa",
+      "ar": "\u0645\u064a\u0627\u0631 \u0639\u0644\u0627\u0621"
+    },
+    "role": {
+      "en": "Moderation & Social Media Specialist",
+      "ar": "\u0623\u062e\u0635\u0627\u0626\u064a\u0629 \u0645\u0648\u0627\u0642\u0639 \u0627\u0644\u062a\u0648\u0627\u0635\u0644 \u0648\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u062a\u0641\u0627\u0639\u0644"
+    },
+    "discipline": {
+      "en": "Content, Community & Engagement",
+      "ar": "\u0627\u0644\u0645\u062d\u062a\u0648\u0649 \u0648\u0627\u0644\u0645\u062c\u062a\u0645\u0639 \u0648\u0627\u0644\u062a\u0641\u0627\u0639\u0644"
+    },
+    "badge": "SOCIAL MEDIA & MODERATION",
+    "avatarType": "client",
+    "photo": "/images/team/mayar-alaa.webp",
+    "linkedinUrl": "https://www.linkedin.com/in/mayar-alaa-722523447/"
+  },
+  {
+    "id": "client",
+    "name": {
+      "en": "Alaa Hassan",
+      "ar": "\u0622\u0644\u0627\u0621 \u062d\u0633\u0646"
+    },
+    "role": {
+      "en": "Account Manager",
+      "ar": "\u0645\u062f\u064a\u0631\u0629 \u062d\u0633\u0627\u0628\u0627\u062a"
+    },
+    "discipline": {
+      "en": "Account Growth, Reporting & Value",
+      "ar": "\u0646\u0645\u0648 \u0627\u0644\u062d\u0633\u0627\u0628\u0627\u062a \u0648\u0627\u0644\u062a\u0642\u0627\u0631\u064a\u0631 \u0648\u0627\u0644\u0642\u064a\u0645\u0629"
+    },
+    "badge": "ACCOUNT MANAGEMENT",
+    "avatarType": "client",
+    "photo": "/images/team/alaa-hassen.webp",
+    "linkedinUrl": "https://www.linkedin.com/in/alaa-hassan-722523447/"
   }
 ];
 
@@ -428,10 +429,10 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
         <div className="lp-team-ceo-portrait rounded-squircle-lg">
           <MemberPortrait member={ceo} locale={locale} featured/>
           <CareerAccents type="ceo" />
-          <span className="lp-team-verified-pill">
+          {!ceo.photo && <span className="lp-team-verified-pill">
             <span className="badge-dot" aria-hidden="true" />
             <span>{isAr ? 'رسم توضيحي مؤقت · CEO' : 'ILLUSTRATION PLACEHOLDER · CEO'}</span>
-          </span>
+          </span>}
         </div>
 
         <div className="lp-team-ceo-content">

@@ -54,7 +54,7 @@ export function StaffLogin({locale}: {locale: Locale}) {
       });
       if (response.ok) {
         form.reset(); setSignedIn(true);
-        redirectTimer.current = window.setTimeout(() => {router.replace(`/${locale}/staff`); redirectTimer.current = null;}, 650);
+        redirectTimer.current = window.setTimeout(() => {router.replace(`/${locale}/staff/calendar`); redirectTimer.current = null;}, 650);
       }
       else setError(response.status === 503 ? c.unavailable : c.failed);
     } catch {setError(c.unavailable);}

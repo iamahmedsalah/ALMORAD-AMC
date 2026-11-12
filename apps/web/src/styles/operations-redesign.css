@@ -115,3 +115,12 @@
 @media (max-width: 420px) {
   .staff-workspace .hours-grid > div { grid-template-columns: minmax(0, 1fr); gap: 0.4rem; padding-block: 1rem; }
 }
+
+.staff-identity {display:flex;align-items:center;justify-content:flex-end;gap:.75rem;flex-wrap:wrap;margin-block:1rem;}
+.staff-avatar {display:grid;place-items:center;width:48px;height:48px;flex:none;border-radius:20px;background:var(--accent-soft);color:var(--accent-text);font-weight:700;border:1px solid var(--border);}
+.staff-identity-name {display:grid;min-width:0;overflow-wrap:anywhere;flex:1;max-width:28ch;}
+.staff-identity-name small {color:var(--muted-foreground);}
+.staff-accounts-create,.staff-account-row {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1rem;align-items:end;}
+@media(max-width:600px){.staff-identity-name{max-width:none;flex-basis:calc(100% - 64px);}.staff-identity > .button{flex:1 1 120px;}.operations-heading{display:block;}}
+
+.agenda-selectable-card{min-width:0;display:grid;align-content:start;gap:.4rem}.agenda-select-record{display:flex;align-items:center;gap:.6rem;min-height:44px;overflow-wrap:anywhere}.agenda-select-record input,.agenda-bulk input[type=checkbox]{width:20px;height:20px;flex:none}.agenda-bulk{padding:1rem;border:1px solid var(--border);border-radius:20px;margin-block-end:1rem}.agenda-selectable-card .calendar-appointment{width:100%;}

@@ -2,7 +2,7 @@ import {setTimeout} from 'node:timers/promises';
 import {releaseOrigin,releaseHeaders} from './release-origin.mjs';
 const {origin,vercel}=releaseOrigin(process.env.RELEASE_URL);
 const headers=releaseHeaders(vercel,process.env.VERCEL_AUTOMATION_BYPASS_SECRET);
-for(const path of ['/health','/health/ready','/api/booking/config','/en','/ar','/en/contact','/ar/contact','/en/booking','/ar/booking','/robots.txt','/sitemap.xml',...['ahmed-soliman','alaa-hassen','belal-khaled-morad','gina-raafat','mayar-alaa','mohamed-khaled-morad','omar-allam'].map(name=>'/images/team/'+name+'.webp')]){
+for(const path of ['/health','/health/ready','/api/booking/config','/en','/ar','/en/contact','/ar/contact','/en/booking','/ar/booking','/robots.txt','/sitemap.xml',...['khaled-morad','ahmed-soliman','alaa-hassen','belal-khaled-morad','gina-raafat','mayar-alaa','mohamed-khaled-morad','omar-allam'].map(name=>'/images/team/'+name+'.webp')]){
   let passed=false;
   let status=null,category=null;
   for(let attempt=0;attempt<4;attempt++){
