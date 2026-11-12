@@ -26,8 +26,8 @@ describe.sequential('conflict-safe booking and staff-reviewed client changes',()
 it('serializes HubSpot intents for one booking across independent drains',async()=>{
  const created=asClient(await api.create(input(55)));
  await db.bookingOutbox.deleteMany({where:{bookingId:created.booking.id,kind:{endsWith:':HUBSPOT'}}});
- const firstEvent=await db.bookingEvent.create({data:{bookingId:created.booking.id,kind:'BOOKING_CREATED'}});
- const nextEvent=await db.bookingEvent.create({data:{bookingId:created.booking.id,kind:'BOOKING_EDIT'}});
+ const firstEvent=await db.bookingEvent.create({data:{bookingId:created.booking.id,kind:'BOOKING_CREATED',details:{}}});
+ const nextEvent=await db.bookingEvent.create({data:{bookingId:created.booking.id,kind:'BOOKING_EDIT',details:{}}});
  await db.bookingOutbox.createMany({data:[{bookingId:created.booking.id,eventId:firstEvent.id,kind:'BOOKING_CREATED:HUBSPOT',status:'PENDING',createdAt:new Date(Date.now()-2000)},{bookingId:created.booking.id,eventId:nextEvent.id,kind:'BOOKING_EDIT:HUBSPOT',status:'PENDING'}]});
  let release!:()=>void,entered!:()=>void;
  const gate=new Promise<void>(resolve=>{release=resolve;}),started=new Promise<void>(resolve=>{entered=resolve;});

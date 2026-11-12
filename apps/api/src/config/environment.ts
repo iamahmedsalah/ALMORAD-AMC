@@ -21,6 +21,8 @@ export const environmentSchema = z.object({
 });
 export function parseEnvironment(input: Record<string, string | undefined>) {
   const normalized: Record<string, string | undefined> = {...input};
+  // An explicit empty optional setting disables it and blocks cross-profile fallback.
+  for(const key of ['RESEND_API_KEY','RESEND_FROM_EMAIL','BOOKING_INBOX_EMAIL','CRON_SECRET','BOOKING_TOKEN_SECRET'])if(normalized[key]==='')normalized[key]=undefined;
   if (normalized.DATABASE_URL && !isPgTcpUrl(normalized.DATABASE_URL)) {
     const tcpFallback = [input.POSTGRES_URL, input.DIRECT_URL].find(v => v && isPgTcpUrl(v));
     if (tcpFallback) normalized.DATABASE_URL = tcpFallback;
