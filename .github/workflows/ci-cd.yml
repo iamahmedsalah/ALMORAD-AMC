@@ -32,7 +32,7 @@ jobs:
     timeout-minutes: 35
     environment:
       name: production-vercel
-      url: https://almorad-amc.vercel.app
+      url: https://almorad-amc.com
     concurrency:
       group: production-vercel
       cancel-in-progress: false
@@ -81,16 +81,13 @@ jobs:
       - name: Verify production domain after promotion
         run: node scripts/ci/release-smoke.mjs
         env:
-          RELEASE_URL: https://almorad-amc.vercel.app
-      - name: Verify configured canonical custom domain
-        if: vars.AMC_PRODUCTION_ORIGIN != ''
-        run: node scripts/ci/release-smoke.mjs
-        env:
-          RELEASE_URL: ${{ vars.AMC_PRODUCTION_ORIGIN }}
+          RELEASE_URL: https://almorad-amc.com
+      - name: Verify public domain redirects
+        run: node scripts/ci/domain-redirect-smoke.mjs
       - name: Summarize release
         shell: bash
         run: |
-          printf 'Released commit %s to %s. Pending migrations were applied and verified before candidate health checks. Development/testing policy: no database backup or restore rehearsal.\n' \
+          printf 'Website: https://almorad-amc.com\nReleased commit %s. Verified candidate: %s. Pending migrations were applied and verified before candidate health checks. Development/testing policy: no database backup or restore rehearsal.\n' \
             "$GITHUB_SHA" "$RELEASE_URL" >> "$GITHUB_STEP_SUMMARY"
       - name: Revoke temporary candidate verification access
         if: always()
