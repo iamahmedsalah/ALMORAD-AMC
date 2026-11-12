@@ -82,6 +82,11 @@ jobs:
         run: node scripts/ci/release-smoke.mjs
         env:
           RELEASE_URL: https://almorad-amc.vercel.app
+      - name: Verify configured canonical custom domain
+        if: vars.AMC_PRODUCTION_ORIGIN != ''
+        run: node scripts/ci/release-smoke.mjs
+        env:
+          RELEASE_URL: ${{ vars.AMC_PRODUCTION_ORIGIN }}
       - name: Summarize release
         shell: bash
         run: |

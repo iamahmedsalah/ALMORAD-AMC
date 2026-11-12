@@ -1,7 +1,7 @@
 import {setTimeout} from 'node:timers/promises';
-const origin=new URL(process.env.RELEASE_URL||'');
-if(origin.protocol!=='https:'||!origin.hostname.endsWith('.vercel.app')||origin.username||origin.password||origin.pathname!=='/'||origin.search||origin.hash)throw new Error('Release smoke requires a credential-free Vercel deployment origin');
-const headers=process.env.VERCEL_AUTOMATION_BYPASS_SECRET?{'x-vercel-protection-bypass':process.env.VERCEL_AUTOMATION_BYPASS_SECRET}:{};
+import {releaseOrigin,releaseHeaders} from './release-origin.mjs';
+const {origin,vercel}=releaseOrigin(process.env.RELEASE_URL);
+const headers=releaseHeaders(vercel,process.env.VERCEL_AUTOMATION_BYPASS_SECRET);
 for(const path of ['/health','/health/ready','/api/booking/config','/en','/ar','/en/contact','/ar/contact','/en/booking','/ar/booking','/robots.txt','/sitemap.xml']){
   let passed=false;
   let status=null,category=null;
