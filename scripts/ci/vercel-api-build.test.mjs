@@ -15,10 +15,16 @@ test('failed API compilation prevents production migration execution',async()=>{
   assert.equal(migrated,false);
 });
 
-test('normal production, preview and local Vercel builds do not invoke production migration checks',async()=>{
+test('production/preview without authorization and local builds do not invoke migrations',async()=>{
   let migrated=false;
-  for(const env of [{VERCEL_ENV:'production'},{VERCEL_ENV:'preview',AMC_RELEASE_MIGRATIONS:'1'},{}])await buildVercelApi(env,{execute:()=>({status:0}),migrate:async()=>{migrated=true;}});
+  for(const env of [{VERCEL_ENV:'production'},{VERCEL_ENV:'preview'},{AMC_RELEASE_MIGRATIONS:'1'},{}])await buildVercelApi(env,{execute:()=>({status:0}),migrate:async()=>{migrated=true;}});
   assert.equal(migrated,false);
+});
+
+test('authorized staging preview migrates before it can pass deployment verification',async()=>{
+  const calls=[];
+  await buildVercelApi({VERCEL_ENV:'preview',AMC_RELEASE_MIGRATIONS:'1'},{execute:()=>{calls.push('build');return {status:0};},migrate:async()=>{calls.push('migrate');}});
+  assert.deepEqual(calls,['build','migrate']);
 });
 
 test('migration/backup gate failure stops the Vercel build',async()=>{

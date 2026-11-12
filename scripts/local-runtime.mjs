@@ -7,6 +7,7 @@ import {spawn,spawnSync} from 'node:child_process';
 import {createServer} from 'node:https';
 import {request as httpRequest} from 'node:http';
 import {inspectMigrations} from './ci/migrations.mjs';
+import {migrateDevelopment} from './dev-migrations.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const apiRequire=createRequire(new URL('../apps/api/package.json',import.meta.url));
@@ -44,7 +45,7 @@ export async function verifyDatabase(env){
   finally{await db.end();}
   let state;
   try{state=await inspectMigrations(env);}catch{throw new Error('Cannot verify migration history through DIRECT_URL (or DATABASE_URL). No schema changes were attempted.');}
-  if(state.pending.length)throw new Error(`${state.pending.length} migrations are pending. Review/apply them separately for this database; local setup does not migrate hosted databases.`);
+  if(state.pending.length)throw new Error(`${state.pending.length} migrations are pending. Run pnpm dev:setup with the authorized development migration settings before starting the preview.`);
   console.log(JSON.stringify({event:'local_database_verified',target:localHosts.includes(new URL(env.DATABASE_URL).hostname)?'loopback':'hosted',pendingMigrations:0}));
 }
 
@@ -107,8 +108,8 @@ async function main(){
     run([resolve(root,'node_modules/turbo/bin/turbo'),'run','build'],root,env);return;
   }
   if(mode==='preview'){await preview(env);return;}
+  if(mode==='setup')console.log(JSON.stringify(await migrateDevelopment(env)));
   await verifyDatabase(env);
-  if(mode==='setup')run([resolve(root,'apps/api/node_modules/prisma/build/index.js'),'generate'],resolve(root,'apps/api'),env);
   console.log('Database configuration ready. pnpm dev uses this .env without Docker.');
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url){

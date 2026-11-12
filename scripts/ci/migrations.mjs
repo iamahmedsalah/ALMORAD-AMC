@@ -66,15 +66,24 @@ export function authorizeMigration(env,state){
   const target=migrationTarget(env);
   const local=['127.0.0.1','localhost','[::1]'].includes(target.url.hostname)&&decodeURIComponent(target.url.pathname).endsWith('_test');
   if(local&&env.NODE_ENV!=='production')return;
+  // Owner-authorized development/testing deployments do not require a backup.
+  // Keep this explicit: NODE_ENV=production is also used by Vercel test builds.
+  if(env.AMC_RELEASE_MIGRATIONS==='1'&&env.AMC_MIGRATION_POLICY==='development'){
+    if(env.AMC_RELEASE_DATABASE_FINGERPRINT&&env.AMC_RELEASE_DATABASE_FINGERPRINT!==state.fingerprint)throw new ReleasePolicyError('Development release database does not match');
+    if(env.AMC_RELEASE_MIGRATION_DIGEST&&env.AMC_RELEASE_MIGRATION_DIGEST!==state.digest)throw new ReleasePolicyError('Development release migration manifest does not match');
+    return;
+  }
   if(env.AMC_RELEASE_MIGRATIONS!=='1'||!/^(github:[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+:\d+:\d+|snapshot:[A-Za-z0-9_.:-]{8,200})$/.test(env.AMC_MIGRATION_BACKUP_REF||'')||!/^[a-f0-9]{40}$/.test(env.AMC_RELEASE_SHA||'')||env.AMC_RELEASE_DATABASE_FINGERPRINT!==state.fingerprint||env.AMC_RELEASE_MIGRATION_DIGEST!==state.digest)throw new ReleasePolicyError('Pending production migrations require a reviewed release, matching database, backup and rehearsal');
 }
-export async function deployMigrations(env=process.env){
-  const state=await inspectMigrations(env);authorizeMigration(env,state);
+export async function deployMigrations(env=process.env,{inspect=inspectMigrations,execute=spawnSync}={}){
+  const state=await inspect(env);authorizeMigration(env,state);
   if(state.pending.length){
     const cli=resolve(root,'apps/api/node_modules/prisma/build/index.js');
-    const result=spawnSync(process.execPath,[cli,'migrate','deploy'],{cwd:resolve(root,'apps/api'),env,encoding:'utf8',timeout:180000});
+    const result=execute(process.execPath,[cli,'migrate','deploy'],{cwd:resolve(root,'apps/api'),env,encoding:'utf8',timeout:180000,windowsHide:true});
     if(result.error||result.status!==0)throw new ReleasePolicyError('Prisma migration deployment failed; inspect migration status before retrying');
   }
+  const after=await inspect(env);
+  if(after.pending.length||after.fingerprint!==state.fingerprint||after.digest!==state.digest)throw new ReleasePolicyError('Migration verification failed; target or manifest changed, or migrations remain pending');
   console.log(JSON.stringify({event:'migrations_verified',applied:state.pending.length}));
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url){

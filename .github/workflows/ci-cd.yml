@@ -68,7 +68,9 @@ jobs:
         run: |
           set -euo pipefail
           vercel deploy --prod --skip-domain --yes --token "$VERCEL_TOKEN" \
-            --build-env "AMC_RELEASE_MIGRATIONS=0" \
+            --build-env "AMC_RELEASE_MIGRATIONS=1" \
+            --build-env "AMC_MIGRATION_POLICY=development" \
+            --build-env "AMC_RELEASE_SHA=$GITHUB_SHA" \
             > "$RUNNER_TEMP/amc-vercel-deployment.txt"
           node scripts/ci/deployment-url.mjs "$RUNNER_TEMP/amc-vercel-deployment.txt" >> "$GITHUB_ENV"
       - name: Verify candidate health, schema and bilingual routes
@@ -83,7 +85,7 @@ jobs:
       - name: Summarize release
         shell: bash
         run: |
-          printf 'Released commit %s to %s. Database backup, restore rehearsal and migrations were not run by this workflow.\n' \
+          printf 'Released commit %s to %s. Pending migrations were applied and verified before candidate health checks. Development/testing policy: no database backup or restore rehearsal.\n' \
             "$GITHUB_SHA" "$RELEASE_URL" >> "$GITHUB_STEP_SUMMARY"
       - name: Revoke temporary candidate verification access
         if: always()

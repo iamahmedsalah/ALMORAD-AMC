@@ -34,6 +34,7 @@
   ],
   "globalPassThroughEnv": [
     "AMC_RELEASE_MIGRATIONS",
+    "AMC_MIGRATION_POLICY",
     "DATABASE_URL",
     "TEST_DATABASE_URL",
     "SWC_NATIVE_BINDING_CACHE",

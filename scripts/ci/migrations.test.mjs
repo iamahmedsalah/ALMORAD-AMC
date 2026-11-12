@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {migrationTarget,reviewSql,pendingMigrations,authorizeMigration,migrationManifest} from './migrations.mjs';
+import {migrationTarget,reviewSql,pendingMigrations,authorizeMigration,migrationManifest,deployMigrations} from './migrations.mjs';
 import {deploymentUrl} from './deployment-url.mjs';
 const remote={DIRECT_URL:'postgresql://release:private@db.example.invalid/studio?schema=public',NODE_ENV:'production'};
 test('migration target rejects non-TCP sources and unsafe schemas without leaking credentials',()=>{
@@ -21,6 +21,26 @@ test('only isolated local test databases bypass production release prerequisites
   assert.doesNotThrow(()=>authorizeMigration({DIRECT_URL:'postgresql://test:test@localhost/amc_release_test'}, {pending:['new']}));
   assert.throws(()=>authorizeMigration({DIRECT_URL:'postgresql://test:test@localhost/amc_dev'}, {pending:['new']}));
   assert.throws(()=>authorizeMigration({DIRECT_URL:'postgresql://test:test@remote.invalid/amc_test'}, {pending:['new']}));
+});
+
+test('development/testing releases explicitly opt into migrations without a backup reference',()=>{
+  const state={pending:['new'],fingerprint:migrationTarget(remote).fingerprint,digest:'d'.repeat(64)};
+  const env={...remote,AMC_RELEASE_MIGRATIONS:'1',AMC_MIGRATION_POLICY:'development'};
+  assert.doesNotThrow(()=>authorizeMigration(env,state));
+  assert.throws(()=>authorizeMigration({...env,AMC_RELEASE_MIGRATIONS:'0'},state));
+  assert.throws(()=>authorizeMigration({...env,AMC_MIGRATION_POLICY:'unknown'},state));
+  assert.throws(()=>authorizeMigration({...env,AMC_RELEASE_DATABASE_FINGERPRINT:'wrong'},state),/database does not match/);
+  assert.throws(()=>authorizeMigration({...env,AMC_RELEASE_MIGRATION_DIGEST:'wrong'},state),/manifest does not match/);
+});
+
+test('migration deployment verifies history after execution and refuses residual pending migrations',async()=>{
+  const state={pending:['new'],fingerprint:migrationTarget(remote).fingerprint,digest:'d'.repeat(64)};
+  const env={...remote,AMC_RELEASE_MIGRATIONS:'1',AMC_MIGRATION_POLICY:'development'};
+  let reads=0;const calls=[];
+  await deployMigrations(env,{inspect:async()=>reads++?{...state,pending:[]}:state,execute:(_exe,args)=>{calls.push(args.slice(1));return {status:0};}});
+  assert.deepEqual(calls,[['migrate','deploy']]);assert.equal(reads,2);
+  await assert.rejects(deployMigrations(env,{inspect:async()=>state,execute:()=>({status:0})}),/verification failed/);
+  await assert.rejects(deployMigrations(env,{inspect:async()=>state,execute:()=>({status:1,stderr:'private connection details'})}),/Prisma migration deployment failed/);
 });
 test('applied history cannot be silently baselined, modified, failed or gapped',()=>{
   const entries=[{name:'one',checksum:'a'},{name:'two',checksum:'b'}];
