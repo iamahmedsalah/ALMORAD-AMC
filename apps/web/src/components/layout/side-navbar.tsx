@@ -50,7 +50,9 @@ function SideNavbarContent({
     const focusables = () => Array.from(drawerRef.current?.querySelectorAll<HTMLElement>('a[href], button, select') ?? []);
     focusables()[0]?.focus();
     const previousOverflow = document.body.style.overflow;
+    const previousRootOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     const main = document.getElementById('main');
     const previousInert = main?.inert ?? false;
     if (main) main.inert = true;
@@ -69,6 +71,7 @@ function SideNavbarContent({
     window.addEventListener('keydown', onKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
+      document.documentElement.style.overflow = previousRootOverflow;
       if (main) main.inert = previousInert;
       window.removeEventListener('keydown', onKeyDown);
       trigger?.focus();

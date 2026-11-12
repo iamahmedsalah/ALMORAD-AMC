@@ -97,7 +97,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
             });
 
             // 5. Premotio-style 3D card scroll reveal & exit behavior
-            gsap.utils.toArray<HTMLElement>('[data-scroll-card]').forEach((card, index) => {
+            const revealCard = (card: HTMLElement, index: number) =>
               gsap.fromTo(
                 card,
                 {
@@ -123,7 +123,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
                   },
                 },
               );
-            });
+            gsap.utils.toArray<HTMLElement>('[data-scroll-card]').forEach(revealCard);
 
             // Scroll-linked specialty accents, including the three executives.
             gsap.utils.toArray<HTMLElement>('[data-scroll-card] .team-career-accents').forEach(accent => {
@@ -165,7 +165,13 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
             // 7. Process workflow progress bar scrub
             const gallery = root.current?.querySelector<HTMLElement>('[data-gallery-track]');
             if (gallery) {
-              stackMedia.add('(min-height: 760px)', () => {
+              // Phones use the same reveal as the three project possibilities.
+              // Keep the existing tablet/desktop scrub and stack unchanged.
+              stackMedia.add('(max-width: 767px)', () => {
+                const animations = Array.from(gallery.querySelectorAll<HTMLElement>('[data-service-card]')).map(revealCard);
+                return () => animations.forEach(animation => { animation.scrollTrigger?.kill(); animation.revert(); });
+              });
+              stackMedia.add('(min-width: 768px) and (min-height: 760px)', () => {
                 const cards = Array.from(gallery.querySelectorAll<HTMLElement>('[data-service-card]'));
                 if (cards.every(card => card.offsetHeight < innerHeight - 190)) gallery.dataset.serviceStack = 'true';
                 const isRtl = document.documentElement.dir === 'rtl';

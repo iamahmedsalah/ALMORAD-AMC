@@ -1,10 +1,15 @@
 'use client';
-import {useEffect, useRef, useState, type FormEvent} from 'react';
+import {useEffect, useRef, useState} from 'react';
+import {useForm} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
+import {z} from 'zod';
 import {contactSubmissionSchema, type Locale} from '@amc/shared';
 import {SubmissionArt} from '@/components/ui/submission-art';
 import {Button} from '@/components/ui/button';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 
+const formSchema = contactSubmissionSchema.omit({locale: true, idempotencyKey: true});
+type FormFields = z.input<typeof formSchema>;
 type ContactField = 'name' | 'email' | 'phone' | 'message';
 
 function FieldFeedback({id, valid, message}: {id: string; valid: boolean; message: string}) {
@@ -34,18 +39,12 @@ export function ContactForm({locale}: {locale: Locale}) {
   const [successLeaving, setSuccessLeaving] = useState(false);
   const exitTimer = useRef<number | null>(null);
   const [error, setError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [values, setValues] = useState<Record<ContactField, string>>({name: '', email: '', phone: '', message: ''});
-  const [touched, setTouched] = useState<Record<ContactField, boolean>>({name: false, email: false, phone: false, message: false});
-  const feedback = ar ? {valid: 'البيانات صحيحة', problem: 'راجع البيانات'} : {valid: 'Looks good', problem: 'Please check your details'};
-  const fieldStatus = (field: ContactField) => fieldErrors[field] ? 'invalid' : !touched[field] ? 'idle' :
-    contactSubmissionSchema.shape[field].safeParse(values[field]).success ? 'valid' : 'invalid';
-  const changeField = (field: ContactField, value: string) => {
-    setValues(previous => ({...previous, [field]: value}));
-    setTouched(previous => ({...previous, [field]: true}));
-    setFieldErrors(previous => {const next = {...previous}; delete next[field]; return next;});
-    if (state === 'error') {setState('idle'); setError('');}
-  };
+  const {register, handleSubmit, reset, formState: {errors, touchedFields, submitCount}} = useForm<FormFields, unknown, z.output<typeof formSchema>>({
+    resolver: zodResolver(formSchema), mode: 'onTouched', defaultValues: {name: '', email: '', phone: '', message: '', website: ''},
+  });
+  const fieldErrors = Object.fromEntries(Object.entries(errors).map(([key, value]) => [key, key === 'name' ? c.errName : key === 'email' ? c.errEmail : key === 'message' ? c.errMessage : key === 'consent' ? c.errConsent : value?.message || c.invalid]));
+  const feedback = ar ? {valid: '\u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0635\u062d\u064a\u062d\u0629', problem: '\u0631\u0627\u062c\u0639 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a'} : {valid: 'Looks good', problem: 'Please check your details'};
+  const fieldStatus = (field: ContactField) => fieldErrors[field] ? 'invalid' : touchedFields[field] || submitCount ? 'valid' : 'idle';
   const attempt = useRef<{fingerprint: string; key: string} | null>(null);
   const busy = useRef(false);
   const status = useRef<HTMLDivElement>(null);
@@ -53,34 +52,14 @@ export function ContactForm({locale}: {locale: Locale}) {
     if (state === 'success') status.current?.focus();
   }, [state]);
   useEffect(() => () => {if (exitTimer.current !== null) window.clearTimeout(exitTimer.current);}, []);
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submit(data: z.output<typeof formSchema>) {
     if (busy.current) return;
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const fields = {locale, name: String(data.get('name') || ''), email: String(data.get('email') || ''), phone: String(data.get('phone') || ''), message: String(data.get('message') || ''), consent: data.get('consent') === 'on', website: String(data.get('website') || '')};
+    const fields = {locale, ...data};
     const fingerprint = JSON.stringify(fields);
     if (attempt.current?.fingerprint !== fingerprint) attempt.current = {fingerprint, key: crypto.randomUUID()};
     const parsed = contactSubmissionSchema.safeParse({...fields, idempotencyKey: attempt.current.key});
-    if (!parsed.success) {
-      const issues: Record<string, string> = {};
-      for (const issue of parsed.error.issues) {
-        const key = String(issue.path[0]);
-        if (!issues[key]) {
-          if (key === 'name') issues[key] = c.errName;
-          else if (key === 'email') issues[key] = c.errEmail;
-          else if (key === 'message') issues[key] = c.errMessage;
-          else if (key === 'consent') issues[key] = c.errConsent;
-          else issues[key] = issue.message;
-        }
-      }
-      setFieldErrors(issues);
-      setError(c.invalid);
-      setState('error');
-      form.querySelector<HTMLElement>(`[name="${String(parsed.error.issues[0]?.path[0])}"]`)?.focus();
-      return;
-    }
-    busy.current = true; setFieldErrors({}); setError(''); setState('pending');
+    if (!parsed.success) return;
+    busy.current = true; setError(''); setState('pending');
     try {
       const response = await fetch('/api/contact/submit', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(parsed.data), signal: AbortSignal.timeout(20000)});
       if (!response.ok) {
@@ -95,8 +74,7 @@ export function ContactForm({locale}: {locale: Locale}) {
       }
       const result: unknown = await response.json();
       if (!result || typeof result !== 'object' || !('accepted' in result) || result.accepted !== true) throw new Error('Invalid acknowledgement');
-      form.reset(); attempt.current = null; setValues({name: '', email: '', phone: '', message: ''});
-      setTouched({name: false, email: false, phone: false, message: false}); setSuccessLeaving(false); setState('success');
+      reset(); attempt.current = null; setSuccessLeaving(false); setState('success');
     } catch { setError(c.failed); setState('error'); }
     finally { busy.current = false; }
   }
@@ -104,21 +82,21 @@ export function ContactForm({locale}: {locale: Locale}) {
     <p className="badge">{ar ? 'رسالتك التالية' : 'Your next move'}</p>
     <h2 id="contact-form-title">{c.title}</h2><p>{c.intro}</p>
     {state === 'success' ? <div ref={status} tabIndex={-1} className="contact-success" data-state={successLeaving ? 'closed' : 'open'}><SubmissionArt kind="message"/><Alert variant="success" open={!successLeaving}><AlertTitle>{ar ? 'تم إرسال الرسالة' : 'Message received'}</AlertTitle><AlertDescription>{c.success}</AlertDescription></Alert><Button type="button" variant="secondary" onClick={() => {setSuccessLeaving(true); exitTimer.current = window.setTimeout(() => {setState('idle'); exitTimer.current = null;}, 290);}}>{c.again}</Button></div> :
-    <form onSubmit={submit} noValidate aria-busy={state === 'pending'}>
+    <form onSubmit={event => {void handleSubmit(submit, () => {setError(c.invalid); setState('error');})(event);}} noValidate aria-busy={state === 'pending'}>
       <p className="contact-form-note">{c.required}</p>
       <fieldset disabled={state === 'pending'}>
         <div className="contact-form-fields">{(['name', 'email'] as const).map(field => {
           const status = fieldStatus(field);
           return <div className="contact-field" key={field}>
           <label htmlFor={`contact-${field}`}>{c[field]}</label>
-          <input id={`contact-${field}`} name={field} type={field === 'email' ? 'email' : 'text'} dir={field === 'email' ? 'ltr' : undefined} autoComplete={field} required minLength={field === 'name' ? 2 : undefined} maxLength={field === 'name' ? 120 : 254} value={values[field]} onChange={event => changeField(field, event.target.value)} onBlur={() => setTouched(previous => ({...previous, [field]: true}))} aria-invalid={status === 'invalid'} data-valid={status === 'valid'} aria-describedby={status !== 'idle' ? `contact-err-${field}` : undefined}/>
+          <input id={`contact-${field}`} {...register(field)} type={field === 'email' ? 'email' : 'text'} dir={field === 'email' ? 'ltr' : undefined} autoComplete={field} required minLength={field === 'name' ? 2 : undefined} maxLength={field === 'name' ? 120 : 254}  aria-invalid={status === 'invalid'} data-valid={status === 'valid'} aria-describedby={status !== 'idle' ? `contact-err-${field}` : undefined}/>
           {status !== 'idle' && <FieldFeedback id={`contact-err-${field}`} valid={status === 'valid'} message={status === 'valid' ? feedback.valid : fieldErrors[field] || (field === 'name' ? c.errName : c.errEmail)}/>}
         </div>})}</div>
-        <div className="contact-field"><label htmlFor="contact-message">{c.message}</label><textarea id="contact-message" name="message" required minLength={10} maxLength={2000} rows={6} value={values.message} onChange={event => changeField('message', event.target.value)} onBlur={() => setTouched(previous => ({...previous, message: true}))} aria-invalid={fieldStatus('message') === 'invalid'} data-valid={fieldStatus('message') === 'valid'} aria-describedby={`contact-hint${fieldStatus('message') !== 'idle' ? ' contact-err-message' : ''}`}/><small id="contact-hint">{c.hint}</small>
+        <div className="contact-field"><label htmlFor="contact-message">{c.message}</label><textarea id="contact-message" {...register('message')} required minLength={10} maxLength={2000} rows={6}  aria-invalid={fieldStatus('message') === 'invalid'} data-valid={fieldStatus('message') === 'valid'} aria-describedby={`contact-hint${fieldStatus('message') !== 'idle' ? ' contact-err-message' : ''}`}/><small id="contact-hint">{c.hint}</small>
         {fieldStatus('message') !== 'idle' && <FieldFeedback id="contact-err-message" valid={fieldStatus('message') === 'valid'} message={fieldStatus('message') === 'valid' ? feedback.valid : fieldErrors.message || c.errMessage}/>}</div>
-        <div className="contact-field"><label htmlFor="contact-phone">{ar?'??? ?????? (???????)':'Phone number (optional)'}</label><input id="contact-phone" name="phone" type="tel" autoComplete="tel" dir="ltr" maxLength={40} value={values.phone} onChange={event=>changeField('phone',event.target.value)} aria-invalid={Boolean(fieldErrors.phone)}/>{fieldErrors.phone&&<p role="alert">{ar?'???? ??? ???? ??????':'Enter a valid phone number'}</p>}</div>
-        <div className="contact-honeypot" aria-hidden="true"><label htmlFor="contact-website">Website</label><input id="contact-website" name="website" tabIndex={-1} autoComplete="off"/></div>
-        <label className="contact-consent"><input type="checkbox" name="consent" required aria-invalid={Boolean(fieldErrors.consent)} aria-describedby={fieldErrors.consent ? 'contact-err-consent' : undefined}/><span>{c.consent}</span></label>
+        <div className="contact-field"><label htmlFor="contact-phone">{ar?'\u0631\u0642\u0645 \u0627\u0644\u0647\u0627\u062a\u0641 (\u0627\u062e\u062a\u064a\u0627\u0631\u064a)':'Phone number (optional)'}</label><input id="contact-phone" {...register('phone')} type="tel" autoComplete="tel" dir="ltr" maxLength={40}  aria-invalid={Boolean(fieldErrors.phone)}/>{fieldErrors.phone&&<p role="alert">{ar?'\u0623\u062f\u062e\u0644 \u0631\u0642\u0645 \u0647\u0627\u062a\u0641 \u0635\u062d\u064a\u062d':'Enter a valid phone number'}</p>}</div>
+        <div className="contact-honeypot" aria-hidden="true"><label htmlFor="contact-website">Website</label><input id="contact-website" {...register('website')} tabIndex={-1} autoComplete="off"/></div>
+        <label className="contact-consent"><input type="checkbox" {...register('consent')} required aria-invalid={Boolean(fieldErrors.consent)} aria-describedby={fieldErrors.consent ? 'contact-err-consent' : undefined}/><span>{c.consent}</span></label>
         {fieldErrors.consent && <FieldFeedback id="contact-err-consent" valid={false} message={fieldErrors.consent}/>}
         <Alert variant="destructive" open={state === 'error'} id="contact-error"><AlertTitle>{feedback.problem}</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>
         <Button type="submit" className="action-motion" data-pending={state === 'pending'}>{state === 'pending' ? c.pending : c.send}<span aria-hidden="true">↗</span></Button>

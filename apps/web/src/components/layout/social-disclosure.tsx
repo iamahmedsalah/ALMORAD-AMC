@@ -5,7 +5,7 @@ import {usePathname} from 'next/navigation';
 
 export type SocialProfile = { name: string; href: string | null; demo?: boolean; icon: 'linkedin' | 'facebook' | 'instagram' | 'x' | 'tiktok' | 'youtube' };
 
-function SocialIcon({ name }: { name: SocialProfile['icon'] }) {
+export function SocialIcon({ name }: { name: SocialProfile['icon'] }) {
   const paths = {
     x: 'M18.9 2H22l-6.8 7.8L23.2 22h-6.3L12 14.5 5.4 22H2.2l8.3-9.5L.8 2h6.5l4.5 6.8L18.9 2Zm-1.1 18h1.7L6.3 4H4.5l13.3 16Z',
     linkedin: 'M5 9H2v13h3V9ZM3.5 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM22 14.5C22 10.5 20 9 17.5 9c-1.8 0-3 1-3.5 1.8V9h-3v13h3v-7c0-1.7.8-2.8 2.3-2.8s2.2 1 2.2 2.8v7H22v-7.5Z',

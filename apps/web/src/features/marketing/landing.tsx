@@ -232,7 +232,7 @@ export function Landing({ locale }: { locale: Locale }) {
                         <p className="text-base text-[var(--fg-muted)] leading-relaxed mb-5">
                           {disciplineFor(p.id,locale).tagline}
                         </p>
-                        <ul className="flex flex-wrap gap-2">
+                        <ul className="pillar-service-links flex flex-wrap gap-2">
                           {pillarServices.map((s) => (
                             <li key={s.slug}>
                               <Link

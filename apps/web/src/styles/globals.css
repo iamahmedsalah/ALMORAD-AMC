@@ -157,7 +157,7 @@ html[lang="ar"] h2 {
   min-height: 44px;
 }
 .desktop-nav a:hover,
-footer a:hover {
+footer a:not(.button):hover {
   color: var(--brand-accent);
 }
 .controls {

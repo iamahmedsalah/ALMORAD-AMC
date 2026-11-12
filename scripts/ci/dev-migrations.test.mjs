@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {developmentTarget,migrateDevelopment} from '../dev-migrations.mjs';
+import {developmentTarget,migrateDevelopment,developmentFailure} from '../dev-migrations.mjs';
 
 const local={NODE_ENV:'development',DATABASE_URL:'postgresql://fixture:fixture@127.0.0.1:5432/amc_dev'};
 test('development migration guard accepts local dev but rejects hosted, production, CI and mismatched targets',()=>{
@@ -56,4 +56,15 @@ test('development migration failures stop verification/client generation without
   await assert.rejects(migrateDevelopment(local,{inspect:async()=>({pending:['new']}),execute:(_exe,args)=>{calls.push(args.slice(1));return {status:1,stderr:'private provider fixture'};}}),/Local migration failed/);
   assert.deepEqual(calls,[['migrate','deploy']]);
   await assert.rejects(migrateDevelopment(local,{inspect:async()=>({pending:['new']}),execute:()=>({status:0})}),/still has pending/);
+});
+
+test('startup diagnostics classify connection errors without exposing raw messages',()=>{
+ for(const code of ['ETIMEDOUT','ECONNRESET','ENOTFOUND'])assert.match(developmentFailure({code,message:'postgresql://secret:secret@private'}),/connection failed/);
+ assert.match(developmentFailure({code:'28P01'}),/authentication/);
+ assert.match(developmentFailure({message:'certificate failure postgresql://secret'}),/TLS/);
+ assert.doesNotMatch(developmentFailure(new Error('private password')),/private password/);
+});
+
+test('development inspection allows a bounded cold-start connection window',async()=>{
+ await migrateDevelopment(local,{inspect:async(_env,options)=>{assert.equal(options.connectionTimeoutMillis,30000);return {pending:[]};},execute:()=>({status:0})});
 });

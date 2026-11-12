@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+import {SocialIcon} from '@/components/layout/social-disclosure';
 import { useEffect, useRef } from 'react';
 import type { Locale } from '@amc/shared';
 import { Link } from '@/i18n/navigation';
@@ -10,11 +12,12 @@ interface TeamMember {
   id: string;
   badge: string;
   featured?: boolean;
+  photo?: string;
+  photoPosition?: string;
+  linkedinUrl?: string;
   name: { en: string; ar: string };
   role: { en: string; ar: string };
   discipline: { en: string; ar: string };
-  quote: { en: string; ar: string };
-  tags: { en: string[]; ar: string[] };
   avatarType: 'ceo' | 'co_ceo' | 'coo' | 'creative' | 'growth' | 'tech' | 'operations' | 'client';
 }
 
@@ -44,140 +47,188 @@ function CareerAccents({ type, surrounding = false }: { type: TeamMember['avatar
 }
 
 const CEO_MEMBER: TeamMember = {
-  id: 'ceo',
-  badge: 'FOUNDER & CEO',
-  featured: true,
-  name: { en: 'Eng.khaled Morad', ar: 'م.خالد مراد' },
-  role: { en: 'Founder & Chief Executive Officer', ar: 'المؤسس والرئيس التنفيذي (CEO)' },
-  discipline: { en: 'Executive Strategy & Brand Growth', ar: 'القيادة التنفيذية واستراتيجية النمو' },
-  quote: {
-    en: 'We built ALMORAD AMC so ambitious brands never have to choose between strategic rigor, bold creative direction, and engineering excellence.',
-    ar: 'أسسنا المراد AMC لتمكين العلامات الطموحة من الجمع بين دقة الاستراتيجية، وقوة الإبداع البصري، والتميز التقني في منظومة واحدة.',
+  "id": "ceo",
+  "badge": "CEO",
+  "name": {
+    "en": "Eng. Khaled Morad",
+    "ar": "\u0645. \u062e\u0627\u0644\u062f \u0645\u0631\u0627\u062f"
   },
-  tags: {
-    en: ['Brand Positioning', 'Growth Architecture', 'Executive Advisory'],
-    ar: ['تموضع العلامة', 'هندسة النمو', 'الاستشارات التنفيذية'],
+  "role": {
+    "en": "Chief Executive Officer",
+    "ar": "\u0627\u0644\u0631\u0626\u064a\u0633 \u0627\u0644\u062a\u0646\u0641\u064a\u0630\u064a"
   },
-  avatarType: 'ceo',
+  "discipline": {
+    "en": "Chief Executive Officer",
+    "ar": "\u0627\u0644\u0631\u0626\u064a\u0633 \u0627\u0644\u062a\u0646\u0641\u064a\u0630\u064a"
+  },
+  "avatarType": "ceo",
+  "featured": true
 };
-
 const CO_LEADERSHIP: readonly TeamMember[] = [
   {
-    id: 'co-ceo',
-    badge: 'EXECUTIVE LEADERSHIP',
-    name: { en: 'Co-Chief Executive Officer', ar: 'الرئيس التنفيذي المشارك (Co-CEO)' },
-    role: { en: 'Co-Chief Executive Officer & Partner', ar: 'الرئيس التنفيذي المشارك والشريك' },
-    discipline: { en: 'Corporate Strategy & Global Partnerships', ar: 'الاستراتيجية المؤسسية والشراكات الدولية' },
-    quote: {
-      en: 'Driving institutional partnerships, market expansion, and long-term brand capital across regional and international sectors.',
-      ar: 'قيادة الشراكات المؤسسية والتوسع السوقي وبناء القيمة المستدامة للعلامات عبر الأسواق الإقليمية والدولية.',
+    "id": "coo",
+    photo: "/images/team/belal-khaled-morad.jpg",
+    "badge": "COO",
+    "name": {
+      "en": "Dr. Belal Khaled Morad",
+      "ar": "\u062f. \u0628\u0644\u0627\u0644 \u062e\u0627\u0644\u062f \u0645\u0631\u0627\u062f"
     },
-    tags: {
-      en: ['Market Expansion', 'Enterprise Strategy', 'Commercial Scale'],
-      ar: ['التوسع السوقي', 'استراتيجية المؤسسات', 'النمو التجاري'],
+    "role": {
+      "en": "Chief Operating Officer",
+      "ar": "\u0631\u0626\u064a\u0633 \u0627\u0644\u0639\u0645\u0644\u064a\u0627\u062a"
     },
-    avatarType: 'co_ceo',
+    "discipline": {
+      "en": "Chief Operating Officer",
+      "ar": "\u0631\u0626\u064a\u0633 \u0627\u0644\u0639\u0645\u0644\u064a\u0627\u062a"
+    },
+    "avatarType": "coo"
   },
   {
-    id: 'coo',
-    badge: 'OPERATIONS EXCELLENCE',
-    name: { en: 'Chief Operating Officer', ar: 'رئيس العمليات التنفيذي (COO)' },
-    role: { en: 'Chief Operating Officer', ar: 'رئيس العمليات التنفيذي والشريك التشغيلي' },
-    discipline: { en: 'Studio Delivery & Governance Systems', ar: 'إدارة العمليات وحوكمة المشاريع وجودة التسليم' },
-    quote: {
-      en: 'Ensuring seamless project execution, sprint velocity, and rigorous quality benchmarks across every multidisciplinary brief.',
-      ar: 'ضمان دقة التنفيذ، وسرعة دورات العمل، وتطبيق أعلى معايير الجودة والحوكمة في كافة مشاريع الاستوديو.',
+    "id": "co-ceo",
+    linkedinUrl: "https://www.linkedin.com/in/mohamed-khaled-morad-97882a1b0/",
+    photo: "/images/team/mohamed-khaled-morad.png",
+    "badge": "CO-CEO",
+    "name": {
+      "en": "Eng. Mohamed Khaled Morad",
+      "ar": "\u0645. \u0645\u062d\u0645\u062f \u062e\u0627\u0644\u062f \u0645\u0631\u0627\u062f"
     },
-    tags: {
-      en: ['Operational Rigor', 'Delivery Excellence', 'Resource Architecture'],
-      ar: ['حوكمة العمليات', 'دقة التسليم', 'إدارة الموارد'],
+    "role": {
+      "en": "Co-Chief Executive Officer",
+      "ar": "\u0627\u0644\u0631\u0626\u064a\u0633 \u0627\u0644\u062a\u0646\u0641\u064a\u0630\u064a \u0627\u0644\u0645\u0634\u0627\u0631\u0643"
     },
-    avatarType: 'coo',
+    "discipline": {
+      "en": "Co-Chief Executive Officer",
+      "ar": "\u0627\u0644\u0631\u0626\u064a\u0633 \u0627\u0644\u062a\u0646\u0641\u064a\u0630\u064a \u0627\u0644\u0645\u0634\u0627\u0631\u0643"
+    },
+    "avatarType": "co_ceo"
+  }
+];
+const CORE_TEAM: readonly TeamMember[] = [
+  {
+    "id": "business-development",
+    "name": {
+      "en": "Gina Raafat",
+      "ar": "\u062c\u064a\u0646\u0627 \u0631\u0623\u0641\u062a"
+    },
+    "role": {
+      "en": "Business Developer",
+      "ar": "\u0645\u0637\u0648\u0631\u0629 \u0623\u0639\u0645\u0627\u0644"
+    },
+    "discipline": {
+      "en": "Partnerships, Opportunities & Growth",
+      "ar": "\u0627\u0644\u0634\u0631\u0627\u0643\u0627\u062a \u0648\u0627\u0644\u0641\u0631\u0635 \u0648\u0627\u0644\u0646\u0645\u0648"
+    },
+    "badge": "BUSINESS DEVELOPMENT",
+    "avatarType": "client",
+    "photo": "/images/team/gina-raafat.jpeg",
+    "linkedinUrl": "https://www.linkedin.com/in/gina-raafat-a24a6a447/"
   },
-] as const;
+  {
+    "id": "research",
+    "name": {
+      "en": "Farah",
+      "ar": "\u0641\u0631\u062d"
+    },
+    "role": {
+      "en": "R&D Specialist",
+      "ar": "\u0623\u062e\u0635\u0627\u0626\u064a\u0629 \u0628\u062d\u062b \u0648\u062a\u0637\u0648\u064a\u0631"
+    },
+    "discipline": {
+      "en": "Research, Insights & New Ideas",
+      "ar": "\u0627\u0644\u0628\u062d\u062b \u0648\u0627\u0644\u0631\u0624\u0649 \u0648\u0627\u0644\u0623\u0641\u0643\u0627\u0631 \u0627\u0644\u062c\u062f\u064a\u062f\u0629"
+    },
+    "badge": "RESEARCH & DEVELOPMENT",
+    "avatarType": "creative"
+  },
+  {
+    "id": "moderation",
+    "name": {
+      "en": "Mayar Alaa",
+      "ar": "\u0645\u064a\u0627\u0631 \u0639\u0644\u0627\u0621"
+    },
+    "role": {
+      "en": "Moderation & Social Media Specialist",
+      "ar": "\u0623\u062e\u0635\u0627\u0626\u064a\u0629 \u0645\u0648\u0627\u0642\u0639 \u0627\u0644\u062a\u0648\u0627\u0635\u0644 \u0648\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u062a\u0641\u0627\u0639\u0644"
+    },
+    "discipline": {
+      "en": "Content, Community & Engagement",
+      "ar": "\u0627\u0644\u0645\u062d\u062a\u0648\u0649 \u0648\u0627\u0644\u0645\u062c\u062a\u0645\u0639 \u0648\u0627\u0644\u062a\u0641\u0627\u0639\u0644"
+    },
+    "badge": "SOCIAL MEDIA & MODERATION",
+    "avatarType": "client",
+    "photo": "/images/team/mayar-alaa.jpeg",
+    "linkedinUrl": "https://www.linkedin.com/in/mayar-alaa-722523447/"
+  },
+  {
+    "id": "client",
+    "name": {
+      "en": "Alaa Hassan",
+      "ar": "\u0622\u0644\u0627\u0621 \u062d\u0633\u0646"
+    },
+    "role": {
+      "en": "Account Manager",
+      "ar": "\u0645\u062f\u064a\u0631\u0629 \u062d\u0633\u0627\u0628\u0627\u062a"
+    },
+    "discipline": {
+      "en": "Account Growth, Reporting & Value",
+      "ar": "\u0646\u0645\u0648 \u0627\u0644\u062d\u0633\u0627\u0628\u0627\u062a \u0648\u0627\u0644\u062a\u0642\u0627\u0631\u064a\u0631 \u0648\u0627\u0644\u0642\u064a\u0645\u0629"
+    },
+    "badge": "ACCOUNT MANAGEMENT",
+    "avatarType": "client",
+    "photo": "/images/team/alaa-hassen.jpeg",
+    "linkedinUrl": "https://www.linkedin.com/in/alaa-hassan-722523447/"
+  },
+  {
+    "id": "growth",
+    "name": {
+      "en": "Omar Allam",
+      "ar": "\u0639\u0645\u0631 \u0639\u0644\u0627\u0645"
+    },
+    "role": {
+      "en": "Marketing Specialist",
+      "ar": "\u0623\u062e\u0635\u0627\u0626\u064a \u062a\u0633\u0648\u064a\u0642"
+    },
+    "discipline": {
+      "en": "Campaigns, Audiences & Brand Growth",
+      "ar": "\u0627\u0644\u062d\u0645\u0644\u0627\u062a \u0648\u0627\u0644\u062c\u0645\u0647\u0648\u0631 \u0648\u0646\u0645\u0648 \u0627\u0644\u0639\u0644\u0627\u0645\u0629"
+    },
+    "badge": "MARKETING",
+    "avatarType": "growth",
+    "photo": "/images/team/omar-allam.png",
+    "linkedinUrl": "https://www.linkedin.com/in/omar3llam/"
+  },
+  {
+    "id": "tech",
+    "name": {
+      "en": "Ahmed Soliman",
+      "ar": "\u0623\u062d\u0645\u062f \u0633\u0644\u064a\u0645\u0627\u0646"
+    },
+    "role": {
+      "en": "Full-Stack Engineer & Web Developer",
+      "ar": "\u0645\u0647\u0646\u062f\u0633 \u0628\u0631\u0645\u062c\u064a\u0627\u062a \u0645\u062a\u0643\u0627\u0645\u0644\u0629 \u0648\u0645\u0637\u0648\u0631 \u0648\u064a\u0628"
+    },
+    "discipline": {
+      "en": "Web Platforms, Engineering & E-Commerce",
+      "ar": "\u0645\u0646\u0635\u0627\u062a \u0627\u0644\u0648\u064a\u0628 \u0648\u0627\u0644\u0647\u0646\u062f\u0633\u0629 \u0648\u0627\u0644\u062a\u062c\u0627\u0631\u0629 \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a\u0629"
+    },
+    "badge": "DIGITAL ENGINEERING",
+    "avatarType": "tech",
+    "photo": "/images/team/ahmed-soliman.jpg",
+    "linkedinUrl": "https://www.linkedin.com/in/iamahmedsoliman/",
+    "photoPosition": "50% 80%"
+  }
+];
 
-const CORE_TEAM_5: readonly TeamMember[] = [
-  {
-    id: 'creative',
-    badge: 'BRAND ARCHITECTURE',
-    name: { en: 'Creative Direction Lead', ar: 'إدارة الإبداع والهوية البصرية' },
-    role: { en: 'Executive Creative Director', ar: 'المدير الإبداعي التنفيذي' },
-    discipline: { en: 'Identity Systems & Visual Craft', ar: 'أنظمة الهوية والإخراج الفني' },
-    quote: {
-      en: 'Crafting timeless bilingual identity systems, typography, and motion languages that command attention across every touchpoint.',
-      ar: 'صياغة أنظمة هوية بصرية ثنائية اللغة وتجارب حركية تترك أثراً دائماً عبر كافة نقاط التواصل.',
-    },
-    tags: {
-      en: ['Visual Identity', 'Art Direction', '3D & Motion'],
-      ar: ['الهوية البصرية', 'الإخراج الفني', 'التصميم ثلاثي الأبعاد'],
-    },
-    avatarType: 'creative',
-  },
-  {
-    id: 'growth',
-    badge: 'PERFORMANCE & MEDIA',
-    name: { en: 'Growth & Media Lead', ar: 'إدارة النمو والحملات الإعلانية' },
-    role: { en: 'Head of Performance & Campaigns', ar: 'رئيس قطاع النمو وشراء الوسائط' },
-    discipline: { en: 'Media Buying, Outdoor & ROI', ar: 'شراء المساحات الإعلانية والحملات الخارجية' },
-    quote: {
-      en: 'Turning market research and audience intelligence into high-converting digital campaigns, outdoor billboards, and corporate events.',
-      ar: 'تحويل أبحاث السوق وبيانات الجمهور إلى حملات رقمية ولوحات خارجية وفعاليات تحقق عائداً ملموساً.',
-    },
-    tags: {
-      en: ['Media Buying', 'Outdoor Billboards', 'Market Analytics'],
-      ar: ['شراء الإعلانات', 'اللوحات الخارجية', 'تحليلات السوق'],
-    },
-    avatarType: 'growth',
-  },
-  {
-    id: 'tech',
-    badge: 'DIGITAL ENGINEERING',
-    name: { en: 'Digital Systems Lead', ar: 'إدارة الهندسة والمنصات الرقمية' },
-    role: { en: 'Lead Technology & Web Architect', ar: 'كبير مهندسي المنصات وتطوير الويب' },
-    discipline: { en: 'Full-Stack Web & E-Commerce', ar: 'تطوير المواقع والتجارة الإلكترونية' },
-    quote: {
-      en: 'Engineering high-speed, SEO-first flagships and custom e-commerce platforms built for reliability, conversion, and scale.',
-      ar: 'هندسة وتطوير منصات رقمية ومتاجر إلكترونية فائقة السرعة ومهيأة لمحركات البحث بمعايير عالمية.',
-    },
-    tags: {
-      en: ['Next.js & 3D Web', 'E-Commerce Systems', 'Technical SEO'],
-      ar: ['منصات الويب التفاعلية', 'التجارة الإلكترونية', 'الأرشفة التقنية SEO'],
-    },
-    avatarType: 'tech',
-  },
-  {
-    id: 'operations',
-    badge: 'PRODUCTION & SPRINT',
-    name: { en: 'Head of Production & Sprints', ar: 'إدارة الإنتاج وإدارة المشاريع' },
-    role: { en: 'Senior Production Director', ar: 'مدير عام الإنتاج وإدارة المشاريع' },
-    discipline: { en: 'Agile Delivery, Timelines & QA', ar: 'إدارة الجداول الزمنية وضمان الجودة البرمجية والتصميمية' },
-    quote: {
-      en: 'Aligning milestones, creative assets, and client sign-offs with unwavering precision and clockwork predictability.',
-      ar: 'تنسيق الجداول الزمنية، ومخرجات التصميم، والتسليمات البرمجية بدقة تامة وانضباط احترافي.',
-    },
-    tags: {
-      en: ['Sprint Leadership', 'QA Benchmarks', 'Resource Tracking'],
-      ar: ['إدارة الدورات', 'معايير الجودة QA', 'إدارة المخرجات'],
-    },
-    avatarType: 'operations',
-  },
-  {
-    id: 'client',
-    badge: 'CLIENT SUCCESS & VALUE',
-    name: { en: 'Client Strategy & Success Lead', ar: 'إدارة نجاح العملاء والاستشارات' },
-    role: { en: 'Director of Strategic Client Success', ar: 'مدير نجاح العملاء والاستشارات الاستراتيجية' },
-    discipline: { en: 'Account Growth, Reporting & Value', ar: 'إدارة حسابات الشركاء والتقارير وتحقيق العائد' },
-    quote: {
-      en: 'Serving as the direct strategic conduit between client goals and our multidisciplinary studio team at every phase.',
-      ar: 'نقطة الاتصال الاستراتيجية المباشرة لضمان توافق أهداف العميل مع كافة مراحل العمل في الاستوديو.',
-    },
-    tags: {
-      en: ['Client Advisory', 'Quarterly ROI', 'Partner Relations'],
-      ar: ['استشارات العملاء', 'متابعة العائد ROI', 'علاقات الشركاء'],
-    },
-    avatarType: 'client',
-  },
-] as const;
+function MemberPortrait({member, locale, featured=false}: {member: TeamMember; locale: Locale; featured?: boolean}) {
+  return member.photo ? <Image src={member.photo} alt={member.name[locale]} fill sizes="(max-width: 767px) 70vw, 260px" style={{objectFit: 'cover', objectPosition: member.photoPosition || '50% 25%'}}/> : <ExecutivePortraitSvg type={member.avatarType} isFeatured={featured}/>;
+}
+
+function MemberLinkedIn({member, locale}: {member: TeamMember; locale: Locale}) {
+  // Publish only explicitly supplied personal profile URLs.
+  if (!member.linkedinUrl || !/^https:\/\/(www\.)?linkedin\.com\/in\/[^/?#]+\/?$/.test(member.linkedinUrl)) return null;
+  const label = `${member.name[locale]} - LinkedIn`;
+  return <a className="team-linkedin icon-button rounded-squircle-md" href={member.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label={label} title={label}><SocialIcon name="linkedin"/></a>;
+}
 
 function ExecutivePortraitSvg({ type, isFeatured }: { type: TeamMember['avatarType']; isFeatured?: boolean }) {
   return (
@@ -355,7 +406,7 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
               : 'Direct partner-level leadership backed by multidisciplinary specialists across brand architecture, media performance, and full-stack engineering.'}
           </p>
           <p className="lp-team-preview-note">
-            {isAr ? 'معاينة التصميم: الملفات التعريفية والرسوم التوضيحية مؤقتة لحين اعتماد الأسماء والصور والسير الذاتية.' : 'Design preview: profiles and illustrations are placeholders pending approved names, photographs and biographies.'}
+            {isAr ? 'الأسماء والأدوار معتمدة من المراد AMC. نعرض صور الفريق المتاحة، والرسوم المتبقية توضيحية مؤقتة.' : 'Team names and roles supplied by ALMORAD AMC. Supplied team photographs are shown where available; remaining illustrations are placeholders.'}
           </p>
           <Link href="/booking" className="button button-primary rounded-squircle-md">
             <span>{isAr ? 'احجز جلسة استراتيجية مع الفريق' : 'Book a Strategy Session with Us'}</span>
@@ -375,7 +426,7 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
         className="lp-team-ceo-card glass-surface rounded-squircle-xl mb-8"
       >
         <div className="lp-team-ceo-portrait rounded-squircle-lg">
-          <ExecutivePortraitSvg type="ceo" isFeatured />
+          <MemberPortrait member={ceo} locale={locale} featured/>
           <CareerAccents type="ceo" />
           <span className="lp-team-verified-pill">
             <span className="badge-dot" aria-hidden="true" />
@@ -392,17 +443,7 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
           </div>
 
           <h3 className="lp-team-ceo-name">{ceo.name[locale]}</h3>
-          <p className="lp-team-ceo-role">{ceo.role[locale]}</p>
-
-          <p className="lp-team-ceo-quote">{ceo.quote[locale]}</p>
-
-          <ul className="lp-team-tags" aria-label={isAr ? 'مجالات التخصص' : 'Specializations'}>
-            {ceo.tags[locale].map((tag) => (
-              <li key={tag} className="badge rounded-squircle-sm">
-                {tag}
-              </li>
-            ))}
-          </ul>
+          <p className="lp-team-ceo-role">{ceo.role[locale]}</p><MemberLinkedIn member={ceo} locale={locale}/>
 
           <div className="lp-team-ceo-actions">
             <Link href="/booking" className="button button-primary rounded-squircle-md">
@@ -432,7 +473,7 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
           >
             <div className="director-portrait-stage">
               <div className="lp-team-card-portrait rounded-squircle-lg">
-                <ExecutivePortraitSvg type={member.avatarType} isFeatured />
+                <MemberPortrait member={member} locale={locale} featured/>
               </div>
               <CareerAccents type={member.avatarType} surrounding />
             </div>
@@ -441,16 +482,7 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
               <span className="lp-team-card-badge director-card-kicker badge rounded-squircle-sm">{member.badge}</span>
               <small className="lp-team-card-discipline">{member.discipline[locale]}</small>
               <h4 className="lp-team-card-title">{member.name[locale]}</h4>
-              <p className="lp-team-card-role">{member.role[locale]}</p>
-              <p className="lp-team-card-bio">{member.quote[locale]}</p>
-
-              <ul className="lp-team-tags mt-auto pt-4">
-                {member.tags[locale].map((tag) => (
-                  <li key={tag} className="badge rounded-squircle-sm">
-                    {tag}
-                  </li>
-                ))}
-              </ul>
+              <p className="lp-team-card-role">{member.role[locale]}</p><MemberLinkedIn member={member} locale={locale}/>
             </div>
           </article>
           </div>
@@ -458,8 +490,8 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
       </div>
 
       {/* 3. Team of 5 Discipline Leads */}
-      <DirectorsReel locale={locale} count={CORE_TEAM_5.length}>
-        {CORE_TEAM_5.map((member) => (
+      <DirectorsReel locale={locale} count={CORE_TEAM.length}>
+        {CORE_TEAM.map((member) => (
           <div key={member.id} className="team-card-reveal">
           <article
             data-team-card
@@ -468,7 +500,7 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
           >
             <div className="director-portrait-stage">
               <div className="lp-team-card-portrait rounded-squircle-lg">
-                <ExecutivePortraitSvg type={member.avatarType} />
+                <MemberPortrait member={member} locale={locale}/>
               </div>
               <CareerAccents type={member.avatarType} surrounding />
             </div>
@@ -477,16 +509,7 @@ export function TeamShowcase({ locale, standalone = false }: { locale: Locale; s
               <span className="lp-team-card-badge director-card-kicker badge rounded-squircle-sm">{member.badge}</span>
               <small className="lp-team-card-discipline">{member.discipline[locale]}</small>
               <h4 className="lp-team-card-title text-lg">{member.name[locale]}</h4>
-              <p className="lp-team-card-role text-xs">{member.role[locale]}</p>
-              <p className="lp-team-card-bio text-xs leading-relaxed">{member.quote[locale]}</p>
-
-              <ul className="lp-team-tags mt-auto pt-3">
-                {member.tags[locale].map((tag) => (
-                  <li key={tag} className="badge rounded-squircle-sm text-[0.7rem] px-2 py-0.5">
-                    {tag}
-                  </li>
-                ))}
-              </ul>
+              <p className="lp-team-card-role text-xs">{member.role[locale]}</p><MemberLinkedIn member={member} locale={locale}/>
             </div>
           </article>
           </div>

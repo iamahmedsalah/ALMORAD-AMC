@@ -26,6 +26,8 @@ html[dir="rtl"] :is(.directional-icon,.directional-control > .animated-icon) { t
 .side-drawer .side-drawer-link-label { min-width:0; line-height:1.4; overflow-wrap:normal; word-break:normal; }
 .side-drawer .side-drawer-link > .solar-icon { width:20px; height:20px; flex:none; }
 .side-drawer.side-drawer { padding:clamp(16px,4vw,28px); padding-block-end:max(20px,env(safe-area-inset-bottom)); }
+.side-drawer.side-drawer { scrollbar-width:none; overscroll-behavior:contain; }
+.side-drawer.side-drawer::-webkit-scrollbar { display:none; width:0; height:0; }
 .side-drawer .side-drawer-links { margin-block:12px; gap:4px; }
 .side-drawer .side-drawer-link { min-height:56px; padding:12px; }
 .side-drawer .side-drawer-link-label { font-size:clamp(1rem,2.8vw,1.35rem); }
@@ -33,6 +35,11 @@ html[dir="rtl"] :is(.directional-icon,.directional-control > .animated-icon) { t
 .side-drawer .side-drawer-header .brand { min-width:0; }
 .side-drawer .side-drawer-header .side-nav-trigger { flex:none; }
 .side-drawer .side-drawer-footer { gap:12px; padding-block-start:12px; }
+@media (max-width:767px) {
+ .amc-landing .pillar-service-links { display:flex; flex-wrap:wrap; gap:12px; }
+ .amc-landing .pillar-service-links > li { display:flex; min-width:0; max-width:100%; }
+ .amc-landing .pillar-service-links .badge { min-height:44px; max-width:100%; }
+}
 .faq-accordion .faq-accordion-item > summary { grid-template-columns:minmax(0,1fr) 44px; gap:12px; min-height:64px; }
 .faq-accordion .faq-accordion-question { min-width:0; width:auto; overflow-wrap:normal; word-break:normal; }
 .faq-accordion .faq-accordion-toggle { width:44px; height:44px; }

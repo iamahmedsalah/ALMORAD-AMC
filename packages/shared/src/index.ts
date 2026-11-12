@@ -53,3 +53,5 @@ export * from './banner.js';
 export * from './calendar.js';
 export * from './office.js';
 
+
+export * from './staff.js';

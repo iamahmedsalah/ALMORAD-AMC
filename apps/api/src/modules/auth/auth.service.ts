@@ -1,11 +1,12 @@
 import {randomBytes} from 'node:crypto';
 import {BadRequestException,Inject,Injectable,NotFoundException,UnauthorizedException} from '@nestjs/common';
 import {z} from 'zod';
+import {staffEmailSchema} from '@amc/shared';
 import {PrismaService} from '../../prisma/prisma.service.js';
 import {CsrfService} from './csrf.js';
 import {hashPassword,tokenHash,verifyPassword} from './security.js';
 import type {StaffRequest} from './session.guard.js';
-const credentials=z.object({email:z.email().max(254).transform(s=>s.toLowerCase()),password:z.string().min(1).max(128)}).strict();
+const credentials=z.object({email:staffEmailSchema,password:z.string().min(1).max(128)}).strict();
 const change=z.object({currentPassword:z.string().min(1).max(128),newPassword:z.string().min(12).max(128)}).strict();
 const publicUser={id:true,email:true,role:true} as const;
 @Injectable()

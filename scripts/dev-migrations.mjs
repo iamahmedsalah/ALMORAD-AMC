@@ -20,18 +20,27 @@ export function developmentTarget(env){
   return direct;
 }
 
+export function developmentFailure(error){
+  if(error instanceof ReleasePolicyError)return error.message;
+  const code=error?.code||error?.cause?.code;
+  if(['ENOTFOUND','EAI_AGAIN','ECONNREFUSED','ECONNRESET','ETIMEDOUT'].includes(code)||/timeout|timed out|connection terminated/i.test(error?.message||''))return 'Development database connection failed or timed out. Check network access and DATABASE_URL / DIRECT_URL, then retry.';
+  if(code==='28P01')return 'Development database authentication failed. Check the configured database credentials.';
+  if(/certificate|TLS|SSL/i.test(error?.message||''))return 'Development database TLS verification failed. Check the configured certificate and SSL settings.';
+  return 'Development migration inspection failed. Check database connectivity and migration configuration; credentials were not logged.';
+}
+
 export async function migrateDevelopment(env=process.env,{inspect=inspectMigrations,execute=spawnSync}={}){
   developmentTarget(env);
   const localEnv={...env,NODE_ENV:'development'};
-  const before=await inspect(localEnv);
+  const before=await inspect(localEnv,{connectionTimeoutMillis:30000});
   const cli=resolve(root,'apps/api/node_modules/prisma/build/index.js');
   const run=command=>{
-    const result=execute(process.execPath,[cli,...command],{cwd:resolve(root,'apps/api'),env:localEnv,encoding:'utf8',timeout:180000});
+    const result=execute(process.execPath,[cli,...command],{cwd:resolve(root,'apps/api'),env:localEnv,encoding:'utf8',timeout:180000,windowsHide:true});
     if(result.error||result.status!==0)throw new ReleasePolicyError(command[0]==='generate'?'Local Prisma client generation failed':'Local migration failed; inspect migration history before retrying');
   };
   const enabled=env.AMC_RELEASE_MIGRATIONS!=='0';
   if(before.pending.length&&enabled)run(['migrate','deploy']);
-  const after=await inspect(localEnv);
+  const after=await inspect(localEnv,{connectionTimeoutMillis:30000});
   if(after.pending.length&&enabled)throw new ReleasePolicyError('Development database still has pending migrations');
   run(['generate']);
   return {event:enabled?'development_migrations_verified':'development_migrations_skipped',applied:enabled?before.pending.length:0,pending:after.pending.length,clientGenerated:true};
@@ -41,5 +50,5 @@ if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.u
   try{
     const file=resolve(root,'.env');if(existsSync(file))loadEnvFile(file);
     console.log(JSON.stringify(await migrateDevelopment()));
-  }catch(error){console.error(error instanceof ReleasePolicyError?error.message:'Development migration setup failed; credentials were not logged');process.exitCode=1;}
+  }catch(error){console.error(developmentFailure(error));process.exitCode=1;}
 }

@@ -48,10 +48,10 @@ export function pendingMigrations(entries,history,existingTables){
   for(const entry of entries){if(!applied.has(entry.name))gap=true;else if(gap)throw new ReleasePolicyError('Migration history has an unexpected gap');}
   return entries.filter(x=>!applied.has(x.name)).map(x=>x.name);
 }
-export async function inspectMigrations(env=process.env){
+export async function inspectMigrations(env=process.env,{connectionTimeoutMillis=10000}={}){
   const target=migrationTarget(env),manifest=await migrationManifest();
   const {Client}=require('pg');
-  const db=new Client({connectionString:target.url.href,options:`-c search_path=${target.schema}`,connectionTimeoutMillis:10000,statement_timeout:15000});
+  const db=new Client({connectionString:target.url.href,options:`-c search_path=${target.schema}`,connectionTimeoutMillis,statement_timeout:15000});
   try{
     await db.connect();await db.query('BEGIN READ ONLY');
     const tables=(await db.query('SELECT tablename FROM pg_tables WHERE schemaname=$1',[target.schema])).rows.map(x=>x.tablename);

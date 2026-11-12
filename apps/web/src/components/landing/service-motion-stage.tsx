@@ -96,11 +96,13 @@ export function ServiceMotionStage({scene,locale,label,fallback='/studio/studio-
   const running=selected&&eligible&&ready&&!paused;
   const poster=scene==='devices'?fallback:`/studio/services/${scene}.webp`;
   const posterSource=failedPoster===poster?fallback:poster;
+  // These small WebP posters are already compressed. Serve the public assets
+  // directly: the multi-service host returns 404 for its image optimizer route.
   return <div ref={ref} className={`service-motion-stage ${scene==='devices'?'service-device-scene':''}`} data-scene={scene} data-active={running?'true':'false'} data-failed={failed?'true':'false'}>
     {scene==='devices'?<>
       <Image className="service-motion-poster service-device-poster-light" src="/studio/studio-03-light.svg" width={1200} height={800} sizes="(max-width: 767px) 100vw, 50vw" unoptimized alt="" loading="lazy" decoding="async"/>
       <Image className="service-motion-poster service-device-poster-dark" src="/studio/studio-03-dark.svg" width={1200} height={800} sizes="(max-width: 767px) 100vw, 50vw" unoptimized alt="" loading="lazy" decoding="async"/>
-    </>:<Image className="service-motion-poster" src={posterSource} width={1000} height={800} sizes="(max-width: 767px) 100vw, 50vw" unoptimized={posterSource.endsWith('.svg')} alt="" loading="lazy" decoding="async" onError={()=>{if(posterSource!==fallback)setFailedPoster(poster);}}/>}
+    </>:<Image className="service-motion-poster" src={posterSource} width={1000} height={800} sizes="(max-width: 767px) 100vw, 50vw" unoptimized alt="" loading="lazy" decoding="async" onError={()=>{if(posterSource!==fallback)setFailedPoster(poster);}}/>}
     <canvas key={`${scene}-${selected}-${eligible}-${paused}`} ref={canvasRef} className="service-motion-canvas" aria-hidden="true" style={{opacity:ready&&selected&&eligible?1:0}}/>
     <button type="button" className="service-motion-toggle" aria-label={`${locale==='ar'?(reduced||failed?'معاينة ثابتة':paused?'تشغيل الحركة':'إيقاف الحركة'):(reduced||failed?'Still preview':paused?'Play motion':'Pause motion')}: ${label}`} aria-pressed={paused||reduced} disabled={reduced||failed} onClick={()=>setPaused(value=>!value)}>
       <PlaybackIcon paused={paused||reduced||failed}/>

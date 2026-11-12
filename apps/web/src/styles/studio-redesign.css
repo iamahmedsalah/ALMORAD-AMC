@@ -2985,3 +2985,32 @@ html:not(.dark):not([data-theme="dark"]) .service-device-scene .service-motion-c
   pointer-events:none;
 }
 .chapter-navigation-overlay .scroll-hud-rail {pointer-events:auto;}
+
+/* Supplied team photography keeps its original colors and a stable portrait frame. */
+.lp-team-card-portrait, .lp-team-ceo-portrait { position:relative; overflow:hidden; }
+.team-linkedin { display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; margin-block-start:.75rem; color:var(--foreground); }
+.team-linkedin:focus-visible { outline:2px solid var(--ring); outline-offset:3px; }
+
+/* Center member details and their actions in both LTR and RTL layouts. */
+.lp-team-section .lp-team-card-body { align-items:center; text-align:center; }
+.lp-team-section .lp-team-ceo-content { text-align:center; }
+.lp-team-section .lp-team-ceo-content > .flex,
+.lp-team-section .lp-team-ceo-actions { justify-content:center; }
+.lp-team-section .team-linkedin { margin-inline:auto; }
+
+/* LinkedIn brand actions: black squircle, inverted monochrome on intentional interaction. */
+.lp-team-section .team-linkedin.icon-button {
+  width:48px; height:48px; flex:none; padding:0; border-radius:20px;
+  border:1px solid rgb(255 255 255 / 24%); background:#0B0A08; color:#FFFFFF;
+  transition:background-color var(--motion-micro,160ms) ease, transform var(--motion-micro,160ms) ease;
+}
+.lp-team-section .team-linkedin.icon-button:focus-visible { background:#FFFFFF; color:#0B0A08; border-color:#0B0A08; }
+@media (hover:hover) and (pointer:fine) {
+  .lp-team-section .team-linkedin.icon-button:hover { background:#FFFFFF; color:#0B0A08; border-color:#0B0A08; transform:translateY(-2px); }
+}
+.lp-team-section .team-linkedin.icon-button:active { transform:scale(.96); }
+@supports (corner-shape:squircle) { .lp-team-section .team-linkedin { corner-shape:squircle; } }
+@media (prefers-reduced-motion:reduce) {
+  .lp-team-section .team-linkedin.icon-button { transition:none; }
+  .lp-team-section .team-linkedin.icon-button:is(:hover,:active) { transform:none; }
+}
