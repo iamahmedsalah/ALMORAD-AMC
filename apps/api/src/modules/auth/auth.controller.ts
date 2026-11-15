@@ -24,6 +24,17 @@ export class AuthController {
     const result=await this.auth.login(input,cookieToken(req.headers.cookie));res.cookie(sessionCookieName(),result.token,{...cookieOptions(),expires:result.expiresAt});return {staff:result.staff,csrfToken:result.csrfToken};
   }
 
+  @Post('forgot-password') @HttpCode(200) @Header('Cache-Control','no-store') @Throttle({default:{limit:3,ttl:60000}})
+  forgot(@Req() req:StaffRequest,@Body() input:unknown){if(!sameOrigin(req.headers.origin))throw new ForbiddenException();return this.auth.forgotPassword(input);}
+  @Post('reset-password') @HttpCode(200) @Header('Cache-Control','no-store') @Throttle({default:{limit:5,ttl:60000}})
+  async reset(@Req() req:StaffRequest,@Body() input:unknown,@Res({passthrough:true}) res:Response){if(!sameOrigin(req.headers.origin))throw new ForbiddenException();const result=await this.auth.resetPassword(input);res.clearCookie(sessionCookieName(),cookieOptions());return result;}
+  @Post('google') @HttpCode(200) @Header('Cache-Control','no-store') @Throttle({default:{limit:10,ttl:60000}})
+  async google(@Req() req:StaffRequest,@Body() input:unknown,@Res({passthrough:true}) res:Response){if(!sameOrigin(req.headers.origin))throw new ForbiddenException();const result=await this.auth.googleLogin(input,cookieToken(req.headers.cookie));res.cookie(sessionCookieName(),result.token,{...cookieOptions(),expires:result.expiresAt});return {staff:result.staff,csrfToken:result.csrfToken};}
+  @Post('google/link') @HttpCode(200) @Header('Cache-Control','no-store') @UseGuards(SessionGuard,CsrfGuard) @Throttle({default:{limit:5,ttl:60000}})
+  link(@Req() req:StaffRequest,@Body() input:unknown){return this.auth.googleLink(req,input);}
+  @Post('google/unlink') @HttpCode(200) @Header('Cache-Control','no-store') @UseGuards(SessionGuard,CsrfGuard)
+  unlink(@Req() req:StaffRequest){return this.auth.googleUnlink(req);}
+
   @ApiOperation({ summary: 'Current staff session', description: 'Returns the current authenticated staff identity and permissions.' })
   @ApiResponse({ status: 200, description: 'Active session returned' })
   @ApiResponse({ status: 401, description: 'Unauthenticated' })

@@ -1,6 +1,7 @@
 import {InquiriesController} from './modules/contact/inquiries.controller.js';
 import {BookingsService} from './modules/bookings/bookings.service.js';
 import {PublicBookingController,StaffBookingsController,BookingSettingsController,BookingAnalyticsController,BookingOriginGuard} from './modules/bookings/bookings.controller.js';
+import {GoogleCalendarService} from './modules/notifications/google-calendar.service.js';
 import {Module} from '@nestjs/common';
 import {APP_GUARD, Reflector} from '@nestjs/core';
 import {getOptionsToken, getStorageToken, ThrottlerGuard, ThrottlerModule, type ThrottlerModuleOptions, type ThrottlerStorage} from '@nestjs/throttler';
@@ -28,7 +29,7 @@ import {HubSpotClient} from './modules/contact/hubspot.client.js';
   ],
   controllers: [InquiriesController,ContactController,PublicBookingController,StaffBookingsController,BookingSettingsController,BookingAnalyticsController,HealthController, StaffController, StaffAccountsController, AuthController, SecurityController, OperationsController],
   providers: [
-    ContactService, HubSpotClient, BookingsService, BookingOriginGuard, PrismaService, SessionGuard, PermissionGuard, Reflector, AuthService, StaffAccountsService, CsrfService, CsrfGuard, ProxyGuard,
+    ContactService, HubSpotClient, GoogleCalendarService, BookingsService, BookingOriginGuard, PrismaService, SessionGuard, PermissionGuard, Reflector, AuthService, StaffAccountsService, CsrfService, CsrfGuard, ProxyGuard,
     {provide:APP_GUARD,useExisting:ProxyGuard},
     {provide:getStorageToken(),useClass:PostgresThrottleStorage},
     {

@@ -40,6 +40,7 @@ describe('PublicBookingController unit tests', () => {
   it('delegates reservation creation', async () => {
     const mockService = {
       create: vi.fn().mockResolvedValue({ id: 'bk_123', status: 'CONFIRMED' }),
+      drainMeet:vi.fn().mockResolvedValue({processed:0,succeeded:0,failed:0}),
       drainCrm:vi.fn().mockResolvedValue({processed:0,succeeded:0,failed:0})
     };
 

@@ -4,11 +4,11 @@ import {proxyClient,signProxy} from '@amc/shared/server';
 
 const publicAllowed:Record<string,string>={'config':'GET','slots':'GET','create':'POST','manage':'POST','action':'POST','recover':'POST','resend':'POST'};
 const contactAllowed:Record<string,string>={'submit':'POST'};
-const allowed:Record<string,string>={'auth/login':'POST','auth/logout':'POST','auth/password':'POST','auth/session':'GET','security/sessions':'GET','security/revoke':'POST','security/overview':'GET','security/audit':'GET','accounts':'GET','accounts/create':'POST','accounts/update':'POST','accounts/deactivate':'POST','inquiries':'GET','appointments':'GET','appointments/detail':'GET','appointments/assignees':'GET','appointments/create':'POST','appointments/action':'POST','booking-settings':'GET,POST','booking-analytics':'GET'};
+const allowed:Record<string,string>={'auth/forgot-password':'POST','auth/reset-password':'POST','auth/google':'POST','auth/google/link':'POST','auth/google/unlink':'POST','appointments/meet-link':'POST','auth/login':'POST','auth/logout':'POST','auth/password':'POST','auth/session':'GET','security/sessions':'GET','security/revoke':'POST','security/overview':'GET','security/audit':'GET','accounts':'GET','accounts/create':'POST','accounts/update':'POST','accounts/deactivate':'POST','inquiries':'GET','appointments':'GET','appointments/detail':'GET','appointments/assignees':'GET','appointments/create':'POST','appointments/action':'POST','booking-settings':'GET,POST','booking-analytics':'GET'};
 
 export async function forward(request:NextRequest,endpoint:string,namespace:'staff'|'booking'|'contact'){
  const routes=namespace==='staff'?allowed:namespace==='contact'?contactAllowed:publicAllowed;
- const bodyLimit=namespace==='contact'?16384:namespace==='staff'&&endpoint==='booking-settings'?16384:4096;
+ const bodyLimit=namespace==='staff'&&endpoint.startsWith('auth/google')?8192:namespace==='contact'?16384:namespace==='staff'&&endpoint==='booking-settings'?16384:4096;
  const unavailable=()=>NextResponse.json({message:namespace==='staff'?'Staff service unavailable':namespace==='contact'?'Contact service unavailable':'Booking service unavailable'},{status:503,headers});
  const headers={'Cache-Control':'private, no-store','X-Robots-Tag':'noindex, nofollow'};
  if(!routes[endpoint]?.split(',').includes(request.method))return NextResponse.json({message:'Not found'},{status:404,headers});

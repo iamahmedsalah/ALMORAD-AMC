@@ -1,0 +1,55 @@
+/* Public and staff operations use the current approved semantic palette. */
+.auth-utilities,.desk-primary-actions,.desk-presets,.staff-identity-heading {display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.auth-utilities {margin-block-end:32px;text-align:start}
+.auth-utilities .controls {position:static}
+.auth-return {display:inline-flex;min-height:44px;align-items:center;margin-block-start:16px}
+.auth-divider {display:flex;gap:12px;align-items:center}
+.auth-divider::before,.auth-divider::after {content:"";flex:1;border-top:1px solid var(--border)}
+.google-signin {min-height:44px;max-width:100%;overflow:hidden}
+.staff-login .staff-password-wrap {position:relative}
+.staff-login .staff-password-wrap input {width:100%;padding-inline-end:52px}
+.staff-role-badge {border:1px solid var(--border);padding:6px 12px;border-radius:10px;font-size:.85rem}
+.amc-dialog-overlay {position:fixed;inset:0;background:var(--overlay, rgb(0 0 0 / 60%));z-index:1100;backdrop-filter:blur(4px)}
+.amc-dialog-content {position:fixed;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:min(1040px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;z-index:1101;padding:clamp(16px,3vw,32px);background:var(--surface);color:var(--fg);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);scrollbar-gutter:stable}
+.amc-dialog-content:focus {outline:2px solid var(--ring);outline-offset:2px}
+.amc-dialog-content>.staff-heading h2 {font-size:clamp(1.25rem,3vw,2rem);margin:0}
+.amc-popover-content {z-index:1150;width:min(360px,calc(100vw - 24px));max-height:min(70dvh,var(--radix-popover-content-available-height));overflow:auto;padding:20px;background:var(--surface);color:var(--fg);border:1px solid var(--border-strong);border-radius:16px;box-shadow:var(--shadow-lg)}
+.amc-popover-content .booking-check {display:flex;min-height:44px;gap:10px;align-items:center}
+.amc-popover-content .booking-check input {width:20px;height:20px;flex:none}
+.amc-popover-content .booking-check span {min-width:0;overflow-wrap:anywhere}
+.desk-filter-popover {width:min(680px,calc(100vw - 24px))}
+.desk-filter-popover .booking-filters {grid-template-columns:repeat(2,minmax(0,1fr))}
+.amc-tooltip {z-index:1200;max-width:260px;padding:8px 12px;background:var(--fg);color:var(--bg);border-radius:8px}
+.desk-primary-actions {justify-content:flex-start;margin-block:20px}
+.desk-presets {justify-content:flex-start;gap:8px;margin-block:16px}
+.desk-presets button {font-size:.85rem;min-height:44px}
+.desk-split {display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}
+.desk-split>* {min-width:0}
+.desk-detail-tabs {display:flex;gap:4px;padding:4px;background:var(--surface-2);border-radius:12px;margin-block:16px;flex-wrap:wrap}
+.desk-detail-tabs button {flex:1;min-height:44px;border:0;padding:10px;background:transparent;color:var(--fg);border-radius:8px;font:inherit;font-size:.85rem}
+.desk-detail-tabs button[data-state="active"] {background:var(--surface);box-shadow:0 1px 5px rgb(0 0 0 / 10%)}
+.appointment-detail-panel [role="tabpanel"][hidden] {display:none!important}
+.appointment-detail-panel {overflow-wrap:anywhere;scroll-margin-top:100px}
+.assignee-picker {display:grid;gap:8px;margin-block:16px}
+.assignee-picker>button {justify-content:space-between}
+.agenda-assignees {display:flex;gap:4px;flex-wrap:wrap}
+.agenda-assignee-chip {background:var(--surface-2);padding:3px 8px;border:1px solid var(--border);border-radius:8px}
+.agenda-time {font-variant-numeric:tabular-nums}
+.booking-wizard {display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}
+.booking-main {min-width:0}
+.booking-summary {padding:24px;background:var(--surface-2);border:1px solid var(--border);border-radius:16px;min-width:0}
+.booking-summary h2 {font-size:1.15rem;margin-block:8px 20px}
+.booking-summary dl {display:grid;gap:16px;margin:0}
+.booking-summary dt {font-size:.85rem;color:var(--muted-foreground)}
+.booking-summary dd {margin:0;overflow-wrap:anywhere}
+.slot-bucket {margin-block:16px}
+.slot-bucket h3 {font-size:1rem;margin-block:0 8px}
+.slot-skeleton {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.slot-skeleton span {height:48px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;animation:slot-loading 1s ease-in-out infinite alternate}
+@keyframes slot-loading {from{opacity:.45}to{opacity:1}}
+@media(min-width:900px){.booking-wizard:not([data-step="4"]) {grid-template-columns:minmax(0,1fr) 260px}.booking-summary {position:sticky;top:100px}.amc-dialog-content .booking-summary {top:0}}
+@media(min-width:1024px){.desk-split.has-detail {grid-template-columns:minmax(280px,1fr) minmax(360px,1fr)}.desk-split.has-detail .appointment-detail-panel {position:sticky;top:100px;max-height:calc(100dvh - 120px);overflow:auto}.desk-split.has-detail .booking-week {grid-template-columns:minmax(0,1fr)}}
+@media(max-width:480px){.desk-filter-popover .booking-filters {grid-template-columns:minmax(0,1fr)}.slot-skeleton {grid-template-columns:repeat(2,minmax(0,1fr))}.desk-detail-tabs button {flex-basis:100%}.auth-utilities .controls {gap:8px}}
+@media(prefers-reduced-motion:reduce){.slot-skeleton span {animation:none}.amc-dialog-content,.amc-popover-content {animation:none}}
+
+.staff-identity-heading .staff-identity-name small {display:none}

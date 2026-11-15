@@ -1,4 +1,5 @@
 import {emailSender} from './sender.js';
+import {staffPasswordResetEmail} from './templates/staff-password-reset.template.js';
 import {emailArtwork} from './email-artwork.js';
 import {renderBookingUpdateEmail} from './templates/booking-update.template.js';
 import {Injectable, Logger, Inject} from '@nestjs/common';
@@ -36,6 +37,13 @@ export class NotificationsService {
   private readonly tokenSecret: string;
 
   get configured(): boolean { return this.resend !== null; }
+
+  async sendStaffPasswordResetOtp(email:string,code:string,locale:string,tokenId:string) {
+    if(!this.configured)return {status:'UNCONFIGURED' as const};
+    const message=staffPasswordResetEmail(code,locale);
+    await this.sendEmail({to:email,...message,idempotencyKey:`staff-reset:${tokenId}`});
+    return {status:'DELIVERED' as const};
+  }
 
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {
     const apiKey = process.env.RESEND_API_KEY;

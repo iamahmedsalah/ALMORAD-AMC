@@ -113,6 +113,8 @@ export async function Footer() {
             <Link href="/contact">{c.nav.contact}</Link>
             <Link href="/booking/manage">{locale==='ar'?'موعدك':'Your appointment'}</Link>
             <Link href="/faq">{t('faq')}</Link>
+            <Link href="/privacy">{locale === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy'}</Link>
+            <Link href="/terms">{locale === 'ar' ? 'شروط الخدمة' : 'Terms of Service'}</Link>
             <Link href="/staff/login" rel="nofollow">{locale === 'ar' ? 'دخول الفريق' : 'Staff sign in'}</Link>
           </nav>
         </div>

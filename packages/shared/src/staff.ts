@@ -12,3 +12,7 @@ export function likelyStaffEmailTypo(left:string,right:string):boolean {
  let i=0;while(i<shorter.length&&shorter[i]===longer[i])i++;
  return shorter.slice(i)===longer.slice(i+1);
 }
+
+export const forgotPasswordInput=z.object({email:staffEmailSchema,locale:z.enum(['en','ar']).default('en')}).strict();
+export const resetPasswordInput=z.object({email:staffEmailSchema,code:z.string().regex(/^\d{6}$/),newPassword:z.string().min(12).max(128)}).strict();
+export const googleAuthInput=z.object({credential:z.string().min(20).max(4096)}).strict();

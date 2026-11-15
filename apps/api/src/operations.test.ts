@@ -24,7 +24,7 @@ it('requires a cron credential before deleting expired state',async()=>{
 it('drains notifications, CRM events, and contacts with valid CRON_SECRET', async () => {
   const notificationsMock = {drain: vi.fn().mockResolvedValue({processed: 2, succeeded: 2, failed: 0})};
   const contactMock = {drain: vi.fn().mockResolvedValue({processed: 1})};
-  const bookingsMock = {drainCrm: vi.fn().mockResolvedValue({processed: 1, succeeded: 1, failed: 0})};
+  const bookingsMock = {drainMeet:vi.fn().mockResolvedValue({processed:0,succeeded:0,failed:0}),drainCrm: vi.fn().mockResolvedValue({processed: 1, succeeded: 1, failed: 0})};
 
   const controller = new OperationsController(
     {} as unknown as PrismaService,
@@ -51,7 +51,7 @@ it('drains notifications, CRM events, and contacts with valid CRON_SECRET', asyn
 });
 it('continues CRM and contact retries when the email drain crashes',async()=>{
  const notifications={drain:vi.fn().mockRejectedValue(new Error('Synthetic provider failure'))};
- const contacts={drain:vi.fn().mockResolvedValue({processed:1})},bookings={drainCrm:vi.fn().mockResolvedValue({processed:1,succeeded:1,failed:0})};
+ const contacts={drain:vi.fn().mockResolvedValue({processed:1})},bookings={drainMeet:vi.fn().mockResolvedValue({processed:0,succeeded:0,failed:0}),drainCrm:vi.fn().mockResolvedValue({processed:1,succeeded:1,failed:0})};
  const controller=new OperationsController({} as PrismaService,notifications as unknown as NotificationsService,contacts as unknown as ContactService,bookings as unknown as BookingsService);
  vi.stubEnv('CRON_SECRET','test-only-cron-value-'.repeat(4));
  expect(await controller.drainNotifications({get:()=>`Bearer ${process.env.CRON_SECRET}`} as unknown as Request)).toMatchObject({emailError:'drain_failed',crm:{succeeded:1},contacts:{processed:1}});

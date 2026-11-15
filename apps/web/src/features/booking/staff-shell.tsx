@@ -1,4 +1,5 @@
 'use client';
+import {staffCopy} from '@/features/staff/copy';
 import {StaffAccountMenu} from '@/features/staff/account-menu';
 import {useEffect,useState} from 'react';
 import {useRouter} from 'next/navigation';
@@ -23,7 +24,7 @@ export function StaffBookingShell({locale,view,children}:{locale:Locale;view:'ca
  const c=deskCopy(locale),b=bookingCopy(locale);const router=useRouter();const [identity,setIdentity]=useState<StaffIdentity|null>(null);const [error,setError]=useState('');
  useEffect(()=>{let stop=false;void bookingFetch<StaffIdentity>('staff/auth/session').then(data=>{if(!stop)setIdentity(data);}).catch(e=>{if(e instanceof BookingError&&e.status===401)router.replace('/'+locale+'/staff/login');else if(!stop)setError(b.error);});return()=>{stop=true;};},[locale,router,b.error]);
  return <section className="container staff-workspace operations-workspace">
-  <header className="operations-heading"><p className="eyebrow">ALMORAD AMC</p><h1>{view==='inquiries'?(locale==='ar'?'الاستفسارات':'Meeting inquiries'):view==='calendar'?c.title:view==='analytics'?c.analytics:c.settings}</h1>{identity&&<StaffAccountMenu identity={identity} locale={locale}/>}</header>
+  <header className="operations-heading"><p className="eyebrow">ALMORAD AMC</p><h1>{view==='inquiries'?(locale==='ar'?'الاستفسارات':'Meeting inquiries'):view==='calendar'?c.title:view==='analytics'?c.analytics:c.settings}</h1>{identity&&<div className="staff-identity-heading"><span className="staff-role-badge">{staffCopy(locale).roleNames[identity.staff.role]}</span><StaffAccountMenu identity={identity} locale={locale}/></div>}</header>
   <div className="operations-layout">
    <OperationsNavigation locale={locale} role={identity?.staff.role} view={view}/>
    <div className="operations-content">

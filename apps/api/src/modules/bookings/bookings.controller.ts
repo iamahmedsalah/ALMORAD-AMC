@@ -1,4 +1,4 @@
-import {Body,Controller,Get,Header,Inject,Post,Query,Req,UseGuards,ForbiddenException,Injectable,type CanActivate,type ExecutionContext} from '@nestjs/common';
+import {Body,Controller,HttpCode,Get,Header,Inject,Post,Query,Req,UseGuards,ForbiddenException,Injectable,type CanActivate,type ExecutionContext} from '@nestjs/common';
 import {waitUntil} from '@vercel/functions';
 import {Throttle} from '@nestjs/throttler';
 import {ApiTags, ApiOperation, ApiResponse, ApiQuery} from '@nestjs/swagger';
@@ -60,7 +60,7 @@ export class PublicBookingController {
   @ApiOperation({ summary: 'Client booking action', description: 'Request reschedule or cancellation by client.' })
   @Post('action') @Header('Cache-Control','no-store') @Throttle({default:{limit:10,ttl:60000}})
   async action(@Body() input:unknown){const result=await this.bookings.clientAction(input);this.deliver();return result;}
-  private deliver(){const job=Promise.allSettled([this.notifications.drain(10),this.bookings.drainCrm(10)]).then(results=>{if(results.some(result=>result.status==='rejected'))console.error('Booking background delivery failed');});if(process.env.VERCEL)waitUntil(job);else void job;}
+  private deliver(){const job=Promise.allSettled([this.notifications.drain(10),this.bookings.drainCrm(10),this.bookings.drainMeet(10)]).then(results=>{if(results.some(result=>result.status==='rejected'))console.error('Booking background delivery failed');});if(process.env.VERCEL)waitUntil(job);else void job;}
 }
 
 @ApiTags('Staff Appointments')
@@ -69,16 +69,19 @@ export class PublicBookingController {
 @RequirePermission('appointments:read')
 export class StaffBookingsController {
   constructor(@Inject(BookingsService) private readonly bookings:BookingsService,@Inject(NotificationsService) private readonly notifications:NotificationsService){}
-  private deliver(){const job=Promise.allSettled([this.notifications.drain(10),this.bookings.drainCrm(10)]).then(results=>{if(results.some(result=>result.status==='rejected'))console.error('Booking background delivery failed');});if(process.env.VERCEL)waitUntil(job);else void job;}
+  private deliver(){const job=Promise.allSettled([this.notifications.drain(10),this.bookings.drainCrm(10),this.bookings.drainMeet(10)]).then(results=>{if(results.some(result=>result.status==='rejected'))console.error('Booking background delivery failed');});if(process.env.VERCEL)waitUntil(job);else void job;}
 
   @ApiOperation({ summary: 'List appointments', description: 'Filter and paginate studio client bookings.' })
   @Get() @Header('Cache-Control','no-store')
-  list(@Req() request:StaffRequest,@Query() input:Record<string,unknown>){return this.bookings.list(input,request.staff!);}
+  async list(@Req() request:StaffRequest,@Query() input:Record<string,unknown>){return {...await this.bookings.list(input,request.staff!),googleMeetEnabled:this.bookings.googleMeetEnabled};}
 
   @ApiOperation({ summary: 'Appointment detail', description: 'Get complete appointment record including audit history.' })
   @ApiQuery({ name: 'id', required: true, description: 'Booking ID' })
   @Get('detail') @Header('Cache-Control','no-store')
   detail(@Req() request:StaffRequest,@Query('id') id:string){return this.bookings.staffDetail(id,request.staff!);}
+
+  @Post('meet-link') @HttpCode(200) @Header('Cache-Control','no-store') @RequirePermission('appointments:write')
+  async meetLink(@Req() request:StaffRequest,@Body() input:unknown){const result=await this.bookings.meetLink(input,request.staff!);this.deliver();return result;}
 
   @Get('assignees') @Header('Cache-Control','no-store') @RequirePermission('appointments:assign')
   assignees(){return this.bookings.assignees();}

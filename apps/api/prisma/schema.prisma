@@ -48,6 +48,11 @@ model StaffUser {
   bookingEvents BookingEvent[]
   sessions  StaffSession[]
   assignedBookings Booking[] @relation("AssignedBookings")
+  passwordResetTokens StaffPasswordResetToken[]
+  googleId String? @unique @db.VarChar(255)
+  googleEmail String? @db.VarChar(254)
+  googleLinkedAt DateTime? @db.Timestamptz(3)
+  assignedBookingsMulti BookingAssignee[]
 }
 
 model StaffSession {
@@ -147,6 +152,8 @@ model Booking {
  company String? @db.VarChar(120)
  notes String? @db.VarChar(1500)
  meetingUrl String? @db.VarChar(1000)
+ googleEventId String? @db.VarChar(128)
+ assignees BookingAssignee[]
  assignedToId String? @db.Uuid
  assignedTo StaffUser? @relation("AssignedBookings", fields:[assignedToId], references:[id], onDelete:SetNull)
  deletedAt DateTime? @db.Timestamptz(3)
@@ -231,4 +238,26 @@ model BookingOutbox {
   @@index([status,createdAt])
   @@index([status,nextRetryAt])
   @@index([bookingId])
+}
+
+model StaffPasswordResetToken {
+ id String @id @default(uuid()) @db.Uuid
+ userId String @db.Uuid
+ user StaffUser @relation(fields:[userId],references:[id],onDelete:Cascade)
+ codeHash String @db.Char(64)
+ attempts Int @default(0)
+ expiresAt DateTime @db.Timestamptz(3)
+ consumedAt DateTime? @db.Timestamptz(3)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ @@index([userId,expiresAt])
+ @@index([expiresAt])
+}
+model BookingAssignee {
+ bookingId String @db.Uuid
+ staffId String @db.Uuid
+ assignedAt DateTime @default(now()) @db.Timestamptz(3)
+ booking Booking @relation(fields:[bookingId],references:[id],onDelete:Cascade)
+ staff StaffUser @relation(fields:[staffId],references:[id],onDelete:Cascade)
+ @@id([bookingId,staffId])
+ @@index([staffId])
 }

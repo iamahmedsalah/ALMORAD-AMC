@@ -39,10 +39,10 @@ it('scopes manager agenda and total counts to assigned, non-deleted meetings',as
  const service=new BookingsService(db as unknown as PrismaService);
  vi.spyOn(service,'getSettings').mockResolvedValue({timezone:'Africa/Cairo',isDemo:false} as never);
  await service.list({from:'2026-11-12',to:'2026-11-14',assignment:'unassigned'},{id:manager,role:'MANAGER'});
- for(const call of [db.booking.findMany.mock.calls[0],db.booking.count.mock.calls[0]])expect(call?.[0]).toMatchObject({where:{assignedToId:manager,deletedAt:null}});
+ for(const call of [db.booking.findMany.mock.calls[0],db.booking.count.mock.calls[0]])expect(call?.[0]).toMatchObject({where:{AND:[{OR:[{assignedToId:manager},{assignees:{some:{staffId:manager}}}]}],deletedAt:null}});
 });
 it('denies a manager direct detail and update access to another managers meeting',async()=>{
- const booking={id,assignedToId:randomUUID()};const tx={$queryRaw:vi.fn(),booking:{findUnique:vi.fn().mockResolvedValue(booking)}};
+ const booking={id,assignedToId:randomUUID()};const tx={$queryRaw:vi.fn(),bookingAssignee:{findUnique:vi.fn().mockResolvedValue(null)},booking:{findFirst:vi.fn().mockResolvedValue(null),findUnique:vi.fn().mockResolvedValue(booking)}};
  const db={booking:tx.booking,$transaction:async(fn:(v:typeof tx)=>unknown)=>fn(tx)};
  const service=new BookingsService(db as unknown as PrismaService);
  await expect(service.staffDetail(id,{id:manager,role:'MANAGER'})).rejects.toMatchObject({status:404});
@@ -57,7 +57,7 @@ it('denies receptionist deletion and manager reassignment before any database wr
 });
 it('allows a manager to edit their assigned meeting and archives an admin-deleted meeting without deleting its row',async()=>{
  const original={id,assignedToId:manager,version:1,status:'CONFIRMED',startsAt:new Date(Date.now()+86400000),endsAt:new Date(Date.now()+88200000),changes:[],notifications:[],deletedAt:null};
- const tx={$queryRaw:vi.fn(),booking:{findUnique:vi.fn().mockResolvedValue(original),findUniqueOrThrow:vi.fn().mockResolvedValue(original),update:vi.fn().mockImplementation(async({data})=>({...original,...data,version:2}))},bookingSettings:{findUnique:vi.fn().mockResolvedValue({isDemo:false})},bookingCommand:{findUnique:vi.fn().mockResolvedValue(null),create:vi.fn()},bookingChangeRequest:{findFirst:vi.fn().mockResolvedValue(null),updateMany:vi.fn()},bookingEvent:{create:vi.fn().mockResolvedValue({id:'event'})},bookingOutbox:{create:vi.fn()},staffAuditEvent:{create:vi.fn()}};
+ const tx={bookingAssignee:{findMany:vi.fn().mockResolvedValue([]),upsert:vi.fn()},$queryRaw:vi.fn(),booking:{findUnique:vi.fn().mockResolvedValue(original),findUniqueOrThrow:vi.fn().mockResolvedValue(original),update:vi.fn().mockImplementation(async({data})=>({...original,...data,version:2}))},bookingSettings:{findUnique:vi.fn().mockResolvedValue({isDemo:false})},bookingCommand:{findUnique:vi.fn().mockResolvedValue(null),create:vi.fn()},bookingChangeRequest:{findFirst:vi.fn().mockResolvedValue(null),updateMany:vi.fn()},bookingEvent:{create:vi.fn().mockResolvedValue({id:'event'})},bookingOutbox:{create:vi.fn()},staffAuditEvent:{create:vi.fn()}};
  const db={$transaction:async(fn:(v:typeof tx)=>unknown)=>fn(tx)};const service=new BookingsService(db as unknown as PrismaService);
  await service.staffAction({id,version:1,idempotencyKey:randomUUID(),action:'EDIT',notes:'Updated meeting details',reason:'Client provided details'},manager,'MANAGER');
  expect(tx.booking.update).toHaveBeenCalledWith(expect.objectContaining({data:expect.objectContaining({notes:'Updated meeting details'})}));
@@ -76,12 +76,12 @@ it('lets receptionists find legacy unassigned records without changing ownership
  const db={booking:{findMany:vi.fn().mockResolvedValue([]),count:vi.fn().mockResolvedValue(0)},$transaction:async(values:Promise<unknown>[])=>Promise.all(values)};
  const service=new BookingsService(db as unknown as PrismaService);vi.spyOn(service,'getSettings').mockResolvedValue({timezone:'Africa/Cairo',isDemo:false} as never);
  await service.list({from:'2026-11-12',to:'2026-11-14',assignment:'unassigned'},{id:manager,role:'RECEPTIONIST'});
- expect(db.booking.findMany).toHaveBeenCalledWith(expect.objectContaining({where:expect.objectContaining({assignedToId:null})}));
+ expect(db.booking.findMany).toHaveBeenCalledWith(expect.objectContaining({where:expect.objectContaining({AND:[{assignedToId:null,assignees:{none:{}}}]})}));
 });
 
 it('confirms an unassigned appointment with the approved default and refuses an inactive assignee',async()=>{
  const original={id,assignedToId:null,version:1,status:'PENDING',startsAt:new Date(Date.now()+86400000),endsAt:new Date(Date.now()+88200000),deletedAt:null};
- const tx={$queryRaw:vi.fn(),booking:{findUnique:vi.fn().mockResolvedValue(original),findUniqueOrThrow:vi.fn().mockResolvedValue(original),update:vi.fn().mockResolvedValue({...original,assignedToId:manager,status:'CONFIRMED'})},bookingSettings:{findUnique:vi.fn().mockResolvedValue({isDemo:true})},bookingCommand:{findUnique:vi.fn().mockResolvedValue(null),create:vi.fn()},bookingChangeRequest:{findFirst:vi.fn().mockResolvedValue(null)},bookingEvent:{create:vi.fn().mockResolvedValue({id:'event'})},bookingOutbox:{create:vi.fn()},staffUser:{findFirst:vi.fn().mockResolvedValue({id:manager})},staffAuditEvent:{create:vi.fn()}};
+ const tx={bookingAssignee:{findMany:vi.fn().mockResolvedValue([]),upsert:vi.fn()},$queryRaw:vi.fn(),booking:{findUnique:vi.fn().mockResolvedValue(original),findUniqueOrThrow:vi.fn().mockResolvedValue(original),update:vi.fn().mockResolvedValue({...original,assignedToId:manager,status:'CONFIRMED'})},bookingSettings:{findUnique:vi.fn().mockResolvedValue({isDemo:true})},bookingCommand:{findUnique:vi.fn().mockResolvedValue(null),create:vi.fn()},bookingChangeRequest:{findFirst:vi.fn().mockResolvedValue(null)},bookingEvent:{create:vi.fn().mockResolvedValue({id:'event'})},bookingOutbox:{create:vi.fn()},staffUser:{findFirst:vi.fn().mockResolvedValue({id:manager})},staffAuditEvent:{create:vi.fn()}};
  const service=new BookingsService({$transaction:async(fn:(v:typeof tx)=>unknown)=>fn(tx)} as unknown as PrismaService);
  const input={id,version:1,idempotencyKey:randomUUID(),action:'CONFIRM',reason:'Client approved meeting'};
  await service.staffAction(input,manager,'RECEPTIONIST');

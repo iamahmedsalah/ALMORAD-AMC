@@ -3,6 +3,9 @@
 import {useEffect, useRef, useState, useSyncExternalStore, type FormEvent} from 'react';
 import {useRouter} from 'next/navigation';
 import {emailRegex, type Locale} from '@amc/shared';
+import {authCopy} from './auth-copy';
+import {AuthUtilities} from './auth-utilities';
+import {GoogleSignInButton} from './google-signin-button';
 import {staffCopy} from './copy';
 import {AnimatedIcon} from '@/components/ui/animated-icon';
 import {SolarIcon} from '@/components/ui/solar-icon';
@@ -14,7 +17,7 @@ const notReady = () => false;
 
 export function StaffLogin({locale}: {locale: Locale}) {
   const hydrated = useSyncExternalStore(subscribe, ready, notReady);
-  const c = staffCopy(locale);
+  const c = staffCopy(locale);const a=authCopy(locale);
   const router = useRouter();
   const emailRef = useRef<HTMLInputElement>(null);
   const redirectTimer = useRef<number | null>(null);
@@ -62,7 +65,7 @@ export function StaffLogin({locale}: {locale: Locale}) {
   }
 
   return <section className="staff-login container">
-    <div className="staff-login-emblem"><SolarIcon name="users-group-rounded-linear"/></div>
+    <AuthUtilities locale={locale}/><div className="staff-login-emblem"><SolarIcon name="users-group-rounded-linear"/></div>
     <p className="eyebrow">ALMORAD AMC</p><h1>{c.signIn}</h1><p>{c.intro}</p>
     <form method="post" action="/api/staff/auth/login" onSubmit={submit} noValidate className="staff-form">
       <label>{c.email}
@@ -85,6 +88,8 @@ export function StaffLogin({locale}: {locale: Locale}) {
       <Alert variant="success" open={signedIn}><AlertTitle>{feedback.success}</AlertTitle><AlertDescription>{feedback.continuing}</AlertDescription></Alert>
       <button className="button button-primary" disabled={!hydrated || pending || signedIn} type="submit">{pending && <SolarIcon name="refresh-linear" className="booking-spinner"/>}{pending ? c.pending : c.submit}</button>
     </form>
+    <a className="auth-return" href={'/'+locale+'/staff/forgot-password'}>{a.forgot}</a>
+    {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID&&<><p className="auth-divider">{a.or}</p><GoogleSignInButton locale={locale} disabled={pending||signedIn} onCredential={async credential=>{setPending(true);setError('');try{const response=await fetch('/api/staff/auth/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential}),cache:'no-store'});if(!response.ok)throw new Error();router.replace(`/${locale}/staff/calendar`);}catch{setError(a.googleError);}finally{setPending(false);}}}/><p className="staff-note">{a.googleIntro}</p></>}
     <noscript>{locale === 'ar' ? 'يلزم تفعيل جافاسكريبت لتسجيل الدخول الآمن.' : 'JavaScript is required for secure sign in.'}</noscript>
   </section>;
 }

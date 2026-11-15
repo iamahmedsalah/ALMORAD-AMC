@@ -1,4 +1,10 @@
-import {createHash, randomBytes, scrypt, timingSafeEqual} from 'node:crypto';
+import {createHash, createHmac, randomBytes, scrypt, timingSafeEqual} from 'node:crypto';
+const developmentOtpSecret=randomBytes(32).toString('hex');
+export function otpHash(userId:string,tokenId:string,otp:string):string {
+ const secret=process.env.STAFF_OTP_SECRET;
+ if(process.env.NODE_ENV==='production'&&(!secret||secret.length<32))throw new Error('STAFF_OTP_SECRET requires 32+ characters');
+ return createHmac('sha256',secret||developmentOtpSecret).update(`${userId}:${tokenId}:${otp}`).digest('hex');
+}
 const derive = (password:string,salt:Buffer) => new Promise<Buffer>((resolve,reject) => scrypt(password,salt,64,{N:32768,r:8,p:3,maxmem:64*1024*1024},(error,key)=>error?reject(error):resolve(key)));
 export const tokenHash = (token:string) => createHash('sha256').update(token).digest('hex');
 export async function hashPassword(password:string) {const salt=randomBytes(16);return `scrypt$1$${salt.toString('hex')}$${(await derive(password,salt)).toString('hex')}`;}

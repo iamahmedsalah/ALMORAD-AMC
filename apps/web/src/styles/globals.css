@@ -9,6 +9,7 @@
 @import "./form-feedback.css";
 @import "./booking-experience.css";
 @import "./responsive-interactions.css";
+@import "./auth-booking-overhaul.css";
 :root {
   --font-display-en: var(--font-heading);
 }
