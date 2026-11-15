@@ -7,6 +7,19 @@ export function serializeJsonLd(data: unknown): string {
   return JSON.stringify(data).replace(/</g, '\\u003c');
 }
 
+export function websiteJsonLd(origin: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${origin}/#website`,
+    url: `${origin}/`,
+    name: 'ALMORAD AMC',
+    alternateName: ['المراد AMC', 'ALMORAD AMC — Growth & Brand Studio'],
+    inLanguage: ['en', 'ar'],
+    publisher: { '@id': `${origin}/#organization` },
+  };
+}
+
 export function organizationJsonLd(locale: Locale, origin: string | null) {
   const c = copyFor(locale);
   const contact = publicContact(locale);

@@ -55,7 +55,7 @@ test('keyboard navigation, mobile disclosure and system theme', async ({page}) =
 test('preview SEO is safe and all public navigation resolves', async ({page,request}) => {
   await page.goto('/en');
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content',/noindex/);
-  const organization = await page.locator('script[type="application/ld+json"]').textContent();
+  const organization = await page.locator('script[type="application/ld+json"]').first().textContent();
   expect(JSON.parse(organization!).name).toBe('ALMORAD AMC');
   expect((await request.get('/robots.txt')).status()).toBe(200);
   expect((await request.get('/sitemap.xml')).status()).toBe(200);

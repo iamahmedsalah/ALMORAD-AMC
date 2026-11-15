@@ -7,9 +7,23 @@ import {
   serializeJsonLd,
   serviceJsonLd,
   servicesCollectionJsonLd,
+  websiteJsonLd,
 } from './jsonld';
 
 afterEach(() => vi.unstubAllEnvs());
+
+it('uses one site identity for both languages, linked to the factual organization', () => {
+  const website = websiteJsonLd('https://almorad-amc.com');
+  expect(website).toMatchObject({
+    '@type': 'WebSite',
+    '@id': 'https://almorad-amc.com/#website',
+    url: 'https://almorad-amc.com/',
+    name: 'ALMORAD AMC',
+    inLanguage: ['en', 'ar'],
+    publisher: { '@id': 'https://almorad-amc.com/#organization' },
+  });
+  expect(website.alternateName).toContain('المراد AMC');
+});
 
 it('escapes closing-tag characters when serializing JSON-LD', () => {
   expect(serializeJsonLd({ text: '</script><script>alert(1)</script>' })).not.toContain('<');

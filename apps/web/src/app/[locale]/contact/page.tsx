@@ -10,8 +10,14 @@ import { publicContact } from '@/lib/public-contact';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const locale = await publicLocale(params);
-  const c = copyFor(locale);
-  return { ...pageMetadata(locale, '/contact', c.nav.contact, c.contactPage.intro), robots: { index: false, follow: true } };
+  return pageMetadata(
+    locale,
+    '/contact',
+    locale === 'ar' ? 'تواصل معنا في الإسكندرية' : 'Contact our Alexandria studio',
+    locale === 'ar'
+      ? 'تواصل مع المراد AMC لمناقشة التسويق والإعلان والاستشارات وتطوير المواقع. اعرف عنوان مكتبنا في سموحة بالإسكندرية واتجاهات الوصول، أو أرسل استفسارك.'
+      : 'Contact ALMORAD AMC about marketing, advertising, consulting or web development. Find our Smouha, Alexandria office and directions, or send an inquiry.'
+  );
 }
 
 export default async function Contact({ params }: { params: Promise<{ locale: string }> }) {
