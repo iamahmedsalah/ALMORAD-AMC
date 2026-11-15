@@ -13,12 +13,15 @@ import { breadcrumbJsonLd, serializeJsonLd, servicesCollectionJsonLd } from '@/l
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
-  const t = await getTranslations({ locale, namespace: 'services' });
   const title =
     locale === 'ar'
       ? 'خدمات التسويق والإعلان والاستشارات وتطوير المواقع'
       : 'Marketing, Advertising, Consulting & Web Services';
-  return pageMetadata(locale, '/services', title, t('intro'));
+  const description =
+    locale === 'ar'
+      ? 'اكتشف خدمات المراد AMC في التسويق، الإعلان، الاستشارات الإدارية والتجارة الإلكترونية، وتطوير المواقع والمتاجر الإلكترونية.'
+      : 'Explore ALMORAD AMC services across Marketing, Advertising, Business Consulting, and Web Development — tailored to grow your brand.';
+  return pageMetadata(locale, '/services', title, description);
 }
 
 export default async function Services({ params }: { params: Promise<{ locale: string }> }) {

@@ -30,6 +30,7 @@ export function organizationJsonLd(locale: Locale, origin: string | null) {
     '@type': 'Organization',
     ...(origin ? { '@id': `${origin}/#organization`, url: origin, logo: `${origin}/icon-512.png` } : {}),
     name: 'ALMORAD AMC',
+    alternateName: locale === 'ar' ? 'المراد AMC' : 'المراد AMC',
     description: c.intro,
     address: {
       '@type': 'PostalAddress',

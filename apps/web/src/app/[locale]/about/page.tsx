@@ -8,9 +8,12 @@ import { pillars } from '@amc/shared';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const l = await publicLocale(params);
-  const c = copyFor(l);
   const title = l === 'ar' ? 'من نحن — استوديو النمو وبناء العلامات' : 'About Us — Growth & Brand Studio';
-  return pageMetadata(l, '/about', title, c.about.intro);
+  const description =
+    l === 'ar'
+      ? 'المراد AMC استوديو للنمو وبناء العلامات في الإسكندرية يجمع التسويق والإعلان والاستشارات وتطوير المواقع في شراكة واحدة.'
+      : 'ALMORAD AMC is a Growth & Brand Studio in Alexandria bringing marketing, advertising, consulting, and web development together.';
+  return pageMetadata(l, '/about', title, description);
 }
 
 export default async function About({ params }: { params: Promise<{ locale: string }> }) {

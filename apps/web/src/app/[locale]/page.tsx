@@ -3,19 +3,21 @@ import { hasLocale } from 'next-intl';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { Landing } from '@/features/marketing/landing';
-import { copyFor } from '@/features/marketing/copy';
 import { pageMetadata, siteOrigin } from '@/lib/seo/metadata';
 import { organizationJsonLd, serializeJsonLd } from '@/lib/seo/jsonld';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
-  const c = copyFor(locale);
   const title =
     locale === 'ar'
       ? 'المراد AMC — استوديو النمو وبناء العلامات | التسويق والإعلان وتطوير المواقع'
       : 'ALMORAD AMC — Growth & Brand Studio | Marketing, Advertising & Web';
-  return pageMetadata(locale, '', title, c.intro, { absoluteTitle: true });
+  const description =
+    locale === 'ar'
+      ? 'المراد AMC استوديو نمو وبناء علامات في الإسكندرية، مصر — نقدم خدمات التسويق، الإعلان، الاستشارات، وتطوير المواقع لبناء حضور رقمي قوي.'
+      : 'ALMORAD AMC is a Growth & Brand Studio in Alexandria, Egypt — offering marketing, advertising, consulting, and web development for ambitious brands.';
+  return pageMetadata(locale, '', title, description, { absoluteTitle: true });
 }
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {

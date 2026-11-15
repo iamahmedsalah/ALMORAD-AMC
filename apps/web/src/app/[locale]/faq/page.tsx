@@ -11,8 +11,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const title = locale === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions';
   const description =
     locale === 'ar'
-      ? 'إجابات عن خدماتنا وكيف نبدأ العمل معًا.'
-      : 'Answers about our services and how we start working together.';
+      ? 'إجابات واضحة عن خدمات المراد AMC في التسويق والإعلان وتطوير المواقع، وطريقة تحديد نطاق العمل وحجز استشارة.'
+      : 'Answers to common questions about ALMORAD AMC services, project scope, website & e-commerce development, and how to book a consultation.';
   return pageMetadata(locale, '/faq', title, description);
 }
 
