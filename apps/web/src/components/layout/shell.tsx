@@ -106,6 +106,7 @@ export async function Footer() {
         <div className="footer-bottom-row">
           <small>© {new Date().getFullYear()} ALMORAD AMC · <a href="/third-party-notices.txt">{locale === 'ar' ? 'تراخيص الأصول' : 'Asset licences'}</a></small>
           <nav aria-label={t('menu')}>
+            <Link href="/services">{t('services')}</Link>
             <Link href="/about">{c.nav.about}</Link>
             <Link href="/work">{c.nav.work}</Link>
             <Link href="/team">{locale === 'ar' ? 'الفريق' : 'Team'}</Link>
