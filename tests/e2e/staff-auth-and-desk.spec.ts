@@ -54,6 +54,16 @@ for(const locale of ['en','ar'] as const){
   await page.goto(`/${locale}/booking`);await page.getByRole('button',{name:bookingCopy(locale).next,exact:true}).click();await expect(page.locator('.slot-bucket h3')).toHaveCount(1);
   await page.route('**/api/booking/slots?*',route=>{const date=new URL(route.request().url()).searchParams.get('date');return route.fulfill({json:{slots:date===new Date().toISOString().slice(0,10)?[]:[{startsAt:booking.startsAt,endsAt:booking.endsAt}],timezone:schedule.timezone,isDemo:true}});});
  });
+ test(`Meet pending and authorization recovery ${locale}`,async({page})=>{
+  await mocks(page);let calls=0;
+  await page.route('**/api/staff/appointments/detail?*',route=>route.fulfill({json:{booking:{...detail,isDemo:false,meetingUrl:null}}}));
+  await page.route('**/api/staff/appointments/meet-link',route=>{calls++;return route.fulfill({status:503,json:{code:calls===1?'GOOGLE_MEET_PENDING':'GOOGLE_MEET_AUTH_FAILED'}});});
+  await page.goto(`/${locale}/staff/calendar`);await page.locator('.calendar-appointment').first().click();await page.getByRole('tab').nth(1).click();
+  const generate=page.getByRole('button',{name:locale==='ar'?'إنشاء رابط Google Meet':'Generate Google Meet link',exact:true});
+  await generate.click();await expect(page.locator('.staff-alert')).toContainText(locale==='ar'?'انتظر':'Wait a moment');await expect(generate).toBeEnabled();
+  await generate.click();await expect(page.locator('.staff-alert')).toContainText(locale==='ar'?'مسؤول النظام':'administrator');await expect(generate).toBeEnabled();
+  await expect(page.locator('input[name="meetingUrl"]')).toHaveValue('');expect(calls).toBe(2);
+ });
  test(`bounded next available day and Meet generation ${locale}`,async({page})=>{
   await mocks(page);let calls=0;
   await page.route('**/api/booking/slots?*',route=>{calls++;return route.fulfill({json:{slots:calls===1?[]:[{startsAt:booking.startsAt,endsAt:booking.endsAt}],timezone:schedule.timezone,isDemo:true}});});

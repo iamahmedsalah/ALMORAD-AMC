@@ -5,6 +5,7 @@ import {createHash,createHmac,randomBytes,randomUUID,timingSafeEqual} from 'node
 import {z} from 'zod';
 import {can,meetLinkInput,activeChanges,recoverBookingInput,type StaffRole,bookingDurations,createBookingInput,clientActionInput,manageInput,services,settingsInput,staffActionInput,type ScheduleInput} from '@amc/shared';
 import {GoogleCalendarService} from '../notifications/google-calendar.service.js';
+import {GoogleMeetError} from '../notifications/google-calendar.error.js';
 import {PrismaService} from '../../prisma/prisma.service.js';
 import type {Booking,BookingSettings,Prisma} from '../../generated/prisma/client.js';
 import {analyticsBounds,calendarSlots,dayBounds,localDate,overlaps} from './schedule.js';
@@ -109,7 +110,7 @@ export class BookingsService {
    this.mutable(booking);
    if(booking.isDemo)throw new BadRequestException('Demo bookings cannot create Google Meet events');
    if(booking.meetingUrl)return {meetingUrl:booking.meetingUrl,googleEventId:booking.googleEventId};
-   if(!this.googleCalendar?.enabled)throw new ServiceUnavailableException('Google Meet is not configured');
+   if(!this.googleCalendar?.enabled)throw new GoogleMeetError('GOOGLE_MEET_NOT_CONFIGURED','configuration');
    const result=await this.googleCalendar.sync(booking);
    await tx.booking.update({where:{id:booking.id},data:result});
    await this.event(tx,booking.id,'BOOKING_UPDATED',actor.id,{googleMeet:true},process.env.RESEND_API_KEY?'PENDING':'UNCONFIGURED');return result;
@@ -134,7 +135,7 @@ export class BookingsService {
     if(result.meetingUrl&&result.meetingUrl!==booking.meetingUrl)await this.event(tx,booking.id,'BOOKING_UPDATED',undefined,{googleMeet:true},process.env.RESEND_API_KEY?'PENDING':'UNCONFIGURED');
     await tx.bookingOutbox.update({where:{id:item.id},data:{status:'DELIVERED',deliveredAt:new Date(),lastError:null}});
    },{timeout:30000});succeeded++;
-  }catch{failed++;await this.db.bookingOutbox.update({where:{id:item.id},data:{status:item.attempts>=5?'FAILED':'PENDING',nextRetryAt:new Date(Date.now()+Math.min(900,5*2**(item.attempts-1))*1000),lastError:'Google Meet sync failed; verify configuration and retry'}});}}
+  }catch(error){failed++;await this.db.bookingOutbox.update({where:{id:item.id},data:{status:item.attempts>=5?'FAILED':'PENDING',nextRetryAt:new Date(Date.now()+Math.min(900,5*2**(item.attempts-1))*1000),lastError:error instanceof GoogleMeetError?error.code:'Google Meet sync failed; verify configuration and retry'}});}}
   return {processed:claimed.length,succeeded,failed};
  }
  async assignees(){return this.db.staffUser.findMany({where:{active:true,role:{in:['MANAGER','ADMIN']}},select:{id:true,email:true,firstName:true,lastName:true,role:true},orderBy:{email:'asc'},take:200});}
