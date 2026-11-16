@@ -49,7 +49,12 @@ describe('PublicBookingController unit tests', () => {
     const booking = await controller.create({ clientName: 'Nour' });
     expect(booking).toEqual({ id: 'bk_123', status: 'CONFIRMED' });
     expect(mockService.create).toHaveBeenCalledWith({ clientName: 'Nour' });
-    expect(mockService.drainCrm).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(mockService.drainMeet).toHaveBeenCalledWith(10);
+      expect(notifications.drain).toHaveBeenCalledWith(10);
+      expect(mockService.drainCrm).toHaveBeenCalledTimes(1);
+      expect(mockService.drainCrm).toHaveBeenCalledWith(10);
+    });
   });
 
   it('validates booking origin guard against trusted origin', () => {

@@ -34,7 +34,12 @@ it('builds factual Organization JSON-LD with verified address, logo, and social 
   expect(org['@type']).toBe('Organization');
   expect(org.name).toBe('ALMORAD AMC');
   expect(org.url).toBe('https://almorad-amc.com');
-  expect(org.logo).toBe('https://almorad-amc.com/icon-512.png');
+  expect(org.logo).toEqual({
+    '@type': 'ImageObject',
+    url: 'https://almorad-amc.com/icon-512.png',
+    width: 512,
+    height: 512,
+  });
   expect(org.address).toEqual({
     '@type': 'PostalAddress',
     streetAddress: '18 Zaki Ragab Street, High Class 1 Tower, Floor 7',

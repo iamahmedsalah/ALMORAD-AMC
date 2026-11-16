@@ -36,7 +36,7 @@ describe('booking lifecycle mail',()=>{
  });
  it('routes change alerts only to staff, without the private client token',async()=>{
   const {service,send}=fixture('CHANGE_REQUESTED:OWNER:EMAIL');await service.drain();
-  const message=send.mock.calls[0]![0];expect(message.to).toBe('bookings@example.invalid');
+  const message=send.mock.calls[0]![0];expect(message.to).toEqual(['bookings@example.invalid']);
   expect(message.html).not.toContain('token=');expect(message.attachments.some((attachment:{filename:string})=>attachment.filename.endsWith('.ics'))).toBe(false);expect(message.attachments[0].contentId).toBe('almorad-logo');
  });
  it('sends the cancellation template only after cancellation approval',async()=>{

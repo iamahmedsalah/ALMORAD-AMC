@@ -20,7 +20,7 @@ describe('separate booking inbox',()=>{
     expect(await service.drain()).toEqual({processed:2,succeeded:2,failed:0});
     const client=send.mock.calls[0]![0],owner=send.mock.calls[1]![0];
     expect(client.to).toBe(booking.email);expect(client.replyTo).toBe('bookings@example.invalid');
-    expect(owner.to).toBe('bookings@example.invalid');expect(owner.replyTo).toBe(booking.email);
+    expect(owner.to).toEqual(['bookings@example.invalid']);expect(owner.replyTo).toBe(booking.email);
     expect(owner.html).toContain('/en/staff/calendar');expect(owner.html).not.toContain('#id=');expect(owner.html).not.toContain('token=');
     expect(owner.html).toContain('&lt;script&gt;fixture&lt;/script&gt;');expect(owner.attachments).toEqual(expect.arrayContaining([expect.objectContaining({contentId:'almorad-logo'})]));expect(owner.attachments.some((file:{filename:string})=>file.filename.endsWith('.ics'))).toBe(false);
     expect(send.mock.calls[0]![1]).not.toEqual(send.mock.calls[1]![1]);
