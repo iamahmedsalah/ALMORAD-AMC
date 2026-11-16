@@ -134,7 +134,7 @@ export class NotificationsService {
       try {
         const booking = await this.prisma.booking.findUnique({
           where: {id: item.bookingId},
-          include: {calendar: true,assignedTo:{select:{firstName:true,lastName:true,email:true}},events:{where:{id:item.eventId},take:1}}
+          include: {calendar: true,assignedTo:{select:{firstName:true,lastName:true,email:true}},assignees:{select:{staff:{select:{firstName:true,lastName:true,email:true}}}},events:{where:{id:item.eventId},take:1}}
         });
 
         if (!booking) {
@@ -164,10 +164,14 @@ export class NotificationsService {
           continue;
         }
 
-        const managerName=booking.assignedTo?([booking.assignedTo.firstName,booking.assignedTo.lastName].filter(Boolean).join(' ')||(booking.assignedTo.email==='mo.khaledmorad@almorad-amc.com'?'Eng. Mohamed Khaled Morad':undefined)):undefined;
+        const formatStaffName=(s:{firstName:string;lastName:string;email:string})=>[s.firstName,s.lastName].filter(Boolean).join(' ')||(s.email==='mo.khaledmorad@almorad-amc.com'?'Eng. Mohamed Khaled Morad':s.email);
+        const managerName=booking.assignees?.length
+          ?booking.assignees.map(a=>formatStaffName(a.staff)).join(', ')
+          :(booking.assignedTo?formatStaffName(booking.assignedTo):undefined);
         const ownerAlert=item.kind.endsWith(':OWNER:EMAIL');
         const ownerInbox=process.env.BOOKING_INBOX_EMAIL;
-        if(ownerAlert&&!ownerInbox){
+        const staffRecipients=Array.from(new Set([ownerInbox,...(booking.assignees?.map(a=>a.staff.email)||[]),booking.assignedTo?.email].filter((v):v is string=>Boolean(v))));
+        if(ownerAlert&&!staffRecipients.length){
           await this.prisma.bookingOutbox.update({where:{id:item.id},data:{status:'UNCONFIGURED',lastError:'BOOKING_INBOX_EMAIL is not configured'}});
           failed++;continue;
         }
@@ -255,14 +259,14 @@ export class NotificationsService {
         }
 
         // A newly supplied link or staff confirmation also carries an updated calendar file.
-        if(!ownerAlert&&['BOOKING_EDIT','BOOKING_CONFIRM','BOOKING_CANCELLED'].includes(eventKind)){
+        if(!ownerAlert&&['BOOKING_EDIT','BOOKING_CONFIRM','BOOKING_CANCELLED','BOOKING_UPDATED'].includes(eventKind)){
           attachments=[{filename:booking.reference+'.ics',content:Buffer.from(generateIcs({id:booking.id,reference:booking.reference,sequence:booking.version,status:isCancelled?'CANCELLED':'CONFIRMED',startsAt:booking.startsAt,endsAt:booking.endsAt,location:booking.meetingType==='ONLINE'?(booking.meetingUrl||'Online Meeting - link pending'):(booking.locale==='ar'?booking.calendar.officeAddressAr:booking.calendar.officeAddressEn)||'',description:'Manage: '+managementUrl}),'utf8')}];
         }
         // Transmit email via Resend
         const resendResponse = await this.resend.emails.send(
           {
             from: this.bookingFromEmail,
-            to: ownerAlert ? ownerInbox! : booking.email,
+            to: ownerAlert ? staffRecipients : booking.email,
             subject: emailContent.subject,
             text: emailContent.text+'\n\n'+officeAddress[booking.locale==='ar'?'ar':'en'],
             html: emailContent.html,

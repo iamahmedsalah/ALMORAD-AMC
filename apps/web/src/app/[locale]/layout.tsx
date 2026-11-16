@@ -5,6 +5,7 @@ import type { Locale } from '@amc/shared';
 import { routing } from '@/i18n/routing';
 import { Providers } from '@/components/layout/providers';
 import { Header, Footer } from '@/components/layout/shell';
+import { PublicChrome } from '@/components/layout/public-chrome';
 import { Preloader } from '@/components/layout/preloader';
 import { ConsoleBanner } from '@/components/ConsoleBanner';
 import { ThemeInit } from '@/components/layout/theme-init';
@@ -14,10 +15,12 @@ export const metadata = {
   icons: {
     icon: [
       { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
       { url: '/favicon-light.svg', media: '(prefers-color-scheme: light)', type: 'image/svg+xml' },
       { url: '/favicon-navy.svg', media: '(prefers-color-scheme: dark)', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
     ],
+    shortcut: ['/favicon.ico'],
     apple: [
       { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
@@ -55,11 +58,9 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <Providers dir={dir}>
             <Preloader locale={locale as Locale} />
-            <Header />
-            <main id="main" tabIndex={-1}>
+            <PublicChrome header={<Header />} footer={<Footer />}>
               {children}
-            </main>
-            <Footer />
+            </PublicChrome>
           </Providers>
         </NextIntlClientProvider>
       </body>

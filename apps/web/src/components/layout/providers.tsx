@@ -6,6 +6,7 @@ import { ThemeProvider } from 'next-themes';
 import { DirectionProvider } from '@radix-ui/react-direction';
 import { ThemeFavicon } from './theme-favicon';
 import { ThemePaintGuard } from './theme-paint-guard';
+import { Toaster } from '@/components/ui/sonner';
 
 export function Providers({
   children,
@@ -22,6 +23,7 @@ export function Providers({
         <ThemePaintGuard />
         <ThemeFavicon />
         {children}
+        <Toaster dir={dir} />
       </ThemeProvider>
     </DirectionProvider>
     </QueryClientProvider>

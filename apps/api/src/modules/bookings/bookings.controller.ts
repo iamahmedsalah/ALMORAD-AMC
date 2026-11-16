@@ -60,7 +60,7 @@ export class PublicBookingController {
   @ApiOperation({ summary: 'Client booking action', description: 'Request reschedule or cancellation by client.' })
   @Post('action') @Header('Cache-Control','no-store') @Throttle({default:{limit:10,ttl:60000}})
   async action(@Body() input:unknown){const result=await this.bookings.clientAction(input);this.deliver();return result;}
-  private deliver(){const job=Promise.allSettled([this.notifications.drain(10),this.bookings.drainCrm(10),this.bookings.drainMeet(10)]).then(results=>{if(results.some(result=>result.status==='rejected'))console.error('Booking background delivery failed');});if(process.env.VERCEL)waitUntil(job);else void job;}
+  private deliver(){const job=this.bookings.drainMeet(10).catch(err=>{console.error('Meet delivery failed',err);}).then(()=>Promise.allSettled([this.notifications.drain(10),this.bookings.drainCrm(10)])).then(results=>{if(results.some(result=>result.status==='rejected'))console.error('Booking background delivery failed');});if(process.env.VERCEL)waitUntil(job);else void job;}
 }
 
 @ApiTags('Staff Appointments')
@@ -69,7 +69,7 @@ export class PublicBookingController {
 @RequirePermission('appointments:read')
 export class StaffBookingsController {
   constructor(@Inject(BookingsService) private readonly bookings:BookingsService,@Inject(NotificationsService) private readonly notifications:NotificationsService){}
-  private deliver(){const job=Promise.allSettled([this.notifications.drain(10),this.bookings.drainCrm(10),this.bookings.drainMeet(10)]).then(results=>{if(results.some(result=>result.status==='rejected'))console.error('Booking background delivery failed');});if(process.env.VERCEL)waitUntil(job);else void job;}
+  private deliver(){const job=this.bookings.drainMeet(10).catch(err=>{console.error('Meet delivery failed',err);}).then(()=>Promise.allSettled([this.notifications.drain(10),this.bookings.drainCrm(10)])).then(results=>{if(results.some(result=>result.status==='rejected'))console.error('Booking background delivery failed');});if(process.env.VERCEL)waitUntil(job);else void job;}
 
   @ApiOperation({ summary: 'List appointments', description: 'Filter and paginate studio client bookings.' })
   @Get() @Header('Cache-Control','no-store')

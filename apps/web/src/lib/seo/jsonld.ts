@@ -41,7 +41,7 @@ export function organizationJsonLd(locale: Locale, origin: string | null) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    ...(origin ? { '@id': `${origin}/#organization`, url: origin, logo: `${origin}/icon-512.png` } : {}),
+    ...(origin ? { '@id': `${origin}/#organization`, url: origin, logo: { '@type': 'ImageObject', url: `${origin}/icon-512.png`, width: 512, height: 512 } } : {}),
     name: 'ALMORAD AMC',
     alternateName: locale === 'ar' ? 'المراد AMC' : 'المراد AMC',
     description: c.intro,

@@ -130,6 +130,24 @@ importers:
       '@amc/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@fullcalendar/core':
+        specifier: 6.1.22
+        version: 6.1.22
+      '@fullcalendar/daygrid':
+        specifier: 6.1.22
+        version: 6.1.22(@fullcalendar/core@6.1.22)
+      '@fullcalendar/interaction':
+        specifier: 6.1.22
+        version: 6.1.22(@fullcalendar/core@6.1.22)
+      '@fullcalendar/list':
+        specifier: 6.1.22
+        version: 6.1.22(@fullcalendar/core@6.1.22)
+      '@fullcalendar/react':
+        specifier: 6.1.22
+        version: 6.1.22(@fullcalendar/core@6.1.22)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@fullcalendar/timegrid':
+        specifier: 6.1.22
+        version: 6.1.22(@fullcalendar/core@6.1.22)
       '@hookform/resolvers':
         specifier: 7.0.5
         version: 7.0.5(@standard-schema/spec@1.1.0)(ajv@8.20.0)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(valibot@1.4.2(typescript@5.9.3))(zod@4.6.7)
@@ -148,6 +166,9 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.2.0
         version: 1.5.0(@types/react@19.3.0)(react@19.3.1)
+      '@radix-ui/react-switch':
+        specifier: 1.4.1
+        version: 1.4.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@radix-ui/react-tabs':
         specifier: 1.2.1
         version: 1.2.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -193,6 +214,9 @@ importers:
       react-hook-form:
         specifier: 7.92.0
         version: 7.92.0(@types/react@19.3.0)(react@19.3.1)
+      sonner:
+        specifier: 2.0.8
+        version: 2.0.8(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       tailwind-merge:
         specifier: ^3.3.0
         version: 3.7.0
@@ -569,6 +593,36 @@ packages:
 
   '@formatjs/intl-localematcher@0.8.14':
     resolution: {integrity: sha512-8O7V38QmbB11+ryJ3KM/znrzXtiqgpXzqNoqDsndHZZ5/zDKTTL+cf5F0mzXkQEwhx8IlWnqYvEovf2S5EwLTw==}
+
+  '@fullcalendar/core@6.1.22':
+    resolution: {integrity: sha512-ju5PJUE++zr8XXCGtlXlrodF6doUy9BDfzx+VmE0B+XDBM2A5cUi/aU3M1ANfw/StmKhwqew7Ps7bXMiv/JREg==}
+
+  '@fullcalendar/daygrid@6.1.22':
+    resolution: {integrity: sha512-cpom5+bAvsGG5nX+snsCtpMIyyhAr+QlseD9mhz5Vq7rMBTzx43mSkz6IBvQ3vz5h2idbDmT1cggEn/dzZwt9Q==}
+    peerDependencies:
+      '@fullcalendar/core': ~6.1.22
+
+  '@fullcalendar/interaction@6.1.22':
+    resolution: {integrity: sha512-r8Njw8aPNFGRwDjVAh9NTh3ZJib5tcUoLi/BM4uYJt5Cs9tDiirmImaqxhx56hclVFX7ktd5CdaMX0+ArSbm5A==}
+    peerDependencies:
+      '@fullcalendar/core': ~6.1.22
+
+  '@fullcalendar/list@6.1.22':
+    resolution: {integrity: sha512-7e5kZbeT3fhtXsts6VMQxbGtpoCFOZCxrIckHfn5VTrRh8Up0TKoYj/AOaIj94uz0qebWgaLXwd9Ijiu3uTwjg==}
+    peerDependencies:
+      '@fullcalendar/core': ~6.1.22
+
+  '@fullcalendar/react@6.1.22':
+    resolution: {integrity: sha512-H7woM4nhvXjyM4Up2D3iSp5f8o3pRPGkiHRixvxxvIMdSMBxboGTqCI7T/vjnAfz5TCxXdeX5HxmSHeANsa6gg==}
+    peerDependencies:
+      '@fullcalendar/core': ~6.1.22
+      react: ^16.7.0 || ^17 || ^18 || ^19
+      react-dom: ^16.7.0 || ^17 || ^18 || ^19
+
+  '@fullcalendar/timegrid@6.1.22':
+    resolution: {integrity: sha512-gNMtkXrkfN3iszXty+pYbJwGxcozL0xBVKYmEd1lm0DMEbrffpVJyV+vifmtl/eIbWCNRWrMWUtGLbYy/ukykA==}
+    peerDependencies:
+      '@fullcalendar/core': ~6.1.22
 
   '@hookform/resolvers@7.0.5':
     resolution: {integrity: sha512-E7ca3tpIJxHPGhFOfXLlCCZh7up6EcnUTbgTt0SRUENXagq8DJnob9rK+VqsNCsfUuO6mMU5NYNm6BaL18flgQ==}
@@ -1435,6 +1489,19 @@ packages:
       react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
+        optional: true
+
+  '@radix-ui/react-switch@1.4.1':
+    resolution: {integrity: sha512-NpBGwc40rY02ZmSvuyeKk0Bvc8ZsNeTMi4qHvJ+ZH4EiYCv0zIXEgdCW4bVdzgIUeP9xxbLJSxKOUfqITYNmkA==}
+    peerDependencies:
+      '@types/react': '*'
+      '@types/react-dom': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+      react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
         optional: true
 
   '@radix-ui/react-tabs@1.2.1':
@@ -4000,6 +4067,9 @@ packages:
     resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
     engines: {node: '>=12'}
 
+  preact@10.12.1:
+    resolution: {integrity: sha512-l8386ixSsBdbreOAkqtrwqHwdvR35ID8c3rKPa8lCWuO86dBi32QWHV4vfsZK1utLLFMvw+Z5Ad4XLkZzchscg==}
+
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -4285,6 +4355,16 @@ packages:
   signal-exit@4.1.0:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
+
+  sonner@2.0.8:
+    resolution: {integrity: sha512-UM/ByIoFra8yzV75n1o0Puu0bw5U/9UNnDacrJNspekBewIfsQ3D6ez1nvlWpt7aTsO6rujQtifBpycwIivqlg==}
+    peerDependencies:
+      '@types/react': ^18.0.0 || ^19.0.0
+      react: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
+      react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   source-map-js@1.2.2:
     resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
@@ -5054,6 +5134,33 @@ snapshots:
     dependencies:
       '@formatjs/fast-memoize': 3.1.7
 
+  '@fullcalendar/core@6.1.22':
+    dependencies:
+      preact: 10.12.1
+
+  '@fullcalendar/daygrid@6.1.22(@fullcalendar/core@6.1.22)':
+    dependencies:
+      '@fullcalendar/core': 6.1.22
+
+  '@fullcalendar/interaction@6.1.22(@fullcalendar/core@6.1.22)':
+    dependencies:
+      '@fullcalendar/core': 6.1.22
+
+  '@fullcalendar/list@6.1.22(@fullcalendar/core@6.1.22)':
+    dependencies:
+      '@fullcalendar/core': 6.1.22
+
+  '@fullcalendar/react@6.1.22(@fullcalendar/core@6.1.22)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@fullcalendar/core': 6.1.22
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+
+  '@fullcalendar/timegrid@6.1.22(@fullcalendar/core@6.1.22)':
+    dependencies:
+      '@fullcalendar/core': 6.1.22
+      '@fullcalendar/daygrid': 6.1.22(@fullcalendar/core@6.1.22)
+
   '@hookform/resolvers@7.0.5(@standard-schema/spec@1.1.0)(ajv@8.20.0)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(valibot@1.4.2(typescript@5.9.3))(zod@4.6.7)':
     dependencies:
       '@standard-schema/utils': 0.3.0
@@ -5765,6 +5872,20 @@ snapshots:
       react: 19.3.1
     optionalDependencies:
       '@types/react': 19.3.0
+
+  '@radix-ui/react-switch@1.4.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@radix-ui/primitive': 1.2.0
+      '@radix-ui/react-compose-refs': 1.1.5(@types/react@19.3.0)(react@19.3.1)
+      '@radix-ui/react-context': 1.3.0(@types/react@19.3.0)(react@19.3.1)
+      '@radix-ui/react-primitive': 2.2.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@radix-ui/react-use-controllable-state': 1.3.0(@types/react@19.3.0)(react@19.3.1)
+      '@radix-ui/react-use-size': 1.1.5(@types/react@19.3.0)(react@19.3.1)
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+    optionalDependencies:
+      '@types/react': 19.3.0
+      '@types/react-dom': 19.3.0(@types/react@19.3.0)
 
   '@radix-ui/react-tabs@1.2.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
@@ -8400,6 +8521,8 @@ snapshots:
 
   postgres@3.4.7: {}
 
+  preact@10.12.1: {}
+
   prelude-ls@1.2.1: {}
 
   prisma@7.10.0(@types/node@24.19.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.9.3):
@@ -8758,6 +8881,13 @@ snapshots:
   signal-exit@3.0.7: {}
 
   signal-exit@4.1.0: {}
+
+  sonner@2.0.8(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
+    dependencies:
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+    optionalDependencies:
+      '@types/react': 19.3.0
 
   source-map-js@1.2.2: {}
 
