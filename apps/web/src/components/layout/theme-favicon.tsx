@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 
-/** One owner for the document icon, including metadata reinserted by navigation. */
+/** Own the themed browser icon while retaining crawlable raster favicon links. */
 export function ThemeFavicon() {
   const { resolvedTheme } = useTheme();
   const pathname = usePathname();
@@ -22,9 +22,9 @@ export function ThemeFavicon() {
       }
       if (link.getAttribute('href') !== href) link.setAttribute('href', href);
       document.head.querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="shortcut icon"]').forEach(other => {
-        // Next owns metadata nodes and may remove them during navigation. Keep
-        // those nodes attached so React can reconcile them safely.
-        if (other !== link) other.rel = 'amc-inactive-icon';
+        // Keep PNG/ICO declarations active for search crawlers after hydration.
+        // Only supersede theme SVGs; keep Next-owned nodes attached for navigation.
+        if (other !== link && other.type === 'image/svg+xml') other.rel = 'amc-inactive-icon';
       });
     };
     synchronize();

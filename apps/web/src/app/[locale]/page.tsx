@@ -11,12 +11,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   if (!hasLocale(routing.locales, locale)) notFound();
   const title =
     locale === 'ar'
-      ? 'المراد AMC | تسويق وبناء علامات وتطوير مواقع بالإسكندرية'
-      : 'ALMORAD AMC | Marketing, Branding & Web in Alexandria';
+      ? 'المراد AMC | مكتب دعاية وإعلان واستشارات تسويقية'
+      : 'ALMORAD AMC | Advertising & Marketing Consulting Office';
   const description =
     locale === 'ar'
-      ? 'المراد AMC استوديو نمو وبناء علامات في الإسكندرية، مصر — نقدم خدمات التسويق، الإعلان، الاستشارات، وتطوير المواقع لبناء حضور رقمي قوي.'
-      : 'ALMORAD AMC is a Growth & Brand Studio in Alexandria, Egypt — offering marketing, advertising, consulting, and web development for ambitious brands.';
+      ? 'المراد AMC مكتب دعاية وإعلان واستشارات تسويقية في الإسكندرية، مصر. نقدم خدمات التسويق وبناء العلامات التجارية والإعلان والاستشارات وتطوير المواقع.'
+      : 'ALMORAD AMC is an advertising and marketing consulting office in Alexandria, Egypt, offering marketing, branding, advertising, consulting and web development.';
   return pageMetadata(locale, '', title, description, { absoluteTitle: true });
 }
 
