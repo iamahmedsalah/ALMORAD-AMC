@@ -13,6 +13,7 @@ import {Dialog,DialogContent} from '@/components/ui/dialog';
 import {Popover,PopoverContent,PopoverTrigger} from '@/components/ui/popover';
 import {Tooltip} from '@/components/ui/tooltip';
 import {BookingLoading} from './loading-state';
+import {Controls} from '@/components/layout/controls';
 
 export type StaffIdentity={
  staff:{id:string;email:string;firstName?:string;lastName?:string;role:StaffRole;googleEmail?:string|null;googleLinkedAt?:string|null;hasPassword?:boolean};
@@ -176,12 +177,14 @@ export function StaffWorkspaceShell({locale,view,children}:{locale:Locale;view:N
      </Tooltip>
     </div>
     <OperationsNavigation locale={locale} role={identity?.staff.role} view={view} collapsed={collapsed} inquiriesCount={inquiriesCount}/>
+    <div className="operations-sidebar-controls"><Controls/></div>
    </aside>
 
    <Dialog open={mobileOpen} onOpenChange={setMobileOpen}>
     <DialogContent locale={locale} title={c.title} className="operations-mobile-drawer">
      <div id="staff-mobile-sidebar" className="operations-mobile-drawer-body">
       <OperationsNavigation locale={locale} role={identity?.staff.role} view={view} inquiriesCount={inquiriesCount} onNavigate={()=>setMobileOpen(false)}/>
+      <div className="operations-sidebar-controls"><Controls/></div>
      </div>
     </DialogContent>
    </Dialog>

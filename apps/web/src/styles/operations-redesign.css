@@ -488,3 +488,13 @@
 
 .operations-sidebar-brand { display: inline-flex; align-items: center; gap: 0.5rem; }
 .operations-sidebar-brand img { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* Sidebar Landing-Style Theme & Language Controls */
+.operations-sidebar-controls { margin-top: auto; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+.operations-sidebar-controls .controls { display: flex; align-items: center; justify-content: space-between; gap: 0.45rem; }
+.operations-sidebar-controls .locale-switch-btn,
+.operations-sidebar-controls .theme-cycle-button { min-height: 40px; min-width: 40px; border: 1px solid var(--border); background: var(--surface-2); color: var(--foreground); }
+.operations-sidebar-controls .locale-switch-btn { flex: 1; justify-content: center; padding-inline: 0.65rem; }
+.dash-shell[data-sidebar-collapsed="true"] .operations-sidebar-controls .controls { flex-direction: column; }
+.dash-shell[data-sidebar-collapsed="true"] .operations-sidebar-controls .locale-switch-btn { flex: none; width: 44px; padding: 0; }
+.dash-shell[data-sidebar-collapsed="true"] .operations-sidebar-controls .locale-switch-btn span { display: none; }
