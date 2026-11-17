@@ -106,29 +106,27 @@ const CO_LEADERSHIP: readonly TeamMember[] = [
 ];
 const CORE_TEAM: readonly TeamMember[] = [
   {
-    "id": "business-development",
-    "name": {
-      "en": "Gina Raafat",
-      "ar": "\u062c\u064a\u0646\u0627 \u0631\u0623\u0641\u062a"
-    },
-    "role": {
-      "en": "Business Developer",
-      "ar": "\u0645\u0637\u0648\u0631\u0629 \u0623\u0639\u0645\u0627\u0644"
-    },
-    "discipline": {
-      "en": "Partnerships, Opportunities & Growth",
-      "ar": "\u0627\u0644\u0634\u0631\u0627\u0643\u0627\u062a \u0648\u0627\u0644\u0641\u0631\u0635 \u0648\u0627\u0644\u0646\u0645\u0648"
-    },
-    "badge": "BUSINESS DEVELOPMENT",
-    "avatarType": "client",
-    "photo": "/images/team/gina-raafat.webp",
-    "linkedinUrl": "https://www.linkedin.com/in/gina-raafat-a24a6a447/"
-  },
-  {
     "id": "research",
     "name": {
       "en": "Farah",
       "ar": "\u0641\u0631\u062d"
+    },
+    "role": {
+      "en": "R&D Specialist",
+      "ar": "\u0623\u062e\u0635\u0627\u0626\u064a\u0629 \u0628\u062d\u062b \u0648\u062a\u0637\u0648\u064a\u0631"
+    },
+    "discipline": {
+      "en": "Research, Insights & New Ideas",
+      "ar": "\u0627\u0644\u0628\u062d\u062b \u0648\u0627\u0644\u0631\u0624\u0649 \u0648\u0627\u0644\u0623\u0641\u0643\u0627\u0631 \u0627\u0644\u062c\u062f\u064a\u062f\u0629"
+    },
+    "badge": "RESEARCH & DEVELOPMENT",
+    "avatarType": "creative"
+  },
+  {
+    "id": "research-fatma",
+    "name": {
+      "en": "Dr. Fatma Ahmed",
+      "ar": "\u062f. \u0641\u0627\u0637\u0645\u0629 \u0623\u062d\u0645\u062f"
     },
     "role": {
       "en": "R&D Specialist",

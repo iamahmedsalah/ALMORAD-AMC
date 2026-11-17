@@ -12,7 +12,8 @@ export class GoogleCalendarService {
  get enabled(){return Boolean(process.env.GOOGLE_CALENDAR_ID&&process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL&&process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY&&process.env.GOOGLE_CALENDAR_IMPERSONATE_EMAIL);}
  private async request(method:string,id:string|undefined,body:unknown,signal:AbortSignal):Promise<CalendarEvent>{
   if(!this.enabled)throw new GoogleMeetError('GOOGLE_MEET_NOT_CONFIGURED','configuration');
-  const auth=new JWT({email:process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,key:process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY!.replaceAll('\\n','\n'),subject:process.env.GOOGLE_CALENDAR_IMPERSONATE_EMAIL,scopes:['https://www.googleapis.com/auth/calendar.events'],transporterOptions:{signal,retry:false}});
+  const privateKey=process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY!.trim().replace(/^["']|["']$/g,'').replaceAll('\\r\\n','\n').replaceAll('\\n','\n').replaceAll('\r\n','\n');
+  const auth=new JWT({email:process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!.trim(),key:privateKey,subject:process.env.GOOGLE_CALENDAR_IMPERSONATE_EMAIL!.trim(),scopes:['https://www.googleapis.com/auth/calendar.events'],transporterOptions:{signal,retry:false}});
   let token:string;
   try{const access=await auth.getAccessToken();if(!access.token)throw new Error();token=access.token;}
   catch(error){
