@@ -2,21 +2,24 @@
 import {useEffect,useState} from 'react';
 import type {Locale} from '@amc/shared';
 import {hubspotStatusLabel} from './hubspot-status';
-import {StaffBookingShell} from './staff-shell';
+import {StaffBookingShell,type StaffIdentity} from './staff-shell';
+import {Dialog,DialogContent} from '@/components/ui/dialog';
 import {appointmentDate,bookingFetch} from './helpers';
 import {SolarIcon} from '@/components/ui/solar-icon';
 import {IconButton} from '@/components/ui/animated-icon';
 import {EmptyState,PageHeader,SideDrawer,SkeletonList,StatCard} from '@/components/ui/staff-primitives';
 
-type Inquiry={id:string;name:string;email:string;phone:string|null;message:string;createdAt:string;ownerEmailStatus:string;visitorEmailStatus:string;hubspotStatus?:string;hubspotContactUrl?:string|null};
+type Inquiry={id:string;name:string;email:string;phone:string|null;message:string;createdAt:string;source?:string;ownerEmailStatus:string;visitorEmailStatus:string;hubspotStatus?:string;hubspotContactUrl?:string|null};
 type Result={items:Inquiry[];total:number;page:number};
 
-export function MeetingInquiries({locale}:{locale:Locale}) {
- return <StaffBookingShell locale={locale} view="inquiries">{()=> <Inbox locale={locale}/>}</StaffBookingShell>;
+export function ContactInquiries({locale}:{locale:Locale}) {
+ return <StaffBookingShell locale={locale} view="inquiries">{identity=> <Inbox locale={locale} identity={identity}/>}</StaffBookingShell>;
 }
 
-function Inbox({locale}:{locale:Locale}) {
+function Inbox({locale,identity}:{locale:Locale;identity:StaffIdentity}) {
  const ar=locale==='ar';
+ const admin=identity.staff.role==='ADMIN';
+ const [createOpen,setCreateOpen]=useState(false),[deleteOpen,setDeleteOpen]=useState(false),[reason,setReason]=useState(''),[busy,setBusy]=useState(false);
  const [search,setSearch]=useState('');
  const [query,setQuery]=useState('');
  const [page,setPage]=useState(0);
@@ -25,6 +28,10 @@ function Inbox({locale}:{locale:Locale}) {
  const [selected,setSelected]=useState<Inquiry|null>(null);
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState('');
+ async function mutate(endpoint:'create'|'delete',data:unknown){
+  if(busy)return;setBusy(true);setError('');
+  try{await bookingFetch('staff/inquiries/'+endpoint,data,identity.csrfToken);setCreateOpen(false);setDeleteOpen(false);setSelected(null);setReason('');setPage(0);setRefresh(v=>v+1);}catch{setError(ar?'تعذر حفظ التغيير. تحقق من البيانات وحاول مجددًا.':'Could not save the change. Check the details and try again.');}finally{setBusy(false);}
+ }
 
  useEffect(()=>{
   const param=new URLSearchParams(window.location.search).get('search');
@@ -44,30 +51,28 @@ function Inbox({locale}:{locale:Locale}) {
   return()=>{stop=true;window.cancelAnimationFrame(startId);};
  },[query,page,refresh,ar]);
 
- const delivery=(status:string)=>status==='SENT'?(ar?'تم الإرسال':'Delivered'):status==='FAILED'?(ar?'فشل':'Failed'):status==='PENDING'?(ar?'قيد الانتظار':'Queued'):(ar?'غير مهيأ':'Unconfigured');
+ const delivery=(status:string)=>status==='SENT'?(ar?'قبله مزود البريد':'Provider accepted'):status==='FAILED'?(ar?'فشل':'Failed'):status==='PENDING'?(ar?'قيد الانتظار':'Queued'):status==='SKIPPED'?(ar?'لم يُرسل':'Not sent'):(ar?'غير مهيأ':'Unconfigured');
  const deliveryIcon=(status:string)=>status==='SENT'?'check-circle-linear':status==='FAILED'?'danger-triangle-linear':'clock-circle-linear';
  const initials=(name:string)=>name.split(/\s+/).slice(0,2).map(part=>part[0]).join('').toUpperCase()||'?';
 
  const deliveredCount=result?result.items.filter(item=>item.ownerEmailStatus==='SENT'||item.visitorEmailStatus==='SENT').length:0;
- const hubspotCount=result?result.items.filter(item=>item.hubspotStatus==='SYNCED').length:0;
+ const hubspotCount=result?result.items.filter(item=>['SYNCED','SENT'].includes(item.hubspotStatus||'')).length:0;
 
  return (
   <>
    <PageHeader
     icon="chat-round-line-linear"
-    title={ar?'استفسارات الاجتماعات':'Meeting inquiries'}
-    description={ar?'رسائل نموذج التواصل. انقر على أي رسالة لعرض التفاصيل الكاملة.':'Contact form messages. Select any inquiry to view full details.'}
+    title={ar?'استفسارات التواصل':'Contact inquiries'}
+    description={ar?'رسائل الموقع وسجلات التواصل التي يضيفها الفريق. لا تُنشئ موعدًا تلقائيًا.':'Website messages and staff-entered contact records. These do not automatically create appointments.'}
     action={
-     <a href={'/'+locale+'/staff/calendar'} className="button button-primary">
-      <SolarIcon name="add-circle-linear"/>{ar?'حجز موعد':'New appointment'}
-     </a>
+     admin?<button type="button" className="button button-primary" onClick={()=>setCreateOpen(true)}><SolarIcon name="add-circle-linear"/>{ar?'إضافة استفسار':'Add contact inquiry'}</button>:undefined
     }
    />
 
    <div className="dash-stat-grid">
     <StatCard icon="chat-round-line-linear" value={result?.total??0} label={ar?'إجمالي الاستفسارات':'Total inquiries'} tone="accent"/>
-    <StatCard icon="letter-linear" value={deliveredCount} label={ar?'تم إرسال البريد':'Email delivered'} tone="success"/>
-    <StatCard icon="link-round-linear" value={hubspotCount} label={ar?'مزامنة HubSpot':'HubSpot synced'}/>
+    <StatCard icon="letter-linear" value={deliveredCount} label={ar?'بريد مقبول · الصفحة الحالية':'Email accepted · loaded page'} tone="success"/>
+    <StatCard icon="link-round-linear" value={hubspotCount} label={ar?'مزامنة HubSpot · الصفحة الحالية':'HubSpot synced · loaded page'}/>
    </div>
 
    <form className="dash-toolbar" onSubmit={e=>{e.preventDefault();setPage(0);setQuery(search);}}>
@@ -138,6 +143,7 @@ function Inbox({locale}:{locale:Locale}) {
    <SideDrawer open={Boolean(selected)} onOpenChange={open=>{if(!open)setSelected(null);}} locale={locale} title={selected?.name||''} description={selected?appointmentDate(selected.createdAt,locale,'Africa/Cairo'):undefined}>
     {selected&&(
      <div className="dash-drawer-body">
+      <p className="eyebrow">{selected.source==='STAFF'?(ar?'سجل أضافه الفريق':'Staff-entered contact'):(ar?'نموذج التواصل بالموقع':'Website contact form')}</p>
       <div className="inquiry-contact">
        <a href={'mailto:'+selected.email}><SolarIcon name="letter-linear"/><bdi>{selected.email}</bdi></a>
        {selected.phone?<a href={'tel:'+selected.phone.replace(/[^+0-9]/g,'')}><SolarIcon name="phone-linear"/><bdi>{selected.phone}</bdi></a>:<span>{ar?'لم يترك رقم هاتف':'No phone supplied'}</span>}
@@ -149,12 +155,32 @@ function Inbox({locale}:{locale:Locale}) {
        <div><dt>HubSpot</dt><dd>{hubspotStatusLabel(locale,selected.hubspotStatus)}</dd></div>
       </dl>
       <div className="booking-actions">
+       {admin&&<button type="button" className="button button-secondary" onClick={()=>setDeleteOpen(true)}><SolarIcon name="trash-bin-trash-linear"/>{ar?'حذف الاستفسار':'Delete inquiry'}</button>}
        <a href={'/'+locale+'/staff/calendar'} className="button button-primary"><SolarIcon name="calendar-linear"/>{ar?'حجز موعد':'Book appointment'}</a>
        {selected.hubspotContactUrl&&<a href={selected.hubspotContactUrl} target="_blank" rel="noopener noreferrer" className="button button-secondary"><SolarIcon name="link-round-linear"/>{ar?'فتح في HubSpot':'Open in HubSpot'}</a>}
       </div>
      </div>
     )}
    </SideDrawer>
+   <Dialog open={createOpen} onOpenChange={value=>{if(!busy)setCreateOpen(value);}}><DialogContent locale={locale} title={ar?'إضافة استفسار تواصل':'Add contact inquiry'}>
+    <p>{ar?'سجل تواصل داخلي؛ لا ينشئ موعدًا ولا يرسل بريدًا تلقائيًا.':'Internal contact record. This does not book a meeting or send an automatic email.'}</p>
+    <form className="staff-form inquiry-create" onSubmit={event=>{event.preventDefault();const form=event.currentTarget;form.dataset.commandKey||=crypto.randomUUID();const data=new FormData(form);void mutate('create',{name:data.get('name'),email:data.get('email'),phone:data.get('phone'),message:data.get('message'),locale,idempotencyKey:form.dataset.commandKey});}}>
+     <label>{ar?'الاسم':'Name'}<input name="name" required minLength={2} maxLength={120}/></label>
+     <label>{ar?'البريد الإلكتروني':'Email'}<input name="email" type="email" dir="ltr" required maxLength={254}/></label>
+     <label>{ar?'الهاتف (اختياري)':'Phone (optional)'}<input name="phone" type="tel" dir="ltr" maxLength={40}/></label>
+     <label>{ar?'تفاصيل الاستفسار':'Inquiry details'}<textarea name="message" required minLength={10} maxLength={2000}/></label>
+     {error&&<p role="alert">{error}</p>}
+     <div className="inquiry-dialog-actions"><button type="button" className="button button-secondary" disabled={busy} onClick={()=>setCreateOpen(false)}>{ar?'تراجع':'Cancel'}</button><button type="submit" className="button button-primary" disabled={busy} aria-busy={busy}>{busy?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ الاستفسار':'Save inquiry')}</button></div>
+    </form>
+   </DialogContent></Dialog>
+   <Dialog open={deleteOpen} onOpenChange={value=>{if(!busy)setDeleteOpen(value);}}><DialogContent locale={locale} title={ar?'حذف الاستفسار؟':'Delete contact inquiry?'}>
+    <p>{ar?'سيُزال من صندوق الاستفسارات مع الاحتفاظ بسجل التدقيق. لا يتأثر أي موعد.':'This archives the contact inquiry and retains its audit history. Appointments are unaffected.'}</p>
+    <form className="staff-form" onSubmit={event=>{event.preventDefault();if(selected)void mutate('delete',{id:selected.id,reason});}}>
+     <label>{ar?'سبب الحذف':'Deletion reason'}<textarea required minLength={3} maxLength={1000} value={reason} onChange={event=>setReason(event.target.value)}/></label>
+     {error&&<p role="alert">{error}</p>}
+     <div className="inquiry-dialog-actions"><button type="button" className="button button-secondary" disabled={busy} onClick={()=>setDeleteOpen(false)}>{ar?'تراجع':'Cancel'}</button><button className="button button-primary" disabled={busy} aria-busy={busy}>{ar?'تأكيد الحذف':'Confirm deletion'}</button></div>
+    </form>
+   </DialogContent></Dialog>
   </>
  );
 }

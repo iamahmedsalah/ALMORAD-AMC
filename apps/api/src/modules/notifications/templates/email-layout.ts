@@ -1,4 +1,10 @@
 import {officeAddress} from '@amc/shared';
+import {meetingUrlInput} from '@amc/shared';
+export function renderMeetingJoinLink(value:string|null|undefined,locale:string):string {
+  const parsed=meetingUrlInput.safeParse(value);
+  if(!parsed.success)return '';
+  return `<p style="text-align:center;"><a href="${escapeHtml(parsed.data)}" style="display:inline-block;padding:12px 20px;color:#0B1F44;background:#FBF1E6;border:1px solid #D9C8B7;border-radius:12px;text-decoration:underline;">${locale==='ar'?'الانضمام للاجتماع':'Join meeting'}</a></p>`;
+}
 /**
  * Reusable ALMORAD AMC email shell: branded header + footer shared by every
  * transactional email (contact, booking, reminders). Table layout and inline

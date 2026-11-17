@@ -57,7 +57,7 @@ export class BookingsService {
  private async event(tx:Tx,id:string,kind:string,actorId:string|undefined,details:Prisma.InputJsonValue,emailStatus='UNCONFIGURED'){
    const event=await tx.bookingEvent.create({data:{bookingId:id,actorId,kind,details}});
    await tx.bookingOutbox.create({data:{bookingId:id,eventId:event.id,kind:kind+':EMAIL',status:emailStatus}});
-   if(process.env.BOOKING_INBOX_EMAIL)await tx.bookingOutbox.create({data:{bookingId:id,eventId:event.id,kind:kind+':OWNER:EMAIL',status:emailStatus}});
+   await tx.bookingOutbox.create({data:{bookingId:id,eventId:event.id,kind:kind+':OWNER:EMAIL',status:emailStatus}});
    const crmStatus=this.hubspot?.enabled?'PENDING':'UNCONFIGURED';
    await tx.bookingOutbox.create({data:{bookingId:id,eventId:event.id,kind:kind+':HUBSPOT',status:crmStatus}});
    if(['BOOKING_CREATED','BOOKING_RESCHEDULED','BOOKING_CANCELLED','BOOKING_DELETED'].includes(kind)){
@@ -101,6 +101,12 @@ export class BookingsService {
   }));}
 
  get googleMeetEnabled(){return this.googleCalendar?.enabled??false;}
+ get googleMeetControlsEnabled(){return this.googleCalendar?.controlsEnabled??false;}
+ private async hasMeetManager(tx:Tx,booking:Booking){
+  const assignments=await tx.bookingAssignee.findMany({where:{bookingId:booking.id},select:{staffId:true}});
+  const ids=[...new Set([...assignments.map(a=>a.staffId),...(booking.assignedToId?[booking.assignedToId]:[])])];
+  return ids.length>0&&await tx.staffUser.count({where:{id:{in:ids},active:true,role:{in:['MANAGER','ADMIN']}}})>0;
+ }
  async meetLink(input:unknown,actor:{id:string;role:StaffRole}){
   const data=parse(meetLinkInput,input);
   return this.db.$transaction(async tx=>{
@@ -109,11 +115,37 @@ export class BookingsService {
    if(booking.meetingType!=='ONLINE')throw new BadRequestException('Only online meetings support Google Meet');
    this.mutable(booking);
    if(booking.isDemo)throw new BadRequestException('Demo bookings cannot create Google Meet events');
-   if(booking.meetingUrl)return {meetingUrl:booking.meetingUrl,googleEventId:booking.googleEventId};
+   const actorKey='staff:'+actor.id,requestHash=hash(JSON.stringify(data));
+   if(data.action!=='CREATE'){
+    const replay=await tx.bookingCommand.findUnique({where:{id:data.idempotencyKey!}});
+    if(replay){if(replay.bookingId!==booking.id||replay.actorKey!==actorKey||replay.requestHash!==requestHash||replay.resultVersion!==booking.version)throw new ConflictException('Action already used');return {meetingUrl:booking.meetingUrl,googleEventId:booking.googleEventId};}
+    if(data.version!==booking.version)throw new ConflictException('Appointment changed; refresh');
+    if(!booking.meetingUrl||data.action!=='REMOVE'&&!booking.googleEventId)throw new BadRequestException('A managed Google Meet link is required');
+   }
+   if(data.action==='CREATE'&&booking.meetingUrl)return {meetingUrl:booking.meetingUrl,googleEventId:booking.googleEventId};
+   if(['CREATE','REGENERATE'].includes(data.action)&&!await this.hasMeetManager(tx,booking))throw new BadRequestException('Assign and save an active meeting manager before generating the link');
+   if(data.action==='REMOVE'){
+    if(booking.googleEventId){if(!this.googleCalendar?.enabled)throw new GoogleMeetError('GOOGLE_MEET_NOT_CONFIGURED','configuration');await this.googleCalendar.removeConference(booking.googleEventId);}
+    await tx.booking.update({where:{id:booking.id},data:{meetingUrl:null,version:{increment:1}}});
+    await this.event(tx,booking.id,'BOOKING_UPDATED',actor.id,{googleMeet:true,action:'REMOVE',meetingUrl:null},process.env.RESEND_API_KEY?'PENDING':'UNCONFIGURED');
+    await tx.bookingCommand.create({data:{id:data.idempotencyKey!,bookingId:booking.id,actorKey,requestHash,resultVersion:booking.version+1}});
+    return {meetingUrl:null,googleEventId:booking.googleEventId};
+   }
    if(!this.googleCalendar?.enabled)throw new GoogleMeetError('GOOGLE_MEET_NOT_CONFIGURED','configuration');
-   const result=await this.googleCalendar.sync(booking);
-   await tx.booking.update({where:{id:booking.id},data:result});
-   await this.event(tx,booking.id,'BOOKING_UPDATED',actor.id,{googleMeet:true},process.env.RESEND_API_KEY?'PENDING':'UNCONFIGURED');return result;
+   if(data.action==='END'){
+    await this.googleCalendar.endConference(booking.meetingUrl!);
+    await tx.booking.update({where:{id:booking.id},data:{version:{increment:1}}});
+    await tx.bookingEvent.create({data:{bookingId:booking.id,actorId:actor.id,kind:'MEET_CALL_ENDED',details:{permanentLinkRevocation:false}}});
+    await tx.staffAuditEvent.create({data:{actorId:actor.id,subjectId:booking.id,action:'MEET_CALL_ENDED'}});
+    await tx.bookingCommand.create({data:{id:data.idempotencyKey!,bookingId:booking.id,actorKey,requestHash,resultVersion:booking.version+1}});
+    return {meetingUrl:booking.meetingUrl,googleEventId:booking.googleEventId};
+   }
+   const result=await this.googleCalendar.sync(booking,data.action==='REGENERATE'?data.idempotencyKey:booking.googleEventId?hash(booking.id+':'+booking.version):undefined);
+   if(data.action==='REGENERATE'&&result.meetingUrl===booking.meetingUrl)throw new GoogleMeetError('GOOGLE_MEET_PENDING','conference');
+   await tx.booking.update({where:{id:booking.id},data:{...result,version:{increment:1}}});
+   await this.event(tx,booking.id,'BOOKING_UPDATED',actor.id,{googleMeet:true,action:data.action,meetingUrl:result.meetingUrl},process.env.RESEND_API_KEY?'PENDING':'UNCONFIGURED');
+   if(data.action==='REGENERATE')await tx.bookingCommand.create({data:{id:data.idempotencyKey!,bookingId:booking.id,actorKey,requestHash,resultVersion:booking.version+1}});
+   return result;
   },{timeout:30000});
  }
  async drainMeet(batchSize=10){
@@ -130,6 +162,9 @@ export class BookingsService {
    await this.db.$transaction(async tx=>{
     const booking=await this.lock(tx,item.bookingId,true);
     if(booking.isDemo||booking.meetingType!=='ONLINE'||booking.meetingUrl&&!booking.googleEventId&&!booking.deletedAt&&booking.status!=='CANCELLED'){await tx.bookingOutbox.update({where:{id:item.id},data:{status:'SKIPPED'}});return;}
+    if(!booking.googleEventId&&!await this.hasMeetManager(tx,booking)){await tx.bookingOutbox.update({where:{id:item.id},data:{status:'SKIPPED'}});return;}
+    // Removed conference details stay removed until staff explicitly generates a replacement.
+    if(booking.googleEventId&&!booking.meetingUrl&&!booking.deletedAt&&booking.status!=='CANCELLED'){await tx.bookingOutbox.update({where:{id:item.id},data:{status:'SKIPPED'}});return;}
     const result=await this.googleCalendar!.sync(booking);
     await tx.booking.update({where:{id:booking.id},data:result});
     if(result.meetingUrl&&result.meetingUrl!==booking.meetingUrl)await this.event(tx,booking.id,'BOOKING_UPDATED',undefined,{googleMeet:true},process.env.RESEND_API_KEY?'PENDING':'UNCONFIGURED');

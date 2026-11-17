@@ -2587,10 +2587,10 @@ html[dir="rtl"] .faq-accordion-answer > p { padding-inline:24px 76px; }
  .social-disclosure-sidebar { inset-inline-start:16px; top:auto; bottom:86px; }
  .social-disclosure-sidebar .social-trigger { width:46px; min-height:46px; padding:10px; }
  .social-disclosure-sidebar .social-trigger > span:first-of-type { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
- .social-disclosure-sidebar .social-tray { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); top:auto; bottom:0; width:min(270px,calc(100vw - 90px)); min-width:0; gap:5px; padding:8px; }
- .social-disclosure-sidebar .social-item a { padding:8px; gap:7px; }
- .social-disclosure-sidebar .social-platform-name { font-size:.7rem; }
- .social-disclosure-footer .social-tray { display:grid; grid-template-columns:repeat(3,44px); width:auto; }
+ .social-disclosure-sidebar .social-tray { display:grid; grid-template-columns:minmax(0,1fr); top:auto; bottom:0; width:min(200px,calc(100vw - 88px)); min-width:0; gap:6px; padding:8px; }
+ .social-disclosure-sidebar .social-item a { padding:8px 12px; gap:10px; min-height:44px; }
+ .social-disclosure-sidebar .social-platform-name { font-size:.82rem; }
+ .social-disclosure-footer .social-tray { display:flex; flex-wrap:wrap; gap:6px; width:auto; }
  .amc-landing .faq-section > .faq-accordion { grid-column:1; grid-row:3; }
  .faq-accordion-item > summary { padding:18px 16px; gap:10px; grid-template-columns:minmax(0,1fr) 44px; }
  .faq-accordion-question { font-size:.95rem; }
@@ -2679,3 +2679,9 @@ html.dark .site-header .brand-wording i { background:var(--amc-navy-900); }
 html.dark .site-header :is(.theme-cycle-button,.theme-cycle-button .theme-icon-motion,.locale-switch-btn,.locale-switch-btn span,.locale-switch-btn svg),html.dark .site-header.site-header .locale-switch-btn::after { color:var(--amc-navy-900); }
 html.dark .site-header :is(.theme-cycle-button,.locale-switch-btn,.burger-trigger) { border-color:rgb(11 31 68 / 45%); }
 html.dark .site-header .burger-trigger { background:transparent; color:var(--amc-navy-900); }
+/* Phone social links retain a single readable vertical list, including RTL. */
+@media(max-width:767px) {
+ .social-disclosure.social-disclosure-sidebar .social-tray { display:flex; flex-flow:column nowrap; width:min(200px,calc(100vw - 88px)); max-height:calc(100dvh - 150px); overflow-y:auto; }
+ .social-disclosure.social-disclosure-sidebar .social-item { flex:0 0 auto; width:100%; min-width:0; }
+ .social-disclosure.social-disclosure-sidebar .social-item a { min-height:44px; width:100%; }
+}

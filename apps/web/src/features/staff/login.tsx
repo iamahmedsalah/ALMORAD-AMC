@@ -65,8 +65,9 @@ export function StaffLogin({locale}: {locale: Locale}) {
   }
 
   return <section className="staff-login container">
-    <AuthUtilities locale={locale}/><div className="staff-login-emblem"><SolarIcon name="users-group-rounded-linear"/></div>
-    <p className="eyebrow">ALMORAD AMC</p><h1>{c.signIn}</h1><p>{c.intro}</p>
+    <AuthUtilities locale={locale}/>
+    <header className="staff-login-heading"><div className="staff-login-emblem"><SolarIcon name="user-linear"/></div>
+    <p className="eyebrow">ALMORAD AMC</p><h1>{c.signIn}</h1><p>{c.intro}</p></header>
     <form method="post" action="/api/staff/auth/login" onSubmit={submit} noValidate className="staff-form">
       <label>{c.email}
         <input ref={emailRef} disabled={!hydrated || pending || signedIn} name="email" type="email" autoComplete="username" dir="ltr" required maxLength={254}

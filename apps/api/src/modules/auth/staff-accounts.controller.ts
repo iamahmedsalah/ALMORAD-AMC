@@ -20,4 +20,6 @@ export class StaffAccountsController {
   update(@Req() req:StaffRequest,@Body() input:unknown){return this.accounts.update(req.staff!.id,input);}
   @Post('deactivate') @HttpCode(200) @Header('Cache-Control','no-store')
   deactivate(@Req() req:StaffRequest,@Body() input:unknown){return this.accounts.deactivate(req.staff!.id,input);}
+  @Post('delete') @HttpCode(200) @Header('Cache-Control','no-store')
+  remove(@Req() req:StaffRequest,@Body() input:unknown){return this.accounts.remove(req.staff!.id,input);}
 }

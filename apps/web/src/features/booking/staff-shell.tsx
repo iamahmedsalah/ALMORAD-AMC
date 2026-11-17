@@ -37,7 +37,7 @@ export function OperationsNavigation({locale,role,view,collapsed=false,inquiries
    section:locale==='ar'?'العمليات':'Operations',
    items:[
     {href:'/'+locale+'/staff/calendar',key:'calendar',icon:'calendar-linear',label:c.agenda,visible:true},
-    {href:'/'+locale+'/staff/inquiries',key:'inquiries',icon:'chat-round-line-linear',label:locale==='ar'?'الاستفسارات':'Meeting inquiries',badge:inquiriesCount,visible:Boolean(role&&can(role,'inquiries:read'))},
+    {href:'/'+locale+'/staff/inquiries',key:'inquiries',icon:'chat-round-line-linear',label:locale==='ar'?'الاستفسارات':'Contact inquiries',badge:inquiriesCount,visible:Boolean(role&&can(role,'inquiries:read'))},
     {href:'/'+locale+'/staff/analytics',key:'analytics',icon:'chart-2-linear',label:c.analytics,visible:Boolean(role&&can(role,'analytics:read'))},
    ]
   },
@@ -78,6 +78,7 @@ export function OperationsNavigation({locale,role,view,collapsed=false,inquiries
 function HeaderUserMenu({identity,locale}:{identity:StaffIdentity;locale:Locale}){
  const [busy,setBusy]=useState(false);
  const name=[identity.staff.firstName,identity.staff.lastName].filter(Boolean).join(' ')||identity.staff.email;
+ const hasName=Boolean(identity.staff.firstName||identity.staff.lastName);
  const initials=name.split(/\s+/).slice(0,2).map(part=>part[0]).join('').toUpperCase()||'A';
  const roleLabel=staffCopy(locale).roleNames[identity.staff.role];
 
@@ -94,7 +95,7 @@ function HeaderUserMenu({identity,locale}:{identity:StaffIdentity;locale:Locale}
   <Popover>
    <PopoverTrigger asChild>
     <button type="button" className="topbar-user-trigger" aria-label={name} title={name}>
-     <span className="staff-avatar dash-topbar-avatar" aria-hidden="true">{initials}</span>
+     <span className="staff-avatar dash-topbar-avatar" aria-hidden="true">{hasName?initials:<SolarIcon name="user-linear"/>}</span>
      <span className="topbar-user-info">
       <strong>{name}</strong>
       <small>{roleLabel}</small>
@@ -104,7 +105,7 @@ function HeaderUserMenu({identity,locale}:{identity:StaffIdentity;locale:Locale}
    </PopoverTrigger>
    <PopoverContent locale={locale} className="sidebar-user-popover">
     <div className="sidebar-user-popover-head">
-     <strong>{name}</strong>
+     <strong>{hasName?name:roleLabel}</strong>
      <small dir="ltr">{identity.staff.email}</small>
     </div>
     <a className="button button-secondary" href={'/'+locale+'/staff'}>
@@ -148,7 +149,7 @@ export function StaffWorkspaceShell({locale,view,children}:{locale:Locale;view:N
   window.dispatchEvent(new Event('amc-sidebar-change'));
  }
 
- const pageTitle=view==='inquiries'?(locale==='ar'?'الاستفسارات':'Meeting inquiries'):view==='calendar'?c.title:view==='analytics'?c.analytics:view==='settings'?c.settings:c.account;
+ const pageTitle=view==='inquiries'?(locale==='ar'?'الاستفسارات':'Contact inquiries'):view==='calendar'?c.title:view==='analytics'?c.analytics:view==='settings'?c.settings:c.account;
  const collapseLabel=collapsed?(locale==='ar'?'توسيع القائمة الجانبية':'Expand sidebar'):(locale==='ar'?'طي القائمة الجانبية':'Collapse sidebar');
  const menuLabel=mobileOpen?(locale==='ar'?'إغلاق القائمة':'Close menu'):(locale==='ar'?'فتح القائمة':'Open menu');
 
@@ -162,7 +163,7 @@ export function StaffWorkspaceShell({locale,view,children}:{locale:Locale;view:N
   <div className="staff-workspace operations-workspace dash-shell" data-sidebar-collapsed={collapsed||undefined}>
    <aside className="operations-sidebar" aria-label={c.title}>
     <div className="operations-sidebar-head">
-     {!collapsed&&<span className="operations-sidebar-brand"><Image src="/brand/amc-mark.svg" alt="" width={20} height={20} unoptimized/><span>ALMORAD AMC</span></span>}
+     {!collapsed&&<span className="operations-sidebar-brand"><Image className="operations-logo-light" src="/brand/amc-mark.svg" alt="" width={32} height={20} unoptimized/><Image className="operations-logo-dark" src="/brand/amc-mark-on-dark.svg" alt="" width={32} height={20} unoptimized/><span>ALMORAD AMC</span></span>}
      <Tooltip label={collapseLabel} locale={locale}>
       <button
        type="button"
@@ -200,8 +201,8 @@ export function StaffWorkspaceShell({locale,view,children}:{locale:Locale;view:N
        <SolarIcon name="filter-linear"/>
        <input type="search" value={topSearch} onChange={e=>setTopSearch(e.target.value)} placeholder={locale==='ar'?'بحث سريع…':'Quick search…'} aria-label={c.search}/>
       </form>
-      <Tooltip label={locale==='ar'?'الاستفسارات':'Meeting inquiries'} locale={locale}>
-       <a href={'/'+locale+'/staff/inquiries'} className="button button-secondary dash-topbar-icon" aria-label={locale==='ar'?'الاستفسارات':'Meeting inquiries'}>
+      <Tooltip label={locale==='ar'?'الاستفسارات':'Contact inquiries'} locale={locale}>
+       <a href={'/'+locale+'/staff/inquiries'} className="button button-secondary dash-topbar-icon" aria-label={locale==='ar'?'الاستفسارات':'Contact inquiries'}>
         <SolarIcon name="chat-round-line-linear"/>
         {typeof inquiriesCount==='number'&&inquiriesCount>0&&<span className="dash-topbar-dot" aria-hidden="true"/>}
        </a>

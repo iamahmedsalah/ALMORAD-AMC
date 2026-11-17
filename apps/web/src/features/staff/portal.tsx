@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import {authCopy} from './auth-copy';
 import {GoogleSignInButton} from './google-signin-button';
 import {useCallback,useEffect,useState} from 'react';
@@ -164,7 +164,7 @@ function AccountSettingsContent({locale,identity,setIdentity}:{locale:Locale;ide
 
      <section className="staff-panel">
       <h2>{c.sessions}</h2>
-      <div className="staff-table-wrap" tabIndex={0}>
+      <div className="staff-table-wrap" tabIndex={0} role="region" aria-label={locale==='ar'?'جدول سجلات الفريق':'Staff records table'}>
        <table>
         <thead><tr><th>{c.created}</th><th>{c.expires}</th><th>{c.action}</th></tr></thead>
         <tbody>
@@ -184,7 +184,7 @@ function AccountSettingsContent({locale,identity,setIdentity}:{locale:Locale;ide
      {audit&&(
       <section className="staff-panel">
        <h2>{c.audit}</h2>
-       <div className="staff-table-wrap" tabIndex={0}>
+       <div className="staff-table-wrap" tabIndex={0} role="region" aria-label={locale==='ar'?'جدول سجلات الفريق':'Staff records table'}>
         <table>
          <thead><tr><th>{c.time}</th><th>{c.action}</th><th>{c.actor}</th></tr></thead>
          <tbody>

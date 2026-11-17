@@ -59,7 +59,7 @@ export class ContactService {
     const notifications = this.notifications;
     if (!notifications) return;
     const row = await this.prisma.contactInquiry.findUnique({where: {id}});
-    if (!row) return;
+    if (!row||row.deletedAt||row.source==='STAFF') return;
     const errors: string[] = [];
     const patch: Record<string, string | Date | null> = {};
     const mail = {locale: row.locale, name: row.name, email: row.email, phone: row.phone, message: row.message};
@@ -132,7 +132,7 @@ export class ContactService {
     const claimedRows = await this.prisma.$queryRaw<{id: string}[]>`
       WITH claimable AS (
         SELECT "id" FROM "ContactInquiry"
-        WHERE "attempts" < ${MAX_ATTEMPTS}
+        WHERE "deletedAt" IS NULL AND "source" = 'WEBSITE' AND "attempts" < ${MAX_ATTEMPTS}
           AND ("nextRetryAt" IS NULL OR "nextRetryAt" <= NOW())
           AND "updatedAt" < NOW() - INTERVAL '30 seconds'
           AND (

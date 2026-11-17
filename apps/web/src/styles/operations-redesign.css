@@ -487,7 +487,39 @@
 .dash-shell .dash-icon-btn .solar-icon.solar-icon { width: 18px; height: 18px; }
 
 .operations-sidebar-brand { display: inline-flex; align-items: center; gap: 0.5rem; }
-.operations-sidebar-brand img { width: 20px; height: 20px; flex-shrink: 0; }
+.operations-sidebar-brand img { width: 32px; height: 24px; object-fit: contain; flex-shrink: 0; }
+.operations-sidebar-brand .operations-logo-dark { display: none; }
+html.dark .operations-sidebar-brand .operations-logo-light { display: none; }
+html.dark .operations-sidebar-brand .operations-logo-dark { display: block; }
+.staff-login-heading { text-align: center; display: grid; justify-items: center; gap: .85rem; margin-block: 1.75rem; }
+.staff-login .staff-login-heading .staff-login-emblem { width: 80px; height: 80px; border-radius: 50%; margin: 0; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-text); border: 1px solid var(--border-strong); }
+.staff-login .staff-login-heading .staff-login-emblem .solar-icon { width: 36px; height: 36px; }
+.staff-login-heading :is(h1,p) { margin: 0; }
+.staff-login-heading { animation: staff-heading-enter var(--motion-entrance,560ms) var(--ease-enter,ease-out) both; }
+@keyframes staff-heading-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.staff-table-wrap { min-width: 0; max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+/* Keep the password form's accessible username helper out of visual layout. */
+.dash-shell .staff-form input.sr-only { position:absolute; width:1px; min-width:0; max-width:1px; height:1px; min-height:0; padding:0; border:0; margin:-1px; overflow:hidden; clip-path:inset(50%); }
+.staff-account-list, .staff-account-row, .dash-row-body, .inquiry-contact { min-width: 0; }
+.staff-account-row > p, .inquiry-contact a, .inquiry-message { overflow-wrap: anywhere; }
+.inquiry-message { white-space: pre-wrap; }
+.inquiry-create { margin-block: 1.5rem; }
+.inquiry-create .staff-form { max-width: none; }
+.inquiry-dialog-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-block-start: 1rem; }
+@media(max-width:767px) {
+ .dash-shell .dash-compact-row { display: grid; grid-template-columns: minmax(0,1fr); gap: .75rem; padding: .9rem; }
+ .dash-shell .dash-compact-row-main { display: grid; grid-template-columns: 36px minmax(0,1fr); align-items: start; min-width: 0; }
+ .dash-shell .dash-row-top { display: grid; grid-template-columns: minmax(0,1fr); gap: .4rem; }
+ .dash-shell .dash-row-top time { white-space: normal; }
+ .dash-shell .dash-status-pill { grid-column: 2; justify-self: start; }
+ .dash-shell .dash-row-actions { justify-content: flex-end; flex-wrap: wrap; }
+ .dash-shell .desk-detail-tabs { display: grid; grid-template-columns: minmax(0,1fr); }
+ .staff-account-row.staff-form { grid-template-columns: minmax(0,1fr); }
+ .staff-account-actions, .booking-actions { flex-wrap: wrap; }
+ .staff-table-wrap table { width:100%; min-width:0; }
+ .staff-table-wrap:has(th:nth-child(4)) table { min-width:640px; }
+}
+@media(prefers-reduced-motion:reduce) { .staff-login-heading { animation: none; } }
 
 /* Sidebar Landing-Style Theme & Language Controls */
 .operations-sidebar-controls { margin-top: auto; padding-top: 0.75rem; border-top: 1px solid var(--border); }

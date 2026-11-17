@@ -5,7 +5,32 @@ import {GoogleCalendarService,calendarEventId} from './google-calendar.service.j
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals();vi.unstubAllEnvs();});
 function setup(){for(const key of ['GOOGLE_CALENDAR_ID','GOOGLE_SERVICE_ACCOUNT_EMAIL','GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY','GOOGLE_CALENDAR_IMPERSONATE_EMAIL'])vi.stubEnv(key,'synthetic');vi.spyOn(JWT.prototype,'getAccessToken').mockResolvedValue({token:'synthetic'});return new GoogleCalendarService();}
 const booking={id:'fixture-id',reference:'AMC-TEST',startsAt:new Date('2026-12-01T10:00Z'),endsAt:new Date('2026-12-01T10:30Z'),timezone:'Africa/Cairo',googleEventId:null,status:'CONFIRMED',deletedAt:null};
+it('preserves an existing conference on ordinary calendar sync and uses the command key only for replacement',async()=>{
+ const service=setup();const fetch=vi.fn().mockImplementation(()=>Promise.resolve(Response.json({hangoutLink:'https://meet.google.com/abc-defg-hij'})));vi.stubGlobal('fetch',fetch);
+ await service.sync({...booking,googleEventId:'existing'});
+ expect(JSON.parse(fetch.mock.calls[0]![1].body)).not.toHaveProperty('conferenceData');
+ await service.sync({...booking,googleEventId:'existing'},'replacement-command');
+ expect(JSON.parse(fetch.mock.calls[1]![1].body).conferenceData.createRequest.requestId).toBe('replacement-command');
+});
+it('resolves the canonical space before ending the active call and sends no calendar deletion',async()=>{
+ const service=setup();vi.stubEnv('GOOGLE_MEET_CONTROLS_ENABLED','true');
+ const fetch=vi.fn().mockResolvedValueOnce(Response.json({name:'spaces/realSpace',activeConference:{conferenceRecord:'conferenceRecords/current'}})).mockResolvedValueOnce(Response.json({}));vi.stubGlobal('fetch',fetch);
+ await service.endConference('https://meet.google.com/abc-defg-hij');
+ expect(fetch.mock.calls[0]![0]).toBe('https://meet.googleapis.com/v2/spaces/abc-defg-hij');
+ expect(fetch.mock.calls[1]![0]).toBe('https://meet.googleapis.com/v2/spaces/realSpace:endActiveConference');
+ expect(fetch.mock.calls[1]![1].method).toBe('POST');
+});
+it('does not end an idle call and fails closed when controls are unconfigured or Google denies access',async()=>{
+ const service=setup();vi.stubEnv('GOOGLE_MEET_CONTROLS_ENABLED','false');const fetch=vi.fn();vi.stubGlobal('fetch',fetch);
+ await expect(service.endConference('https://meet.google.com/abc-defg-hij')).rejects.toMatchObject({code:'GOOGLE_MEET_NOT_CONFIGURED'});expect(fetch).not.toHaveBeenCalled();
+ vi.stubEnv('GOOGLE_MEET_CONTROLS_ENABLED','true');fetch.mockResolvedValueOnce(Response.json({name:'spaces/idle'}));await service.endConference('https://meet.google.com/abc-defg-hij');expect(fetch).toHaveBeenCalledTimes(1);
+ fetch.mockResolvedValueOnce(new Response('private details',{status:403}));await expect(service.endConference('https://meet.google.com/abc-defg-hij')).rejects.toMatchObject({code:'GOOGLE_MEET_ACCESS_DENIED'});
+});
 it('requires explicit configuration and uses stable provider event IDs',()=>{vi.stubEnv('GOOGLE_CALENDAR_ID','');expect(new GoogleCalendarService().enabled).toBe(false);expect(calendarEventId(booking.id)).toMatch(/^[a-v0-9]+$/);expect(calendarEventId(booking.id)).not.toBe(calendarEventId('other'));});
+it('removes only Calendar conference details without deleting the event or claiming URL revocation',async()=>{
+ const service=setup();const fetch=vi.fn().mockResolvedValue(Response.json({}));vi.stubGlobal('fetch',fetch);await service.removeConference('existing');
+ expect(fetch.mock.calls[0]![1].method).toBe('PATCH');expect(JSON.parse(fetch.mock.calls[0]![1].body)).toEqual({conferenceData:null});expect(fetch.mock.calls[0]![0]).toContain('/events/existing?conferenceDataVersion=1');
+});
 it('reconciles duplicate create responses using the same deterministic event instead of creating another',async()=>{
  const service=setup();const fetch=vi.fn().mockResolvedValueOnce(new Response('',{status:409})).mockResolvedValueOnce(Response.json({hangoutLink:'https://meet.google.com/abc-defg-hij'}));vi.stubGlobal('fetch',fetch);
  expect(await service.sync(booking)).toEqual({googleEventId:calendarEventId(booking.id),meetingUrl:'https://meet.google.com/abc-defg-hij'});

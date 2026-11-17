@@ -73,7 +73,7 @@ export class StaffBookingsController {
 
   @ApiOperation({ summary: 'List appointments', description: 'Filter and paginate studio client bookings.' })
   @Get() @Header('Cache-Control','no-store')
-  async list(@Req() request:StaffRequest,@Query() input:Record<string,unknown>){return {...await this.bookings.list(input,request.staff!),googleMeetEnabled:this.bookings.googleMeetEnabled};}
+  async list(@Req() request:StaffRequest,@Query() input:Record<string,unknown>){return {...await this.bookings.list(input,request.staff!),googleMeetEnabled:this.bookings.googleMeetEnabled,googleMeetControlsEnabled:this.bookings.googleMeetControlsEnabled};}
 
   @ApiOperation({ summary: 'Appointment detail', description: 'Get complete appointment record including audit history.' })
   @ApiQuery({ name: 'id', required: true, description: 'Booking ID' })

@@ -25,3 +25,14 @@ it('identifies the assigned manager in confirmed client emails and escapes the n
  const result=renderBookingConfirmationEmail({managerName:'Mohamed <Khaled>',reference:'FIXTURE',clientName:'Client',serviceTitle:'Branding',locale:'en',meetingType:'ONLINE',startsAt:new Date('2026-11-15T10:00:00Z'),endsAt:new Date('2026-11-15T10:30:00Z'),timezone:'Africa/Cairo',managementUrl:'https://example.invalid/private',status:'CONFIRMED'});
  expect(result.html).toContain('Mohamed &lt;Khaled&gt;');expect(result.html).not.toContain('Mohamed <Khaled>');expect(result.text).toContain('Meeting with: Mohamed <Khaled>');expect(result.subject).toContain('confirmed');
 });
+it('renders replacement and removal notices in both languages with a safe join link and private client management action',async()=>{
+ const {renderBookingUpdateEmail}=await import('./templates/booking-update.template.js');
+ const {renderMeetingJoinLink}=await import('./templates/email-layout.js');
+ const input={reference:'AMC-FIXTURE',clientName:'Client',managerName:'Manager <Fixture>',serviceTitle:'Branding',meetingType:'ONLINE',startsAt:new Date('2026-12-01T10:00Z'),endsAt:new Date('2026-12-01T10:30Z'),timezone:'Africa/Cairo',managementUrl:'https://example.invalid/private',kind:'BOOKING_UPDATED'};
+ for(const locale of ['en','ar']){
+  const updated=renderBookingUpdateEmail({...input,locale,meetAction:'REGENERATE',meetingUrl:'https://meet.google.com/new-link-abc'});
+  expect(updated.html).toContain('href="https://meet.google.com/new-link-abc"');expect(updated.html).toContain('Manager &lt;Fixture&gt;');expect(updated.html).toContain(input.managementUrl);expect(updated.subject).toContain(locale==='ar'?'تم تغيير رابط':'link has changed');
+  const removed=renderBookingUpdateEmail({...input,locale,meetAction:'REMOVE',meetingUrl:null});expect(removed.html).not.toContain('href="https://meet.google.com');expect(removed.subject).toContain(locale==='ar'?'إزالة':'removed');
+ }
+ expect(renderMeetingJoinLink('javascript:alert(1)','en')).toBe('');
+});

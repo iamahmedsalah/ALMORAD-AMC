@@ -7,13 +7,14 @@ import request from 'supertest';
 import {PrismaService} from '../../prisma/prisma.service.js';
 import {SessionGuard} from './session.guard.js';
 import {PermissionGuard} from './permission.guard.js';
+import {CsrfGuard,CsrfService} from './csrf.js';
 import {StaffController} from './staff.controller.js';
 import {InquiriesController} from '../contact/inquiries.controller.js';
 describe('staff HTTP authentication and authorization', () => {
   let app: INestApplication;
   const lookup = vi.fn(); const token = 'a'.repeat(64);
   beforeAll(async () => {
-    const testingModule = await Test.createTestingModule({controllers:[StaffController,InquiriesController], providers:[SessionGuard,PermissionGuard,{provide:PrismaService,useValue:{staffSession:{findUnique:lookup},contactInquiry:{findMany:vi.fn().mockResolvedValue([{id:'test-inquiry',phone:'+20200000000'}]),count:vi.fn().mockResolvedValue(1)},$transaction:async(queries:Promise<unknown>[])=>Promise.all(queries)}}]}).compile();
+    const testingModule = await Test.createTestingModule({controllers:[StaffController,InquiriesController], providers:[SessionGuard,PermissionGuard,CsrfService,CsrfGuard,{provide:PrismaService,useValue:{staffSession:{findUnique:lookup},contactInquiry:{findMany:vi.fn().mockResolvedValue([{id:'test-inquiry',phone:'+20200000000'}]),count:vi.fn().mockResolvedValue(1)},$transaction:async(queries:Promise<unknown>[])=>Promise.all(queries)}}]}).compile();
     app = testingModule.createNestApplication(); await app.init();
   });
   afterAll(async () => {await app?.close();});
@@ -44,5 +45,11 @@ describe('staff HTTP authentication and authorization', () => {
     const response=await request(app.getHttpServer()).get('/staff/inquiries?search=Test').set('Authorization',`Bearer ${token}`).expect(200);
     expect(response.body.items[0].phone).toBe('+20200000000');expect(response.headers['cache-control']).toContain('no-store');
     await request(app.getHttpServer()).get('/staff/inquiries?page=-1').set('Authorization',`Bearer ${token}`).expect(400);
+  });
+  it('denies contact management to receptionists and managers even with valid CSRF',async()=>{
+    for(const role of ['RECEPTIONIST','MANAGER']){
+      lookup.mockResolvedValue({expiresAt:new Date(Date.now()+60000),user:{id:'staff-test',active:true,role}});
+      for(const endpoint of ['create','delete'])await request(app.getHttpServer()).post('/staff/inquiries/'+endpoint).set('Authorization',`Bearer ${token}`).set('Origin',process.env.WEB_ORIGIN||'http://localhost:3000').set('X-CSRF-Token',app.get(CsrfService).token(token)).send({}).expect(403);
+    }
   });
 });

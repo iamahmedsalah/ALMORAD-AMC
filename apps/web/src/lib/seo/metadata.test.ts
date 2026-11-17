@@ -7,7 +7,7 @@ it('does not invent a public domain or index local previews', () => {
   vi.stubEnv('NEXT_PUBLIC_SITE_URL', undefined);
   expect(siteOrigin()).toBeNull();
   const metadata = pageMetadata('en', '', 'Home', 'Description');
-  expect(metadata.robots).toEqual({ index: false, follow: true });
+  expect(metadata.robots).toEqual({ index: false, follow: true, 'max-image-preview': 'large' });
   expect(metadata.metadataBase).toBeUndefined();
 });
 
@@ -68,10 +68,12 @@ it('keeps editorial drafts noindex even with a configured domain', () => {
   expect(pageMetadata('en', '/services/branding', 'Branding', 'Description').robots).toEqual({
     index: false,
     follow: true,
+    'max-image-preview': 'large',
   });
   vi.stubEnv('NEXT_PUBLIC_CONTENT_APPROVED', 'true');
   expect(pageMetadata('en', '/services/branding', 'Branding', 'Description').robots).toEqual({
     index: true,
     follow: true,
+    'max-image-preview': 'large',
   });
 });

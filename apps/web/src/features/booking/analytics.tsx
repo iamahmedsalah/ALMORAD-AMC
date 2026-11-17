@@ -77,7 +77,7 @@ function AnalyticsView({locale}:{locale:Locale}){
         <div className="booking-chart" aria-hidden="true">
          {data.trend.map(row=><div key={row.date}><span style={{height:Math.max(3,100*row.count/Math.max(...data.trend.map(v=>v.count)))+'%'}}/><small>{row.date.slice(5)}</small></div>)}
         </div>
-        <div className="staff-table-wrap" tabIndex={0}>
+        <div className="staff-table-wrap" tabIndex={0} role="region" aria-label={locale==='ar'?'جدول الإحصاءات':'Analytics table'}>
          <table><thead><tr><th>{c.date}</th><th>{c.count}</th></tr></thead><tbody>{data.trend.map(row=><tr key={row.date}><td>{row.date}</td><td>{count(row.count)}</td></tr>)}</tbody></table>
         </div>
        </>

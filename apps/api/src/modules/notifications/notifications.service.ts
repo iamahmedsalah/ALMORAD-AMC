@@ -134,7 +134,7 @@ export class NotificationsService {
       try {
         const booking = await this.prisma.booking.findUnique({
           where: {id: item.bookingId},
-          include: {calendar: true,assignedTo:{select:{firstName:true,lastName:true,email:true}},assignees:{select:{staff:{select:{firstName:true,lastName:true,email:true}}}},events:{where:{id:item.eventId},take:1}}
+          include: {calendar: true,assignedTo:{select:{firstName:true,lastName:true,email:true,active:true}},assignees:{select:{staff:{select:{firstName:true,lastName:true,email:true,active:true}}}},events:{where:{id:item.eventId},take:1}}
         });
 
         if (!booking) {
@@ -164,13 +164,12 @@ export class NotificationsService {
           continue;
         }
 
-        const formatStaffName=(s:{firstName:string;lastName:string;email:string})=>[s.firstName,s.lastName].filter(Boolean).join(' ')||(s.email==='mo.khaledmorad@almorad-amc.com'?'Eng. Mohamed Khaled Morad':s.email);
-        const managerName=booking.assignees?.length
-          ?booking.assignees.map(a=>formatStaffName(a.staff)).join(', ')
-          :(booking.assignedTo?formatStaffName(booking.assignedTo):undefined);
+        const formatStaffName=(s:{firstName:string;lastName:string;email:string})=>[s.firstName,s.lastName].filter(Boolean).join(' ')||(s.email==='mo.khaledmorad@almorad-amc.com'?'Eng. Mohamed Khaled Morad':booking.locale==='ar'?'مدير الاجتماع':'Meeting manager');
+        const assignedStaff=(booking.assignees?.length?booking.assignees.map(a=>a.staff):booking.assignedTo?[booking.assignedTo]:[]).filter(staff=>staff.active!==false);
+        const managerName=assignedStaff.map(formatStaffName).join(', ')||undefined;
         const ownerAlert=item.kind.endsWith(':OWNER:EMAIL');
         const ownerInbox=process.env.BOOKING_INBOX_EMAIL;
-        const staffRecipients=Array.from(new Set([ownerInbox,...(booking.assignees?.map(a=>a.staff.email)||[]),booking.assignedTo?.email].filter((v):v is string=>Boolean(v))));
+        const staffRecipients=Array.from(new Set([ownerInbox,...assignedStaff.map(staff=>staff.email)].filter((v):v is string=>Boolean(v))));
         if(ownerAlert&&!staffRecipients.length){
           await this.prisma.bookingOutbox.update({where:{id:item.id},data:{status:'UNCONFIGURED',lastError:'BOOKING_INBOX_EMAIL is not configured'}});
           failed++;continue;
@@ -182,6 +181,10 @@ export class NotificationsService {
         const serviceTitle=services.find(service=>service.slug===booking.serviceSlug)?.[booking.locale==='ar'?'ar':'en']||booking.serviceSlug;
         const eventKind=item.kind.split(':')[0] || item.kind;
         const eventDetails=booking.events?.[0]?.details;
+        const meetAction=eventDetails&&typeof eventDetails==='object'&&!Array.isArray(eventDetails)&&typeof eventDetails.action==='string'&&['CREATE','REMOVE','REGENERATE'].includes(eventDetails.action)?eventDetails.action:undefined;
+        if(meetAction&&eventDetails&&typeof eventDetails==='object'&&!Array.isArray(eventDetails)&&Object.prototype.hasOwnProperty.call(eventDetails,'meetingUrl')&&eventDetails.meetingUrl!==booking.meetingUrl){
+          await this.prisma.bookingOutbox.update({where:{id:item.id},data:{status:'SKIPPED',lastError:null,nextRetryAt:null}});succeeded++;continue;
+        }
         const proposedStartAt=eventDetails&&typeof eventDetails==='object'&&!Array.isArray(eventDetails)&&typeof eventDetails.proposedStartAt==='string'?eventDetails.proposedStartAt:null;
         const isCancelled = eventKind==='BOOKING_CANCELLED';
         const isRescheduled = eventKind==='BOOKING_RESCHEDULED';
@@ -190,9 +193,9 @@ export class NotificationsService {
         let attachments: {filename: string; content: Buffer;contentId?:string;contentType?:string}[] | undefined;
 
         if(ownerAlert){
-          emailContent=renderBookingOwnerEmail({eventKind,reference:booking.reference,clientName:booking.clientName,email:booking.email,phone:booking.phone,notes:booking.notes,company:booking.company,officeAddress:booking.calendar.officeAddressEn,serviceTitle,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,staffUrl:`${this.webOrigin}/en/staff/calendar`});
+          emailContent=renderBookingOwnerEmail({meetAction,eventKind,reference:booking.reference,clientName:booking.clientName,email:booking.email,phone:booking.phone,notes:booking.notes,company:booking.company,officeAddress:booking.calendar.officeAddressEn,serviceTitle,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,meetingUrl:booking.meetingUrl,managerName,staffUrl:`${this.webOrigin}/en/staff/calendar`});
         } else if (!['BOOKING_CREATED','BOOKING_RESCHEDULED','BOOKING_CANCELLED','BOOKING_ACCESS_RECOVERY'].includes(eventKind)) {
-          emailContent=renderBookingUpdateEmail({managerName,kind:eventKind,proposedStartAt,reference:booking.reference,clientName:booking.clientName,serviceTitle,locale:booking.locale,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,managementUrl,meetingUrl:booking.meetingUrl,officeAddress:booking.locale==='ar'?booking.calendar.officeAddressAr:booking.calendar.officeAddressEn});
+          emailContent=renderBookingUpdateEmail({meetAction,managerName,kind:eventKind,proposedStartAt,reference:booking.reference,clientName:booking.clientName,serviceTitle,locale:booking.locale,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,managementUrl,meetingUrl:booking.meetingUrl,officeAddress:booking.locale==='ar'?booking.calendar.officeAddressAr:booking.calendar.officeAddressEn});
         } else if (isCancelled) {
           emailContent = renderBookingCancelledEmail({
             reference: booking.reference,

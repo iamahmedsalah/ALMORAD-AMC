@@ -8,6 +8,16 @@ import type {PrismaService} from '../../prisma/prisma.service.js';
 it('requires the ADMIN-only staff management permission at the API boundary',()=>{
   expect(Reflect.getMetadata('permission',StaffAccountsController)).toBe('staff:manage');
 });
+it('archives deleted accounts, revokes sessions, records the reason and prevents self/last-admin deletion',async()=>{
+ const id=randomUUID(),actorId=randomUUID();const tx={$queryRaw:vi.fn(),staffUser:{findUnique:vi.fn().mockResolvedValue({id,active:true,role:'MANAGER'}),update:vi.fn(),count:vi.fn().mockResolvedValue(1)},staffSession:{deleteMany:vi.fn()},staffAuditEvent:{create:vi.fn()}};
+ const service=new StaffAccountsService({$transaction:async(fn:(t:typeof tx)=>unknown)=>fn(tx)} as unknown as PrismaService);
+ await service.remove(actorId,{id,reason:'Access no longer required'});
+ expect(tx.staffUser.update).toHaveBeenCalledWith({where:{id},data:{active:false,deletedAt:expect.any(Date)}});expect(tx.staffSession.deleteMany).toHaveBeenCalledWith({where:{userId:id}});
+ expect(tx.staffAuditEvent.create).toHaveBeenCalledWith({data:expect.objectContaining({action:'STAFF_ACCOUNT_DELETED',details:{reason:'Access no longer required'}})});
+ await expect(service.remove(id,{id,reason:'Review removal'})).rejects.toMatchObject({status:409});
+ tx.staffUser.findUnique.mockResolvedValue({id,active:true,role:'ADMIN'});
+ await expect(service.remove(actorId,{id,reason:'Review removal'})).rejects.toMatchObject({status:409});
+});
 it('preserves the last active admin account',async()=>{
   const id=randomUUID();const tx={$queryRaw:vi.fn().mockResolvedValue([]),staffUser:{findUnique:vi.fn().mockResolvedValue({id,role:'ADMIN',active:true}),count:vi.fn().mockResolvedValue(1)},staffSession:{deleteMany:vi.fn()},staffAuditEvent:{create:vi.fn()}};
   const service=new StaffAccountsService({$transaction:async(fn:(value:typeof tx)=>unknown)=>fn(tx)} as unknown as PrismaService);

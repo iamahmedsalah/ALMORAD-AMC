@@ -13,6 +13,34 @@ function fixture(){
 }
 afterEach(()=>vi.unstubAllEnvs());
 describe('separate booking inbox',()=>{
+  it('does not expose an unnamed staff email as the client-facing manager name',async()=>{
+    const {db,service,send}=fixture();db.booking.findUnique.mockResolvedValue({...booking,assignees:[{staff:{firstName:'',lastName:'',email:'private-staff@example.invalid',active:true}}]} as typeof booking);
+    db.$queryRaw.mockResolvedValue([{id:'client-manager-name',bookingId:booking.id,kind:'BOOKING_UPDATED:EMAIL',attempts:1}]);
+    await service.drain();expect(send.mock.calls[0]![0].html).not.toContain('private-staff@example.invalid');expect(send.mock.calls[0]![0].text).toContain('Meeting manager');
+  });
+  it('skips an obsolete link-removal notice when a new link has already replaced it',async()=>{
+    const {db,service,send}=fixture();
+    db.booking.findUnique.mockResolvedValue({...booking,meetingUrl:'https://meet.google.com/new-link-abc',events:[{details:{action:'REMOVE',meetingUrl:null}}]} as typeof booking);
+    db.$queryRaw.mockResolvedValue([{id:'obsolete-removal',bookingId:booking.id,kind:'BOOKING_UPDATED:EMAIL',attempts:1}]);
+    await service.drain();expect(send).not.toHaveBeenCalled();expect(db.bookingOutbox.update).toHaveBeenCalledWith({where:{id:'obsolete-removal'},data:{status:'SKIPPED',lastError:null,nextRetryAt:null}});
+  });
+  it('does not notify inactive managers retained in appointment history',async()=>{
+    vi.stubEnv('BOOKING_INBOX_EMAIL','');const {db,service,send}=fixture();
+    db.booking.findUnique.mockResolvedValue({...booking,assignees:[{staff:{firstName:'Archived',lastName:'Manager',email:'archived@example.invalid',active:false}}]} as typeof booking);
+    db.$queryRaw.mockResolvedValue([{id:'archived-staff',bookingId:booking.id,kind:'BOOKING_UPDATED:OWNER:EMAIL',attempts:1}]);
+    await service.drain();expect(send).not.toHaveBeenCalled();
+  });
+  it('sends a changed Meet link to the assigned manager without requiring the general inbox',async()=>{
+    vi.stubEnv('BOOKING_INBOX_EMAIL','');
+    const {db,service,send}=fixture();
+    db.booking.findUnique.mockResolvedValue({...booking,meetingUrl:'https://meet.google.com/new-link-abc',assignees:[{staff:{firstName:'Assigned',lastName:'Manager',email:'manager@example.invalid'}}]} as typeof booking);
+    db.$queryRaw.mockResolvedValue([{id:'client-update',bookingId:booking.id,kind:'BOOKING_UPDATED:EMAIL',attempts:1},{id:'manager-update',bookingId:booking.id,kind:'BOOKING_UPDATED:OWNER:EMAIL',attempts:1}]);
+    expect(await service.drain()).toEqual({processed:2,succeeded:2,failed:0});
+    expect(send.mock.calls[0]![0].to).toBe(booking.email);
+    expect(send.mock.calls[1]![0].to).toEqual(['manager@example.invalid']);
+    for(const call of send.mock.calls)expect(call[0].html).toContain('https://meet.google.com/new-link-abc');
+    expect(send.mock.calls[1]![0].html).not.toContain('token=');
+  });
   it('delivers a client receipt and a separate staff alert without leaking the client access link',async()=>{
     vi.stubEnv('BOOKING_INBOX_EMAIL','bookings@example.invalid');
     const {db,service,send}=fixture();

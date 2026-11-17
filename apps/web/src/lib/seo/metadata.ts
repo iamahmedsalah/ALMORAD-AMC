@@ -40,9 +40,17 @@ export function pageMetadata(
     metadataBase: origin ? new URL(origin) : undefined,
     title: options?.absoluteTitle ? { absolute: title } : fullTitle,
     description,
+    // Public ownership tokens supplied by the owner; never fabricate verification.
+    verification: {
+      google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+      other: process.env.BING_SITE_VERIFICATION
+        ? { 'msvalidate.01': process.env.BING_SITE_VERIFICATION }
+        : undefined,
+    },
     robots: {
       index: Boolean(origin) && process.env.NEXT_PUBLIC_CONTENT_APPROVED === 'true',
       follow: true,
+      'max-image-preview': 'large',
     },
     alternates: origin
       ? {

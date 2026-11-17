@@ -40,6 +40,9 @@ function Desk({locale,identity}:{locale:Locale;identity:StaffIdentity}){
  const [confirmForm,setConfirmForm]=useState<HTMLFormElement|null>(null);
  const [detailTab,setDetailTab]=useState('details');
  const [meetingDraft,setMeetingDraft]=useState('');
+ const [meetAction,setMeetAction]=useState<'END'|'REGENERATE'|'REMOVE'|null>(null);
+ const [assignmentDirty,setAssignmentDirty]=useState(false);
+ const meetCommand=useRef<{scope:string;key:string}|null>(null);
  const [checkedIds,setCheckedIds]=useState<string[]>([]);
  const [bulkAction,setBulkAction]=useState<'CONFIRM'|'CANCEL'|'DELETE'>('CONFIRM');
  const [bulkReviewed,setBulkReviewed]=useState(false);
@@ -95,6 +98,7 @@ function Desk({locale,identity}:{locale:Locale;identity:StaffIdentity}){
   try{
    const result=await bookingFetch<{booking:StaffBookingDetail}>('staff/appointments/detail?id='+id);
    setSelected(result.booking);setMeetingDraft(result.booking.meetingUrl||'');setDetailTab('details');setAction('EDIT');setSlot('');
+   setAssignmentDirty(false);
   }catch{toast.error(b.error);}
   finally{setBusy(false);}
  },[b.error]);
@@ -123,7 +127,7 @@ function Desk({locale,identity}:{locale:Locale;identity:StaffIdentity}){
    const result=await bookingFetch<{booking:BookingDetail}>('staff/appointments/action',data,identity.csrfToken);
    if(action==='DELETE')setSelected(null);
    else setSelected(previous=>({...result.booking,hubspotContactUrl:previous?.hubspotContactUrl,hubspotMeetingId:previous?.hubspotMeetingId}));
-   toast.success(c.actionSaved);
+   setAssignmentDirty(false);toast.success(c.actionSaved);
    setAction('EDIT');setSlot('');await load();
   }catch(e){
    const msg=e instanceof BookingError&&e.status===409?b.conflict:e instanceof BookingError&&e.status===400?b.invalid:b.error;
@@ -138,7 +142,7 @@ function Desk({locale,identity}:{locale:Locale;identity:StaffIdentity}){
     id:booking.id,version:booking.version,idempotencyKey:crypto.randomUUID(),
     action:'RESCHEDULE',startsAt:newStartIso,reason:ar?'إعادة جدولة من التقويم':'Rescheduled via calendar'
    },identity.csrfToken);
-   toast.success(c.actionSaved);
+   setAssignmentDirty(false);toast.success(c.actionSaved);
    await load();
    return true;
   }catch(e){
@@ -148,14 +152,19 @@ function Desk({locale,identity}:{locale:Locale;identity:StaffIdentity}){
   }
  }
 
- async function generateMeet(){
+ async function generateMeet(action:'CREATE'|'END'|'REGENERATE'|'REMOVE'='CREATE'){
   if(!selected||busy)return;
+  if(['CREATE','REGENERATE'].includes(action)&&(!(selected.assignees?.length||selected.assignedToId)||assignmentDirty)){toast.error(ar?'اختر مديرًا واحفظ التعيين أولًا.':'Choose a manager and save the assignment first.');return;}
   setBusy(true);setError('');
   try{
-   await bookingFetch('staff/appointments/meet-link',{id:selected.id},identity.csrfToken);
+   const scope=`${selected.id}:${selected.version}:${action}`;
+   if(meetCommand.current?.scope!==scope)meetCommand.current={scope,key:crypto.randomUUID()};
+   await bookingFetch('staff/appointments/meet-link',{id:selected.id,action,...(action!=='CREATE'?{version:selected.version,idempotencyKey:meetCommand.current.key}:{})},identity.csrfToken);
    const result=await bookingFetch<{booking:StaffBookingDetail}>('staff/appointments/detail?id='+selected.id);
    setSelected(result.booking);setMeetingDraft(result.booking.meetingUrl||'');
-   toast.success(ar?'تم إنشاء رابط Google Meet':'Google Meet link created');
+   meetCommand.current=null;setMeetAction(null);
+   toast.success(action==='END'?(ar?'تم إنهاء المكالمة الحالية':'Active call ended'):action==='REMOVE'?(ar?'تمت إزالة رابط الموعد':'Appointment link removed'):(ar?'تم حفظ رابط Google Meet':'Google Meet link saved'));
+   await load();
   }catch(err){
    const msg=meetErrorMessage(err,locale,b.error);
    setError(msg);toast.error(msg);
@@ -336,6 +345,7 @@ function Desk({locale,identity}:{locale:Locale;identity:StaffIdentity}){
        <bdi>{selected.reference}</bdi>
        <span className="appointment-status" data-status={selected.status}>{bookingLabel(locale,selected.status)}</span>
       </div>
+      {identity.staff.role==='ADMIN'&&<button type="button" className="button button-secondary" disabled={busy} onClick={()=>{setDetailTab('details');setAction('DELETE');}}><SolarIcon name="trash-bin-trash-linear"/>{ar?'حذف الموعد':'Delete appointment'}</button>}
       <Tabs value={detailTab} onValueChange={setDetailTab} dir={ar?'rtl':'ltr'}>
        <TabsList className="desk-detail-tabs" aria-label={c.detail}>
         <TabsTrigger value="details">{c.detail}</TabsTrigger>
@@ -368,12 +378,13 @@ function Desk({locale,identity}:{locale:Locale;identity:StaffIdentity}){
        </TabsContent>
 
        <TabsContent value="links" forceMount hidden={detailTab!=='links'}>
-        {canAssign&&action==='EDIT'&&<AssigneePicker key={selected.id+':'+selected.version} locale={locale} options={assignees} defaultValue={selected.assignees?.map(a=>a.staff.id)??(selected.assignedToId?[selected.assignedToId]:[])} form="appointment-edit-form" disabled={busy}/>}
+        {canAssign&&action==='EDIT'&&<AssigneePicker key={selected.id+':'+selected.version} locale={locale} options={assignees} defaultValue={selected.assignees?.map(a=>a.staff.id)??(selected.assignedToId?[selected.assignedToId]:[])} form="appointment-edit-form" disabled={busy} onChange={()=>setAssignmentDirty(true)}/>}
         {action==='EDIT'&&selected.meetingType==='ONLINE'&&<label className="dash-drawer-field">{ar?'رابط الاجتماع (Google Meet أو Zoom أو Teams)':'Meeting link (Google Meet, Zoom or Teams)'}<input type="url" name="meetingUrl" form="appointment-edit-form" dir="ltr" maxLength={1000} value={meetingDraft} onChange={event=>setMeetingDraft(event.target.value)}/><small>{ar?'أضف رابط الاجتماع الحقيقي لإرساله إلى العميل.':'Add the real meeting link to send it to the client.'}</small></label>}
         {selected.meetingUrl&&<div className="booking-actions"><a className="button button-secondary" href={selected.meetingUrl} target="_blank" rel="noopener noreferrer">{ar?'\u0627\u0644\u0627\u0646\u0636\u0645\u0627\u0645 \u0644\u0644\u0627\u062c\u062a\u0645\u0627\u0639':'Join meeting'}</a><button type="button" className="button button-secondary" onClick={()=>void navigator.clipboard.writeText(selected.meetingUrl!).then(()=>toast.success(ar?'\u062a\u0645 \u0646\u0633\u062e \u0627\u0644\u0631\u0627\u0628\u0637':'Link copied')).catch(()=>toast.error(b.error))}>{ar?'\u0646\u0633\u062e \u0627\u0644\u0631\u0627\u0628\u0637':'Copy link'}</button></div>}
         {selected.meetingType==='ONLINE'&&canWrite&&!selected.meetingUrl&&['PENDING','CONFIRMED'].includes(selected.status)&&(
          <div className="dash-meet-generate">
-          <button type="button" className="button button-primary" disabled={busy||!list?.googleMeetEnabled||selected.isDemo} aria-busy={busy} onClick={()=>void generateMeet()}>
+          {(!(selected.assignees?.length||selected.assignedToId)||assignmentDirty)&&<p role="status" className="staff-note">{ar?'اختر مديرًا واحفظ التعيين من تفاصيل الموعد قبل إنشاء الرابط.':'Choose a manager and save the assignment in Appointment details before generating a link.'}</p>}
+          <button type="button" className="button button-primary" disabled={busy||!list?.googleMeetEnabled||selected.isDemo||assignmentDirty||!(selected.assignees?.length||selected.assignedToId)} aria-busy={busy} onClick={()=>void generateMeet()}>
            <SolarIcon name="videocamera-record-linear"/>{ar?'\u0625\u0646\u0634\u0627\u0621 \u0631\u0627\u0628\u0637 Google Meet':'Generate Google Meet link'}
           </button>
           {(!list?.googleMeetEnabled||selected.isDemo)&&<small className="staff-note">{selected.isDemo?(ar?'حجوزات العرض التجريبي لا تنشئ روابط Google Meet تلقائيًا.':'Demo bookings do not auto-create Google Meet links.'):(ar?'تكامل Google Calendar/Meet غير مهيأ في الخادم بعد.':'Google Calendar/Meet integration is not configured on the server yet.')}</small>}
@@ -381,6 +392,20 @@ function Desk({locale,identity}:{locale:Locale;identity:StaffIdentity}){
         )}
         {canAssign&&action==='EDIT'&&<p className="staff-note">{ar?'\u0627\u062d\u0641\u0638 \u0627\u0644\u062a\u0639\u064a\u064a\u0646 \u0648\u0627\u0644\u0631\u0627\u0628\u0637 \u0645\u0646 \u062a\u0628\u0648\u064a\u0628 \u0627\u0644\u062a\u0641\u0627\u0635\u064a\u0644.':'Save assignments and link from the Details tab.'}</p>}
         <HubSpotStatus locale={locale} notifications={selected.notifications} contactUrl={selected.hubspotContactUrl} meetingUrl={selected.hubspotMeetingUrl} meetingId={selected.hubspotMeetingId} busy={busy} onRefresh={()=>void select(selected.id)}/>
+        {canWrite&&selected.meetingUrl&&['PENDING','CONFIRMED'].includes(selected.status)&&!selected.isDemo&&<div className="booking-actions">
+         <button type="button" className="button button-secondary" disabled={busy||Boolean(selected.googleEventId&&!list?.googleMeetEnabled)} onClick={()=>setMeetAction('REMOVE')}><SolarIcon name="trash-bin-trash-linear"/>{ar?'إزالة رابط الموعد':'Remove appointment link'}</button>
+         {selected.googleEventId&&<><button type="button" className="button button-secondary" disabled={busy||!list?.googleMeetControlsEnabled} onClick={()=>setMeetAction('END')}>{ar?'إنهاء المكالمة الحالية':'End active call'}</button>
+         <button type="button" className="button button-secondary" disabled={busy||!list?.googleMeetEnabled||assignmentDirty||!(selected.assignees?.length||selected.assignedToId)} onClick={()=>setMeetAction('REGENERATE')}>{ar?'إنشاء رابط بديل':'Generate replacement link'}</button></>}
+        </div>}
+        {canWrite&&selected.googleEventId&&<p className="staff-note">{ar?'إنهاء المكالمة يتطلب صلاحيات Google Meet إضافية. إنهاء المكالمة أو استبدال الرابط لا يضمن تعطيل الرابط القديم نهائيًا.':'Ending a call requires additional Google Meet permissions. Ending or replacing a call does not permanently disable the old URL.'}</p>}
+        <h3>{ar?'إشعارات البريد':'Email notifications'}</h3>
+        {(['client','staff'] as const).map(target=>{
+         const notice=selected.notifications.find(item=>item.kind.endsWith(':EMAIL')&&(target==='staff'?item.kind.includes(':OWNER:'):!item.kind.includes(':OWNER:')));
+         const status=notice?.status;
+         const label=status==='DELIVERED'?(ar?'قبله مزود البريد؛ وصوله إلى صندوق الوارد غير مؤكد':'Accepted by email provider; inbox receipt unverified'):status==='FAILED'?(ar?'فشل الإرسال':'Sending failed'):status==='UNCONFIGURED'?(ar?'البريد غير مهيأ':'Email not configured'):status==='SKIPPED'?(ar?'لم يُرسل':'Not sent'):status?(ar?'قيد الإرسال':'Queued / processing'):(ar?'الحالة غير متاحة':'Status unavailable');
+         return <p key={target}>{target==='client'?(ar?'العميل':'Client'):(ar?'المديرون المعينون وصندوق الحجوزات':'Assigned managers / booking inbox')}: {label}</p>;
+        })}
+        <button type="button" className="button button-secondary" disabled={busy} onClick={()=>void select(selected.id)}>{ar?'تحديث حالة البريد':'Refresh email status'}</button>
        </TabsContent>
 
        <TabsContent value="activity" forceMount hidden={detailTab!=='activity'}>
@@ -394,6 +419,12 @@ function Desk({locale,identity}:{locale:Locale;identity:StaffIdentity}){
     )}
    </SideDrawer>
 
+   <Dialog open={Boolean(meetAction)} onOpenChange={open=>{if(!open&&!busy)setMeetAction(null);}}>
+    <DialogContent locale={locale} title={meetAction==='END'?(ar?'إنهاء المكالمة الحالية؟':'End active call?'):meetAction==='REMOVE'?(ar?'إزالة رابط الموعد؟':'Remove appointment link?'):(ar?'إنشاء رابط بديل؟':'Generate replacement link?')}>
+     <p>{meetAction==='END'?(ar?'سيتم إنهاء المكالمة الحالية لجميع المشاركين. هذا لا يحذف رابط Google Meet نهائيًا.':'This ends the current call for everyone. It does not permanently delete the Google Meet URL.'):meetAction==='REMOVE'?(ar?'سيُزال الرابط وأي تفاصيل مؤتمر يديرها النظام في Google Calendar وسيتم إشعار العميل والمديرين المعينين. قد يظل الرابط القديم صالحًا ولا يتم إنهاء المكالمة الحالية.':'This removes the saved link and any managed Calendar conference details, and queues client/manager notifications. It does not end an active call or permanently disable the old URL.'):(ar?'سيتم استبدال رابط الموعد وإضافة إشعارات للعميل والمديرين المعينين إلى قائمة الإرسال. الرابط القديم قد يظل صالحًا.':'This replaces the appointment link and queues notifications for the client and assigned managers. The old URL may remain usable.')}</p>
+     <div className="booking-actions"><button type="button" className="button button-secondary" disabled={busy} onClick={()=>setMeetAction(null)}>{ar?'تراجع':'Cancel'}</button><button type="button" className="button button-primary" disabled={busy} aria-busy={busy} onClick={()=>{if(meetAction)void generateMeet(meetAction);}}>{busy?(ar?'جارٍ التنفيذ…':'Working…'):(ar?'تأكيد':'Confirm')}</button></div>
+    </DialogContent>
+   </Dialog>
    <Dialog open={Boolean(confirmForm)} onOpenChange={open=>{if(!open)setConfirmForm(null);}}>
     <DialogContent locale={locale} title={action==='DELETE'?(ar?'تأكيد حذف الموعد':'Confirm deletion'):(ar?'تأكيد إلغاء الموعد':'Confirm cancellation')}>
      <p>{ar?'هل أنت متأكد من تنفيذ هذا الإجراء؟ قد يتم إشعار العميل بذلك.':'Are you sure you want to proceed with this action? The client may be notified.'}</p>

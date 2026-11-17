@@ -9,6 +9,30 @@ export interface CalendarBooking {id:string;reference:string;startsAt:Date;endsA
 export const calendarEventId=(id:string)=>'amc'+createHash('sha256').update(id).digest('hex');
 @Injectable()
 export class GoogleCalendarService {
+ get controlsEnabled(){return this.enabled&&process.env.GOOGLE_MEET_CONTROLS_ENABLED==='true';}
+ async removeConference(googleEventId:string){
+  await this.request('PATCH',googleEventId,{conferenceData:null},AbortSignal.timeout(20000));
+ }
+ async endConference(meetingUrl:string){
+  if(!this.controlsEnabled)throw new GoogleMeetError('GOOGLE_MEET_NOT_CONFIGURED','configuration');
+  const url=new URL(meetingUrl);
+  if(url.protocol!=='https:'||url.hostname!=='meet.google.com'||!/^\/[a-z]+-[a-z]+-[a-z]+$/.test(url.pathname))throw new GoogleMeetError('GOOGLE_MEET_INVALID_RESPONSE','conference');
+  const signal=AbortSignal.timeout(20000);
+  const key=process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY!.trim().replace(/^["']|["']$/g,'').replaceAll('\\r\\n','\n').replaceAll('\\n','\n').replaceAll('\r\n','\n');
+  const auth=new JWT({email:process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!.trim(),key,subject:process.env.GOOGLE_CALENDAR_IMPERSONATE_EMAIL!.trim(),scopes:['https://www.googleapis.com/auth/meetings.space.created','https://www.googleapis.com/auth/meetings.space.readonly'],transporterOptions:{signal,retry:false}});
+  let token:string;
+  try{const access=await auth.getAccessToken();if(!access.token)throw new Error();token=access.token;}catch{throw new GoogleMeetError('GOOGLE_MEET_AUTH_FAILED','authorization');}
+  const request=async(path:string,method='GET')=>{
+   let response:Response;
+   try{response=await fetch('https://meet.googleapis.com/v2/'+path,{method,headers:{Authorization:`Bearer ${token}`},signal});}catch{throw new GoogleMeetError('GOOGLE_MEET_UNAVAILABLE','conference');}
+   if(!response.ok)throw new GoogleMeetError([401,403].includes(response.status)?'GOOGLE_MEET_ACCESS_DENIED':'GOOGLE_MEET_UNAVAILABLE','conference',response.status);
+   return response;
+  };
+  const response=await request('spaces/'+encodeURIComponent(url.pathname.slice(1)));
+  let space:{name:string;activeConference?:unknown};
+  try{space=z.object({name:z.string().regex(/^spaces\/[A-Za-z0-9_-]+$/),activeConference:z.unknown().optional()}).parse(await response.json());}catch{throw new GoogleMeetError('GOOGLE_MEET_INVALID_RESPONSE','conference');}
+  if(space.activeConference)await request(space.name+':endActiveConference','POST');
+ }
  get enabled(){return Boolean(process.env.GOOGLE_CALENDAR_ID&&process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL&&process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY&&process.env.GOOGLE_CALENDAR_IMPERSONATE_EMAIL);}
  private async request(method:string,id:string|undefined,body:unknown,signal:AbortSignal):Promise<CalendarEvent>{
   if(!this.enabled)throw new GoogleMeetError('GOOGLE_MEET_NOT_CONFIGURED','configuration');
@@ -33,7 +57,7 @@ export class GoogleCalendarService {
   try{return calendarEvent.parse(await response.json());}
   catch{throw new GoogleMeetError('GOOGLE_MEET_INVALID_RESPONSE','calendar');}
  }
- async sync(booking:CalendarBooking):Promise<{googleEventId:string;meetingUrl:string|null}>{
+ async sync(booking:CalendarBooking,requestId?:string):Promise<{googleEventId:string;meetingUrl:string|null}>{
   // Authorization and all reconciliation calls share a budget below the 30s DB
   // transaction timeout. Outbox/staff retries own retries rather than the SDK.
   const signal=AbortSignal.timeout(20000);
@@ -43,7 +67,7 @@ export class GoogleCalendarService {
    // Deterministic ID also reconciles a create whose response was lost.
    await request('DELETE',id);return {googleEventId:id,meetingUrl:null};
   }
-  const body={summary:`ALMORAD AMC — ${booking.reference}`,start:{dateTime:booking.startsAt.toISOString(),timeZone:booking.timezone},end:{dateTime:booking.endsAt.toISOString(),timeZone:booking.timezone},conferenceData:{createRequest:{requestId:id,conferenceSolutionKey:{type:'hangoutsMeet'}}}};
+  const body={summary:`ALMORAD AMC — ${booking.reference}`,start:{dateTime:booking.startsAt.toISOString(),timeZone:booking.timezone},end:{dateTime:booking.endsAt.toISOString(),timeZone:booking.timezone},...(!booking.googleEventId||requestId?{conferenceData:{createRequest:{requestId:requestId||id,conferenceSolutionKey:{type:'hangoutsMeet'}}}}:{})};
   let event:Awaited<ReturnType<GoogleCalendarService['request']>>;
   if(booking.googleEventId)event=await request('PATCH',id,body);
   else{event=await request('POST',undefined,{id,...body});if(event.conflict)event=await request('PATCH',id,body);}

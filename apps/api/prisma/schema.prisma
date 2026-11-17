@@ -8,6 +8,8 @@ datasource db {
 }
 
 model ContactInquiry {
+  deletedAt DateTime? @db.Timestamptz(3)
+  source String @default("WEBSITE") @db.VarChar(20)
   id String @id @default(uuid()) @db.Uuid
   idempotencyKey String @unique @db.Uuid
   requestHash String @db.Char(64)
@@ -16,7 +18,7 @@ model ContactInquiry {
   phone String? @db.VarChar(40)
   message String @db.VarChar(2000)
   locale String @db.VarChar(2)
-  consentAt DateTime @default(now()) @db.Timestamptz(3)
+  consentAt DateTime? @default(now()) @db.Timestamptz(3)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   ownerEmailStatus String @default("PENDING") @db.VarChar(20)
   visitorEmailStatus String @default("PENDING") @db.VarChar(20)
@@ -36,6 +38,7 @@ enum StaffRole {
 }
 
 model StaffUser {
+  deletedAt DateTime? @db.Timestamptz(3)
   firstName String @default("") @db.VarChar(80)
   lastName String @default("") @db.VarChar(80)
   id        String         @id @default(uuid()) @db.Uuid
@@ -68,6 +71,7 @@ model StaffSession {
 }
 
 model StaffAuditEvent {
+  details Json?
   id String @id @default(uuid()) @db.Uuid
   actorId String? @db.Uuid
   subjectId String? @db.Uuid
