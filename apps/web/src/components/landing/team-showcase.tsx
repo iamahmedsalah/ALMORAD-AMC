@@ -108,8 +108,8 @@ const CORE_TEAM: readonly TeamMember[] = [
   {
     "id": "research",
     "name": {
-      "en": "Farah",
-      "ar": "\u0641\u0631\u062d"
+      "en": "Farah Mohamed",
+      "ar": "\u0641\u0631\u062d \u0645\u062d\u0645\u062f"
     },
     "role": {
       "en": "R&D Specialist",

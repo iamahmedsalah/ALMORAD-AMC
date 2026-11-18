@@ -18,6 +18,11 @@ allowBuilds:
 overrides:
   '@prisma/config>deepmerge-ts': 8.0.0
   'prisma>mysql2': 3.23.1
+# picomatch >=4.0.8 (GHSA-fc5q-39xc-vjpf) is not yet published on npm (latest is 4.0.7);
+# only pulled via next-intl -> @parcel/watcher (file-watching, no untrusted glob input).
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf
 minimumReleaseAgeExclude:
   - '@vercel/cli-config@0.3.7'
   - '@vercel/functions@3.11.0'
