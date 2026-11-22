@@ -21,5 +21,6 @@ test('candidate bypass is masked, exported and revoked without changing existing
   assert.equal(JSON.parse(readFileSync(capture,'utf8')).revoke.secret,record.generate.secret);
   assert.equal(existsSync(join(directory,'amc-release-protection.json')),false);
   const existing=run('prepare',{VERCEL_AUTOMATION_BYPASS_SECRET:'fixture-existing'});assert.equal(existing.status,0,existing.stderr);assert.equal(existsSync(join(directory,'amc-release-protection.json')),false);
+  const noopCleanup=run('cleanup',{VERCEL_PROJECT_ID:'',VERCEL_ORG_ID:'',VERCEL_TOKEN:''});assert.equal(noopCleanup.status,0,noopCleanup.stderr);
  }finally{rmSync(directory,{recursive:true,force:true});}
 });

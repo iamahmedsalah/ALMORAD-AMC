@@ -7,6 +7,7 @@ import {join} from 'node:path';
 const mode=process.argv[2];
 if(!['prepare','cleanup'].includes(mode)||!process.env.GITHUB_ACTIONS||!process.env.RUNNER_TEMP)throw new Error('Protection setup is only supported inside GitHub Actions');
 const file=join(process.env.RUNNER_TEMP,'amc-release-protection.json');
+if(mode==='cleanup'&&!existsSync(file))process.exit(0);
 const project=process.env.VERCEL_PROJECT_ID,team=process.env.VERCEL_ORG_ID;
 if(!project||!team||!process.env.VERCEL_TOKEN)throw new Error('Vercel release access is missing');
 async function update(body){
