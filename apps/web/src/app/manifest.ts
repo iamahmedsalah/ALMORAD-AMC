@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'ALMORAD AMC — Growth & Brand Studio',
+    name: 'ALMORAD AMC — Advertising, Marketing & Consulting Agency',
     short_name: 'ALMORAD AMC',
-    description: 'Bilingual Growth & Brand Studio offering marketing, advertising, consulting, and web development.',
+    description: 'Advertising, Marketing & Consulting Agency in Alexandria, Egypt offering branding, advertising, consulting, and web development.',
     start_url: '/en',
     display: 'standalone',
     background_color: '#0B1F44',

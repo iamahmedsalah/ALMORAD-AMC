@@ -8,11 +8,14 @@ import { pillars } from '@amc/shared';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const l = await publicLocale(params);
-  const title = l === 'ar' ? 'من نحن — استوديو النمو وبناء العلامات' : 'About Us — Growth & Brand Studio';
+  const title =
+    l === 'ar'
+      ? 'من نحن — وكالة دعاية وإعلان وتسويق واستشارات'
+      : 'About Us — Advertising, Marketing & Consulting Agency';
   const description =
     l === 'ar'
-      ? 'المراد AMC استوديو للنمو وبناء العلامات في الإسكندرية يجمع التسويق والإعلان والاستشارات وتطوير المواقع في شراكة واحدة.'
-      : 'ALMORAD AMC is a Growth & Brand Studio in Alexandria bringing marketing, advertising, consulting, and web development together.';
+      ? 'المراد AMC وكالة دعاية وإعلان وتسويق واستشارات في الإسكندرية تجمع التسويق والإعلان والاستشارات وتطوير المواقع في شراكة واحدة.'
+      : 'ALMORAD AMC is an advertising, marketing & consulting agency in Alexandria bringing marketing, advertising, consulting, and web development together.';
   return pageMetadata(l, '/about', title, description);
 }
 

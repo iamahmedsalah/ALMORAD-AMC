@@ -1,5 +1,4 @@
 import { officeLocation, pillars, services, type Locale } from '@amc/shared';
-import { copyFor } from '../../features/marketing/copy';
 import { publicContact } from '../public-contact';
 import { socialProfiles } from '../social-profiles';
 
@@ -14,14 +13,17 @@ export function websiteJsonLd(origin: string) {
     '@id': `${origin}/#website`,
     url: `${origin}/`,
     name: 'ALMORAD AMC',
-    alternateName: ['المراد AMC', 'ALMORAD AMC — Growth & Brand Studio'],
+    alternateName: [
+      'المراد AMC',
+      'ALMORAD AMC — Advertising, Marketing & Consulting Agency',
+      'ALMORAD AMC — Growth & Brand Studio',
+    ],
     inLanguage: ['en', 'ar'],
     publisher: { '@id': `${origin}/#organization` },
   };
 }
 
 export function organizationJsonLd(locale: Locale, origin: string | null) {
-  const c = copyFor(locale);
   const contact = publicContact(locale);
   const sameAs = socialProfiles()
     .filter((profile) => profile.href && !profile.demo)
@@ -43,8 +45,24 @@ export function organizationJsonLd(locale: Locale, origin: string | null) {
     '@type': 'Organization',
     ...(origin ? { '@id': `${origin}/#organization`, url: origin, logo: { '@type': 'ImageObject', url: `${origin}/icon-512.png`, width: 512, height: 512 } } : {}),
     name: 'ALMORAD AMC',
-    alternateName: locale === 'ar' ? 'المراد AMC' : 'المراد AMC',
-    description: c.intro,
+    alternateName: locale === 'ar' ? 'المراد AMC' : 'ALMORAD AMC Agency',
+    description:
+      locale === 'ar'
+        ? 'المراد AMC وكالة دعاية وإعلان وتسويق واستشارات في الإسكندرية، مصر.'
+        : 'ALMORAD AMC is an advertising, marketing & consulting agency in Alexandria, Egypt.',
+    knowsAbout: [
+      'Advertising',
+      'Marketing',
+      'Branding',
+      'Media Buying',
+      'Management Consulting',
+      'E-commerce Consulting',
+      'Web Development',
+    ],
+    areaServed: {
+      '@type': 'Country',
+      name: 'Egypt',
+    },
     address: {
       '@type': 'PostalAddress',
       streetAddress: officeLocation.address[locale],
