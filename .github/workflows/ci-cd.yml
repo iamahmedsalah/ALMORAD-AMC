@@ -37,8 +37,8 @@ jobs:
       group: production-vercel
       cancel-in-progress: false
     env:
-      VERCEL_ORG_ID: team_9mwMW7QGs5HfZuTYgXeftexz
-      VERCEL_PROJECT_ID: prj_3OWasVxcZyRAJDWlt9pNqCW6EW3S
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
       NEXT_TELEMETRY_DISABLED: '1'
@@ -58,6 +58,7 @@ jobs:
         run: |
           set -euo pipefail
           : "${VERCEL_TOKEN:?Set production-vercel secret VERCEL_TOKEN}"
+          node scripts/ci/vercel-access.mjs
       - run: pnpm install --frozen-lockfile
       - name: Install pinned deployment CLI
         run: npm install --global vercel@65.11.0
@@ -67,7 +68,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          vercel deploy --prod --skip-domain --yes --token "$VERCEL_TOKEN" \
+          vercel deploy --prod --skip-domain --yes --scope "$VERCEL_ORG_ID" --token "$VERCEL_TOKEN" \
             --build-env "AMC_RELEASE_MIGRATIONS=1" \
             --build-env "AMC_MIGRATION_POLICY=development" \
             --build-env "AMC_RELEASE_SHA=$GITHUB_SHA" \
@@ -77,7 +78,7 @@ jobs:
         run: node scripts/ci/release-smoke.mjs
       - name: Promote verified deployment
         shell: bash
-        run: vercel promote "$RELEASE_URL" --yes --token "$VERCEL_TOKEN"
+        run: vercel promote "$RELEASE_URL" --yes --scope "$VERCEL_ORG_ID" --token "$VERCEL_TOKEN"
       - name: Verify production domain after promotion
         run: node scripts/ci/release-smoke.mjs
         env:
