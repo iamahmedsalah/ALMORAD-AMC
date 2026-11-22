@@ -37,6 +37,8 @@ for (const locale of ['en', 'ar'] as const) {
     await page.getByRole('radio').first().check();
     await page.getByRole('button', { name: c.next, exact: true }).click();
     await page.locator('input[name="clientName"]').fill('UI Fixture Client');
+    await page.locator('input[name="clientTitle"]').fill('Marketing Director');
+    await page.locator('input[name="company"]').fill('UI Fixture Co');
     await page.locator('input[name="email"]').fill('ui-fixture@example.invalid');
     await page.locator('input[name="phone"]').fill('+1 202 555 0100');
     await page.locator('.booking-check input').check();

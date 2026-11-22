@@ -36,3 +36,34 @@ it('renders replacement and removal notices in both languages with a safe join l
  }
  expect(renderMeetingJoinLink('javascript:alert(1)','en')).toBe('');
 });
+
+it('renders a 2-column SVG-icon grid with company, job title, meeting link, and separate office location',async()=>{
+ const {renderBookingConfirmationEmail}=await import('./templates/booking-confirmation.template.js');
+ const {renderBookingOwnerEmail}=await import('./templates/booking-owner.template.js');
+ const confirmation=renderBookingConfirmationEmail({
+  managerName:'Mohamed Khaled Morad',reference:'AMC-GRID-01',clientName:'Client Fixture',clientTitle:'CEO',company:'Acme Corp',
+  serviceTitle:'Branding',locale:'en',meetingType:'ONLINE',meetingUrl:'https://meet.google.com/abc-defg-hij',
+  startsAt:new Date('2026-11-24T09:45:00Z'),endsAt:new Date('2026-11-24T10:15:00Z'),timezone:'Africa/Cairo',
+  managementUrl:'https://example.invalid/manage',status:'CONFIRMED'
+ });
+ expect(confirmation.html).toContain('class="amc-grid-cell"');
+ expect(confirmation.html).toContain('<svg ');
+ expect(confirmation.html).toContain('Acme Corp');
+ expect(confirmation.html).toContain('CEO');
+ expect(confirmation.html).toContain('https://meet.google.com/abc-defg-hij');
+ expect(confirmation.html).toContain('Office location');
+ expect(confirmation.html).toContain(officeAddress.en);
+
+ const owner=renderBookingOwnerEmail({
+  reference:'AMC-GRID-01',clientName:'Client Fixture',clientTitle:'CEO',company:'Acme Corp',
+  email:'client@example.invalid',phone:'+201000000000',serviceTitle:'Branding',meetingType:'ONLINE',
+  meetingUrl:'https://meet.google.com/abc-defg-hij',startsAt:new Date('2026-11-24T09:45:00Z'),endsAt:new Date('2026-11-24T10:15:00Z'),
+  timezone:'Africa/Cairo',staffUrl:'https://example.invalid/en/staff/calendar',managerName:'Mohamed Khaled Morad'
+ });
+ expect(owner.html).toContain('class="amc-grid-cell"');
+ expect(owner.html).toContain('<svg ');
+ expect(owner.html).toContain('Meeting link');
+ expect(owner.html).toContain('Office location');
+ expect(owner.html).toContain('Acme Corp');
+ expect(owner.html).toContain('CEO');
+});

@@ -22,11 +22,14 @@ export class StaffAccountsService {
     const passwordHash=await hashPassword(parsed.data.password);
     try{return await this.prisma.$transaction(async tx=>{
       await tx.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(1201200)`;
-      const existing=await tx.staffUser.findMany({select:{email:true}});
-      if(existing.some(account=>account.email.trim().toLowerCase()===parsed.data.email))throw new ConflictException({code:'STAFF_EMAIL_EXISTS',message:'Staff email already exists'});
-      const similar=existing.filter(account=>likelyStaffEmailTypo(account.email,parsed.data.email)).map(account=>account.email);
+      const existing=await tx.staffUser.findMany({select:{id:true,email:true,deletedAt:true}});
+      const exact=existing.find(account=>account.email.trim().toLowerCase()===parsed.data.email);
+      if(exact&&!exact.deletedAt)throw new ConflictException({code:'STAFF_EMAIL_EXISTS',message:'Staff email already exists'});
+      const similar=existing.filter(account=>!account.deletedAt&&(!exact||account.id!==exact.id)&&likelyStaffEmailTypo(account.email,parsed.data.email)).map(account=>account.email);
       if(similar.length&&!parsed.data.confirmSimilarEmail)throw new ConflictException({code:'STAFF_EMAIL_REVIEW_REQUIRED',message:'Review similarly spelled staff emails before creating another account',similarEmails:similar});
-      const account=await tx.staffUser.create({data:{email:parsed.data.email,role:parsed.data.role,firstName:parsed.data.firstName,lastName:parsed.data.lastName,passwordHash},select:publicAccount});
+      const account=exact?.deletedAt
+        ? await tx.staffUser.update({where:{id:exact.id},data:{role:parsed.data.role,firstName:parsed.data.firstName,lastName:parsed.data.lastName,passwordHash,active:true,deletedAt:null,googleId:null,googleEmail:null,googleLinkedAt:null},select:publicAccount})
+        : await tx.staffUser.create({data:{email:parsed.data.email,role:parsed.data.role,firstName:parsed.data.firstName,lastName:parsed.data.lastName,passwordHash},select:publicAccount});
       await tx.staffAuditEvent.create({data:{actorId,subjectId:account.id,action:'STAFF_ACCOUNT_CREATED'}});
       if(similar.length)await tx.staffAuditEvent.create({data:{actorId,subjectId:account.id,action:'STAFF_SIMILAR_EMAIL_CONFIRMED'}});
       return account;

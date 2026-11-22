@@ -530,3 +530,310 @@ html.dark .operations-sidebar-brand .operations-logo-dark { display: block; }
 .dash-shell[data-sidebar-collapsed="true"] .operations-sidebar-controls .controls { flex-direction: column; }
 .dash-shell[data-sidebar-collapsed="true"] .operations-sidebar-controls .locale-switch-btn { flex: none; width: 44px; padding: 0; }
 .dash-shell[data-sidebar-collapsed="true"] .operations-sidebar-controls .locale-switch-btn span { display: none; }
+
+/* =========================================================
+   Dashboard Design System Overhaul: Typography, Icons,
+   Modals / Drawers, Inputs, Cards & Role Badges
+   ========================================================= */
+
+/* 1. Operational Typography & Optical Legibility */
+.dash-shell,
+.amc-dialog-content,
+.amc-popover-content {
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+html[dir="rtl"] :is(.dash-shell, .amc-dialog-content, .amc-popover-content) {
+  font-family: var(--font-arabic);
+  letter-spacing: 0;
+}
+
+.dash-topbar-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.dash-page-header-text h2,
+.dash-shell .staff-panel h2 {
+  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.dash-stat-value {
+  font-size: clamp(1.65rem, 2.4vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.dash-shell .staff-form label,
+.amc-dialog-content .staff-form label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--foreground);
+  gap: 0.45rem;
+}
+
+html[dir="rtl"] :is(.dash-topbar-title, .dash-page-header-text h2, .dash-shell .staff-panel h2, .dash-stat-value) {
+  letter-spacing: 0;
+}
+
+/* 2. Crisp, Balanced Solar Icon Hierarchy */
+.dash-shell .solar-icon.solar-icon,
+.amc-dialog-content .solar-icon.solar-icon,
+.amc-popover-content .solar-icon.solar-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.dash-shell .operations-nav .solar-icon.solar-icon,
+.dash-page-header-icon .solar-icon.solar-icon,
+.dash-card-heading .solar-icon.solar-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.dash-status-pill .solar-icon.solar-icon,
+.fc-amc-format.solar-icon.solar-icon,
+.fc-amc-alert.solar-icon.solar-icon,
+.dash-card-req-icon.solar-icon.solar-icon,
+.sidebar-user-chevron.solar-icon.solar-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.dash-empty-svg.solar-icon.solar-icon {
+  width: 26px;
+  height: 26px;
+}
+
+/* 3. Elevated Modals, Side Drawers & Popovers */
+.amc-dialog-overlay {
+  background: rgb(6 20 48 / 54%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: amc-overlay-in 180ms var(--ease-enter, cubic-bezier(.22,1,.36,1));
+}
+
+.amc-dialog-content {
+  border-radius: 24px;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 24px 64px rgb(6 20 48 / 28%), 0 2px 8px rgb(6 20 48 / 12%);
+  animation: amc-modal-in 240ms var(--ease-enter, cubic-bezier(.22,1,.36,1));
+}
+
+.amc-dialog-handle {
+  display: none;
+}
+
+.amc-dialog-header {
+  align-items: flex-start;
+  gap: 1rem;
+  padding-block-end: 1rem;
+  margin-block-end: 1.15rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.amc-dialog-heading-text {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.amc-dialog-header h2 {
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+html[dir="rtl"] .amc-dialog-header h2 {
+  letter-spacing: 0;
+}
+
+.amc-dialog-description {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--muted-foreground);
+}
+
+.amc-dialog-close.amc-dialog-close {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.amc-popover-content {
+  border-radius: 18px;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 18px 48px rgb(6 20 48 / 20%);
+  animation: dash-fade-up 180ms var(--ease-enter, cubic-bezier(.22,1,.36,1));
+}
+
+html[dir="rtl"] .dash-side-drawer.amc-dialog-content {
+  animation-name: dash-drawer-in-rtl;
+}
+
+@media (max-width: 640px) {
+  .dash-side-drawer.amc-dialog-content .amc-dialog-handle {
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: -0.35rem auto 0.65rem;
+    border-radius: 999px;
+    background: var(--border-strong);
+  }
+}
+
+/* 4. Refined Input Focus, Panels & Staff Account Role Badges */
+:is(.dash-shell, .amc-dialog-content) .staff-form :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible,
+.dash-toolbar-search:focus-within,
+.dash-topbar-search:focus-within {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.dash-shell .staff-panel {
+  padding: clamp(1.15rem, 2.4vw, 1.65rem);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.staff-accounts-notice {
+  margin: 0 0 1.25rem;
+  font-size: 0.88rem;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.staff-account-row {
+  background: var(--background);
+  border: 1px solid var(--border);
+  padding: 1.15rem;
+  transition: border-color var(--motion-micro, 160ms) var(--ease-move, ease), box-shadow var(--motion-micro, 160ms) var(--ease-move, ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .staff-account-row:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.staff-account-row-head {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.staff-account-row-head > p {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.staff-account-badges {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.staff-account-role-pill,
+.staff-account-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--foreground);
+}
+
+.staff-account-role-pill[data-role="ADMIN"] {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  color: var(--accent-text);
+}
+
+.staff-account-role-pill[data-role="MANAGER"] {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+
+.staff-account-status-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted-foreground);
+}
+
+.staff-account-status-pill[data-active="true"] {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 35%, var(--border));
+}
+
+.staff-account-status-pill[data-active="true"]::before {
+  background: var(--success);
+}
+
+.staff-accounts-create > button,
+.staff-account-actions .button {
+  gap: 0.45rem;
+}
+
+@keyframes amc-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes amc-modal-in {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes dash-drawer-in-rtl {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@supports (corner-shape: squircle) {
+  .amc-dialog-content,
+  .amc-popover-content,
+  .staff-account-row {
+    corner-shape: squircle;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amc-dialog-overlay,
+  .amc-dialog-content,
+  .amc-popover-content,
+  .staff-account-row {
+    animation: none !important;
+    transition: none !important;
+  }
+}

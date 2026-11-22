@@ -63,3 +63,14 @@ it('updates staff names while revoking sessions and rejects overlong names',asyn
  expect(tx.staffUser.update).toHaveBeenCalledWith(expect.objectContaining({data:expect.objectContaining({firstName:'Mohamed',lastName:'Khaled Morad'})}));expect(tx.staffSession.deleteMany).toHaveBeenCalledWith({where:{userId:id}});
  await expect(service.update(randomUUID(),{id,firstName:'x'.repeat(81)})).rejects.toMatchObject({status:400});
 });
+
+it('restores a previously deleted staff account when recreated with the same email',async()=>{
+ const id=randomUUID(),actorId=randomUUID();
+ const restored={id,email:'restored@example.com',firstName:'New',lastName:'Staff',role:'MANAGER',active:true,createdAt:new Date()};
+ const tx={$queryRaw:vi.fn().mockResolvedValue([]),staffUser:{findMany:vi.fn().mockResolvedValue([{id,email:'restored@example.com',deletedAt:new Date()}]),update:vi.fn().mockResolvedValue(restored),create:vi.fn()},staffAuditEvent:{create:vi.fn()}};
+ const service=new StaffAccountsService({$transaction:async(fn:(value:typeof tx)=>unknown)=>fn(tx)} as unknown as PrismaService);
+ expect(await service.create(actorId,{email:'restored@example.com',firstName:'New',lastName:'Staff',role:'MANAGER',password:'Synthetic-test-password-73'})).toEqual(restored);
+ expect(tx.staffUser.create).not.toHaveBeenCalled();
+ expect(tx.staffUser.update).toHaveBeenCalledWith(expect.objectContaining({where:{id},data:expect.objectContaining({active:true,deletedAt:null,role:'MANAGER'})}));
+ expect(tx.staffAuditEvent.create).toHaveBeenCalledWith({data:{actorId,subjectId:id,action:'STAFF_ACCOUNT_CREATED'}});
+});

@@ -48,7 +48,7 @@ test('booking goes directly to the appointment and recovery remains available af
  const copy=bookingCopy('en');await mockOperations(page);await page.goto('/en/booking');
  await page.getByRole('button',{name:copy.next,exact:true}).click();
  await page.locator('.booking-slots label').first().click();await page.getByRole('button',{name:copy.next,exact:true}).click();
- await page.locator('input[name=clientName]').fill('UI Fixture Client');await page.locator('input[name=email]').fill('fixture@example.invalid');await page.locator('input[name=phone]').fill('+1 202 555 0100');
+ await page.locator('input[name=clientName]').fill('UI Fixture Client');await page.locator('input[name=clientTitle]').fill('Founder');await page.locator('input[name=company]').fill('Fixture Co');await page.locator('input[name=email]').fill('fixture@example.invalid');await page.locator('input[name=phone]').fill('+1 202 555 0100');
  await page.locator('.booking-check input').check();await page.getByRole('button',{name:copy.confirm,exact:true}).click();
  await page.getByRole('link',{name:'Go to your appointment',exact:true}).click();await expect(page.locator('.appointment-status')).toBeVisible();
  await page.evaluate(()=>sessionStorage.clear());await page.goto('/en/booking/manage');await expect(page.locator('.appointment-recovery')).toBeVisible();

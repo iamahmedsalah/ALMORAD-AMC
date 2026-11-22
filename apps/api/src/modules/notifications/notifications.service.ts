@@ -193,9 +193,9 @@ export class NotificationsService {
         let attachments: {filename: string; content: Buffer;contentId?:string;contentType?:string}[] | undefined;
 
         if(ownerAlert){
-          emailContent=renderBookingOwnerEmail({meetAction,eventKind,reference:booking.reference,clientName:booking.clientName,email:booking.email,phone:booking.phone,notes:booking.notes,company:booking.company,officeAddress:booking.calendar.officeAddressEn,serviceTitle,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,meetingUrl:booking.meetingUrl,managerName,staffUrl:`${this.webOrigin}/en/staff/calendar`});
+          emailContent=renderBookingOwnerEmail({meetAction,eventKind,reference:booking.reference,clientName:booking.clientName,clientTitle:booking.clientTitle,email:booking.email,phone:booking.phone,notes:booking.notes,company:booking.company,officeAddress:booking.calendar.officeAddressEn,directionsUrl:booking.calendar.directionsUrl||null,serviceTitle,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,meetingUrl:booking.meetingUrl,managerName,staffUrl:`${this.webOrigin}/en/staff/calendar`});
         } else if (!['BOOKING_CREATED','BOOKING_RESCHEDULED','BOOKING_CANCELLED','BOOKING_ACCESS_RECOVERY'].includes(eventKind)) {
-          emailContent=renderBookingUpdateEmail({meetAction,managerName,kind:eventKind,proposedStartAt,reference:booking.reference,clientName:booking.clientName,serviceTitle,locale:booking.locale,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,managementUrl,meetingUrl:booking.meetingUrl,officeAddress:booking.locale==='ar'?booking.calendar.officeAddressAr:booking.calendar.officeAddressEn});
+          emailContent=renderBookingUpdateEmail({meetAction,managerName,kind:eventKind,proposedStartAt,reference:booking.reference,clientName:booking.clientName,clientTitle:booking.clientTitle,serviceTitle,locale:booking.locale,meetingType:booking.meetingType,startsAt:booking.startsAt,endsAt:booking.endsAt,timezone:booking.timezone,managementUrl,meetingUrl:booking.meetingUrl,officeAddress:booking.locale==='ar'?booking.calendar.officeAddressAr:booking.calendar.officeAddressEn});
         } else if (isCancelled) {
           emailContent = renderBookingCancelledEmail({
             reference: booking.reference,
@@ -244,7 +244,7 @@ export class NotificationsService {
             });
           } else {
             emailContent = renderBookingConfirmationEmail({managerName,
-              status:booking.status,email:booking.email,phone:booking.phone,company:booking.company,
+              status:booking.status,email:booking.email,phone:booking.phone,company:booking.company,clientTitle:booking.clientTitle,
               reference: booking.reference,
               clientName: booking.clientName,
               serviceTitle,

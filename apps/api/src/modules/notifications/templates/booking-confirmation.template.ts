@@ -1,4 +1,10 @@
-import {escapeHtml, renderEmailLayout} from './email-layout.js';
+import {meetingUrlInput, officeLocation} from '@amc/shared';
+import {
+  escapeHtml,
+  renderEmailDetailGrid,
+  renderEmailLayout,
+  type EmailDetailItem
+} from './email-layout.js';
 
 export type MeetingType = 'ONLINE' | 'IN_PERSON';
 
@@ -6,6 +12,7 @@ export interface BookingConfirmationTemplateInput {
   managerName?: string;
   reference: string;
   clientName: string;
+  clientTitle?: string | null;
   serviceTitle: string;
   locale: string;
   meetingType: MeetingType;
@@ -17,9 +24,9 @@ export interface BookingConfirmationTemplateInput {
   directionsUrl?: string | null;
   meetingUrl?: string | null;
   status?: string;
-  email?:string;
-  phone?:string|null;
-  company?:string|null;
+  email?: string;
+  phone?: string | null;
+  company?: string | null;
 }
 
 export interface EmailContent {
@@ -30,6 +37,7 @@ export interface EmailContent {
 
 export function renderBookingConfirmationEmail(input: BookingConfirmationTemplateInput): EmailContent {
   const isAr = input.locale === 'ar';
+  const loc = isAr ? 'ar' : 'en';
 
   const timeFormatter = new Intl.DateTimeFormat(isAr ? 'ar-EG' : 'en-US', {
     timeZone: input.timezone,
@@ -37,47 +45,154 @@ export function renderBookingConfirmationEmail(input: BookingConfirmationTemplat
     timeStyle: 'short'
   });
 
-  const formattedTime = timeFormatter.format(input.startsAt) + ' – ' + new Intl.DateTimeFormat(isAr ? 'ar-EG' : 'en-US', {timeZone:input.timezone,timeStyle:'short'}).format(input.endsAt);
-  const locationText = input.meetingType === 'IN_PERSON'
-    ? (input.officeAddress || (isAr ? 'مقر الاستوديو' : 'Agency Office'))
-    : (input.meetingUrl || (isAr ? 'عبر الإنترنت (سيتم إرسال رابط الاجتماع)' : 'Online Meeting (Video link will be provided)'));
+  const formattedTime =
+    timeFormatter.format(input.startsAt) +
+    ' – ' +
+    new Intl.DateTimeFormat(isAr ? 'ar-EG' : 'en-US', {
+      timeZone: input.timezone,
+      timeStyle: 'short'
+    }).format(input.endsAt);
+
+  const verifiedOfficeAddress =
+    input.officeAddress?.trim() ||
+    `${officeLocation.address[loc]} · ${officeLocation.locality[loc]}`;
+  const verifiedDirectionsUrl = input.directionsUrl?.trim() || officeLocation.directionsUrl;
+  const safeMeetUrl = meetingUrlInput.safeParse(input.meetingUrl).success ? input.meetingUrl! : null;
 
   let subject = isAr
     ? `استلام طلب موعدك مع المراد AMC - ${input.reference}`
     : `Your ALMORAD AMC appointment request - ${input.reference}`;
 
   let heading = isAr ? 'تم استلام طلب موعدك' : 'Appointment request received';
-  const confirmed=input.status==='CONFIRMED';
-  if(confirmed){heading=isAr?'تم تأكيد موعدك':'Appointment confirmed';subject=`${heading} | ALMORAD AMC - ${input.reference}`;}
+  const confirmed = input.status === 'CONFIRMED';
+  if (confirmed) {
+    heading = isAr ? 'تم تأكيد موعدك' : 'Appointment confirmed';
+    subject = `${heading} | ALMORAD AMC - ${input.reference}`;
+  }
+
   const preheader = isAr
-    ? `تم حفظ طلب موعدك: ${input.serviceTitle} في ${formattedTime}`
-    : `Your appointment request for ${input.serviceTitle} on ${formattedTime} was saved.`;
+    ? `تم تأكيد تفاصيل موعدك: ${input.serviceTitle} في ${formattedTime}`
+    : `Your appointment for ${input.serviceTitle} on ${formattedTime} is ready.`;
 
-  const detailsRow = (label: string, value: string) => `
-    <tr>
-      <td style="padding:12px;text-align:center;color:#0B1F44;overflow-wrap:anywhere;border-bottom:1px solid #D9C8B7;">
-        <span style="display:block;font-weight:700;color:#A74200;">${escapeHtml(label)}</span>
-        <span style="display:block;margin-top:3px;">${value}</span>
-      </td>
-    </tr>`;
+  const items: EmailDetailItem[] = [
+    {
+      icon: 'reference',
+      label: isAr ? 'رقم المرجع' : 'Reference',
+      valueHtml: `<code dir="ltr" style="unicode-bidi:isolate;font-family:monospace;font-size:13px;font-weight:700;">${escapeHtml(input.reference)}</code>`
+    },
+    {
+      icon: 'layers',
+      label: isAr ? 'الخدمة' : 'Service',
+      valueHtml: escapeHtml(input.serviceTitle)
+    },
+    {
+      icon: input.meetingType === 'ONLINE' ? 'video' : 'mapPin',
+      label: isAr ? 'نوع الاجتماع' : 'Format',
+      valueHtml: escapeHtml(
+        input.meetingType === 'ONLINE'
+          ? isAr
+            ? 'عبر الإنترنت'
+            : 'Online'
+          : isAr
+            ? 'في المكتب'
+            : 'In person'
+      )
+    },
+    ...(input.managerName
+      ? [
+          {
+            icon: 'users' as const,
+            label: isAr ? 'مع' : 'Meeting with',
+            valueHtml: escapeHtml(input.managerName)
+          }
+        ]
+      : []),
+    ...(input.company
+      ? [
+          {
+            icon: 'building' as const,
+            label: isAr ? 'الشركة' : 'Company',
+            valueHtml: escapeHtml(input.company)
+          }
+        ]
+      : []),
+    ...(input.clientTitle
+      ? [
+          {
+            icon: 'briefcase' as const,
+            label: isAr ? 'المسمى الوظيفي' : 'Job title',
+            valueHtml: escapeHtml(input.clientTitle)
+          }
+        ]
+      : []),
+    ...(input.email
+      ? [
+          {
+            icon: 'mail' as const,
+            label: isAr ? 'البريد الإلكتروني' : 'Email',
+            valueHtml: `<span dir="ltr" style="unicode-bidi:isolate;">${escapeHtml(input.email)}</span>`
+          }
+        ]
+      : []),
+    ...(input.phone
+      ? [
+          {
+            icon: 'phone' as const,
+            label: isAr ? 'الهاتف' : 'Phone',
+            valueHtml: `<span dir="ltr" style="unicode-bidi:isolate;">${escapeHtml(input.phone)}</span>`
+          }
+        ]
+      : []),
+    {
+      icon: 'calendar',
+      label: isAr ? 'الموعد' : 'Schedule',
+      valueHtml: escapeHtml(formattedTime)
+    },
+    {
+      icon: 'globe',
+      label: isAr ? 'المنطقة الزمنية' : 'Timezone',
+      valueHtml: `<span dir="ltr" style="unicode-bidi:isolate;">${escapeHtml(input.timezone)}</span>`
+    }
+  ];
 
-  let bodyHtml = `
-    <p style="margin: 0 0 16px;">
-      ${isAr ? `مرحباً <strong>${escapeHtml(input.clientName)}</strong>، تم حفظ طلب موعدك مع استوديو المراد AMC. سيراجع الفريق تفاصيل الاجتماع.` : `Hello <strong>${escapeHtml(input.clientName)}</strong>, your appointment request with ALMORAD AMC has been saved. Our team will review the meeting details.`}
-    </p>
-    <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #FFF9F2; border-radius: 12px; padding: 12px;">
-      ${detailsRow(isAr ? 'رقم المرجع' : 'Reference', `<code dir="ltr" style="unicode-bidi:isolate;">${escapeHtml(input.reference)}</code>`)}
-      ${input.email?detailsRow(isAr?'✉ البريد الإلكتروني':'✉ Email',escapeHtml(input.email)):''}
-      ${input.phone?detailsRow(isAr?'☎ الهاتف':'☎ Phone',`<span dir="ltr">${escapeHtml(input.phone)}</span>`):''}
-      ${input.company?detailsRow(isAr?'الشركة':'Company',escapeHtml(input.company)):''}
-      ${detailsRow(isAr ? 'الخدمة' : 'Service', escapeHtml(input.serviceTitle))}
-      ${detailsRow(isAr ? 'الموعد' : 'Schedule', `${escapeHtml(formattedTime)} (${escapeHtml(input.timezone)})`)}
-      ${detailsRow(isAr ? 'المكان' : 'Location', escapeHtml(locationText))}
-      ${input.meetingType === 'ONLINE' && input.meetingUrl ? detailsRow(isAr ? 'رابط الاجتماع' : 'Join meeting', `<a href="${escapeHtml(input.meetingUrl)}">${escapeHtml(input.meetingUrl)}</a>`) : ''}
-      ${input.meetingType === 'IN_PERSON' && input.directionsUrl ? detailsRow(isAr ? 'الاتجاهات' : 'Directions', `<a href="${escapeHtml(input.directionsUrl)}" style="color: #F7761E; text-decoration: underline;">${isAr ? 'عرض على خرائط جوجل' : 'View on Google Maps'}</a>`) : ''}
-      ${input.managerName?detailsRow(isAr?'\u0645\u0639':'Meeting with',escapeHtml(input.managerName)):''}
-    </table>
-    <p style="margin: 16px 0 0; font-size: 14px; color: #625D52;">
+  if (input.meetingType === 'ONLINE') {
+    items.push({
+      icon: 'video',
+      label: isAr ? 'رابط الاجتماع' : 'Meeting link',
+      fullWidth: true,
+      valueHtml: safeMeetUrl
+        ? `<a href="${escapeHtml(safeMeetUrl)}" dir="ltr" style="color:#0B1F44;text-decoration:underline;word-break:break-all;">${escapeHtml(safeMeetUrl)}</a><div style="margin-top:10px;"><a href="${escapeHtml(safeMeetUrl)}" style="display:inline-block;padding:9px 18px;background:#0B1F44;color:#FBF1E6;border-radius:10px;font-weight:700;font-size:13px;text-decoration:none;">${isAr ? 'الانضمام عبر Google Meet' : 'Join Google Meet'}</a></div>`
+        : escapeHtml(
+            isAr
+              ? 'عبر الإنترنت (سيتم إرسال رابط الاجتماع فور تجهيزه)'
+              : 'Online meeting (Video link will be shared once ready)'
+          )
+    });
+  }
+
+  items.push({
+    icon: 'mapPin',
+    label: isAr ? 'عنوان المكتب' : 'Office location',
+    fullWidth: true,
+    valueHtml: `<span>${escapeHtml(verifiedOfficeAddress)}</span>${
+      verifiedDirectionsUrl
+        ? `<div style="margin-top:8px;"><a href="${escapeHtml(verifiedDirectionsUrl)}" style="color:#A74200;font-weight:700;text-decoration:underline;">${isAr ? 'عرض الموقع والاتجاهات على خرائط Google ↗' : 'View location & directions on Google Maps ↗'}</a></div>`
+        : ''
+    }`
+  });
+
+  const introText = confirmed
+    ? isAr
+      ? `مرحباً <strong>${escapeHtml(input.clientName)}</strong>، تم تأكيد موعدك مع استوديو المراد AMC. ستجد جميع تفاصيل الاجتماع أدناه.`
+      : `Hello <strong>${escapeHtml(input.clientName)}</strong>, your appointment with ALMORAD AMC is confirmed. All meeting details are below.`
+    : isAr
+      ? `مرحباً <strong>${escapeHtml(input.clientName)}</strong>، تم حفظ طلب موعدك مع استوديو المراد AMC. سيراجع الفريق تفاصيل الاجتماع.`
+      : `Hello <strong>${escapeHtml(input.clientName)}</strong>, your appointment request with ALMORAD AMC has been saved. Our team will review the meeting details.`;
+
+  const bodyHtml = `
+    <p style="margin:0 0 16px;">${introText}</p>
+    ${renderEmailDetailGrid(items, input.locale)}
+    <p style="margin:14px 0 0;font-size:13px;color:#465676;">
       ${isAr ? 'تم إرفاق ملف التقويم (.ics) لتثبيت الموعد على تقويمك الشخصي.' : 'A calendar invite (.ics) is attached to add this meeting to your calendar.'}
     </p>
   `;
@@ -98,16 +213,57 @@ export function renderBookingConfirmationEmail(input: BookingConfirmationTemplat
     footerNote
   });
 
-  let text = isAr
-    ? `مرحباً ${input.clientName}،\n\nتم حفظ طلب موعدك لدى المراد AMC. سيراجع الفريق التفاصيل.\n\nرقم المرجع: ${input.reference}\nالخدمة: ${input.serviceTitle}\nالموعد: ${formattedTime} (${input.timezone})\nالمكان: ${locationText}\n${input.directionsUrl ? `اتجاهات الوصول: ${input.directionsUrl}\n` : ''}\nإدارة موعدك:\n${input.managementUrl}\n\nفريق المراد AMC\nhttps://almorad-amc.com`
-    : `Hello ${input.clientName},\n\nYour appointment request with ALMORAD AMC was saved. Our team will review the meeting details.\n\nReference: ${input.reference}\nService: ${input.serviceTitle}\nDate & Time: ${formattedTime} (${input.timezone})\nLocation: ${locationText}\n${input.directionsUrl ? `Directions: ${input.directionsUrl}\n` : ''}\nManage your booking:\n${input.managementUrl}\n\nALMORAD AMC Team\nhttps://almorad-amc.com`;
+  const textLines = isAr
+    ? [
+        `مرحباً ${input.clientName}،`,
+        '',
+        confirmed ? 'تم تأكيد موعدك مع استوديو المراد AMC.' : 'تم حفظ طلب موعدك مع استوديو المراد AMC.',
+        '',
+        `رقم المرجع: ${input.reference}`,
+        ...(input.company ? [`الشركة: ${input.company}`] : []),
+        ...(input.clientTitle ? [`المسمى الوظيفي: ${input.clientTitle}`] : []),
+        `الخدمة: ${input.serviceTitle}`,
+        `نوع الاجتماع: ${input.meetingType === 'ONLINE' ? 'عبر الإنترنت' : 'في المكتب'}`,
+        ...(input.managerName ? [`مع: ${input.managerName}`] : []),
+        `الموعد: ${formattedTime} (${input.timezone})`,
+        ...(input.meetingType === 'ONLINE'
+          ? [`رابط الاجتماع: ${safeMeetUrl || 'سيتم إرسال الرابط فور تجهيزه'}`]
+          : []),
+        `عنوان المكتب: ${verifiedOfficeAddress}`,
+        `اتجاهات الوصول: ${verifiedDirectionsUrl}`,
+        '',
+        'إدارة موعدك:',
+        input.managementUrl,
+        '',
+        'فريق المراد AMC',
+        'https://almorad-amc.com'
+      ]
+    : [
+        `Hello ${input.clientName},`,
+        '',
+        confirmed
+          ? 'Your appointment with ALMORAD AMC is confirmed.'
+          : 'Your appointment request with ALMORAD AMC was saved. Our team will review the meeting details.',
+        '',
+        `Reference: ${input.reference}`,
+        ...(input.company ? [`Company: ${input.company}`] : []),
+        ...(input.clientTitle ? [`Job title: ${input.clientTitle}`] : []),
+        `Service: ${input.serviceTitle}`,
+        `Format: ${input.meetingType === 'ONLINE' ? 'Online' : 'In person'}`,
+        ...(input.managerName ? [`Meeting with: ${input.managerName}`] : []),
+        `Date & Time: ${formattedTime} (${input.timezone})`,
+        ...(input.meetingType === 'ONLINE'
+          ? [`Meeting link: ${safeMeetUrl || 'Online Meeting (Video link will be provided)'}`]
+          : []),
+        `Office location: ${verifiedOfficeAddress}`,
+        `Directions: ${verifiedDirectionsUrl}`,
+        '',
+        'Manage your booking:',
+        input.managementUrl,
+        '',
+        'ALMORAD AMC Team',
+        'https://almorad-amc.com'
+      ];
 
-  if(input.managerName)text+='\n'+(isAr?'\u0645\u0639: ':'Meeting with: ')+input.managerName;
-  if(confirmed){
-    const old=isAr?'تم حفظ طلب موعدك لدى المراد AMC. سيراجع الفريق التفاصيل.':'Your appointment request with ALMORAD AMC was saved. Our team will review the meeting details.';
-    text=text.replace(old,isAr?'تم تأكيد موعدك لدى المراد AMC.':'Your appointment with ALMORAD AMC is confirmed.');
-    bodyHtml=bodyHtml.replace(isAr?'تم حفظ طلب موعدك مع استوديو المراد AMC. سيراجع الفريق تفاصيل الاجتماع.':'your appointment request with ALMORAD AMC has been saved. Our team will review the meeting details.',isAr?'تم تأكيد موعدك مع استوديو المراد AMC.':'your appointment with ALMORAD AMC is confirmed.');
-    return {subject,text,html:renderEmailLayout({locale:input.locale,heading,preheader:heading,bodyHtml,cta:{label:isAr?'إدارة الموعد':'Manage appointment',url:input.managementUrl},footerNote})};
-  }
-  return {subject, text, html};
+  return {subject, text: textLines.join('\n'), html};
 }

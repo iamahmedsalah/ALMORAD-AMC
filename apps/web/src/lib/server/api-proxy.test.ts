@@ -44,4 +44,12 @@ describe('public API proxy failure boundary',()=>{
   vi.stubEnv('STAFF_PROXY_SECRET',undefined);const fetch=vi.fn();vi.stubGlobal('fetch',fetch);
   expect((await forward(request('booking/config'),'config','booking')).status).toBe(503);expect(fetch).not.toHaveBeenCalled();
  });
+ it('forwards staff account deletion and inquiry management routes',async()=>{
+  const fetch=vi.fn().mockImplementation(()=>Promise.resolve(Response.json({deleted:true},{status:200})));vi.stubGlobal('fetch',fetch);
+  for(const endpoint of ['accounts/delete','inquiries/create','inquiries/delete']){
+   const response=await forward(request(`staff/${endpoint}`,'{}'),endpoint,'staff');
+   expect(response.status).toBe(200);
+  }
+  expect(fetch).toHaveBeenCalledTimes(3);
+ });
 });
