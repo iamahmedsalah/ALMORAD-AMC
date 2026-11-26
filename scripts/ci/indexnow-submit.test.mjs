@@ -67,7 +67,7 @@ test('parses canonical sitemap URLs and rejects foreign hosts', () => {
 
 test('verifies live keyLocation and submits official IndexNow JSON payload accepting 200 and 202', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'amc-indexnow-submit-'));
-  const fixtureKey = '0123456789abcdef0123456789abcdef';
+  const fixtureKey = 'a'.repeat(32);
   writeFileSync(join(dir, `${fixtureKey}.txt`), fixtureKey, 'utf8');
 
   const sitemapXml = `<urlset>
@@ -143,7 +143,7 @@ test('verifies live keyLocation and submits official IndexNow JSON payload accep
 
 test('dry-run parses sitemap without calling api.indexnow.org', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'amc-indexnow-dry-'));
-  const fixtureKey = 'fedcba9876543210fedcba9876543210';
+  const fixtureKey = 'b'.repeat(32);
   writeFileSync(join(dir, `${fixtureKey}.txt`), fixtureKey, 'utf8');
 
   const calls = [];
