@@ -46,7 +46,8 @@
     "preview:build": "node scripts/local-runtime.mjs build",
     "preview:local": "node scripts/local-runtime.mjs preview",
     "crm:check": "node scripts/check-hubspot.mjs",
-    "email:test": "node scripts/test-email.mjs"
+    "email:test": "node scripts/test-email.mjs",
+    "seo:indexnow": "node scripts/ci/indexnow-submit.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",

@@ -85,6 +85,9 @@ jobs:
           RELEASE_URL: https://almorad-amc.com
       - name: Verify public domain redirects
         run: node scripts/ci/domain-redirect-smoke.mjs
+      - name: Notify Bing IndexNow of updated sitemap URLs
+        continue-on-error: true
+        run: node scripts/ci/indexnow-submit.mjs
       - name: Summarize release
         shell: bash
         run: |
