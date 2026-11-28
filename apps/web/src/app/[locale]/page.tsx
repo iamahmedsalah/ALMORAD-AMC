@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       : 'ALMORAD AMC | Advertising, Marketing & Consulting Agency';
   const description =
     locale === 'ar'
-      ? 'المراد AMC وكالة دعاية وإعلان وتسويق واستشارات في الإسكندرية، مصر. نقدم خدمات التسويق الرقمي وبناء العلامات التجارية والإعلان والاستشارات وتطوير المواقع.'
-      : 'ALMORAD AMC is an advertising, marketing & consulting agency in Alexandria, Egypt, offering branding, digital marketing, media buying, consulting & web development.';
+      ? 'المراد AMC — وكالة دعاية وإعلان وتسويق واستشارات في الإسكندرية، مصر: التسويق الرقمي، الهوية التجارية، الإعلان، الاستشارات، وتطوير المواقع الإلكترونية.'
+      : 'ALMORAD AMC — advertising, marketing & consulting agency in Alexandria, Egypt: branding, digital marketing, media buying, consulting & web development.';
   return pageMetadata(locale, '', title, description, { absoluteTitle: true });
 }
 

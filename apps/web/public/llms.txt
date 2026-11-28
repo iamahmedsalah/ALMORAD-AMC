@@ -1,0 +1,46 @@
+# ALMORAD AMC (المراد AMC)
+
+> Advertising, Marketing, Branding, Consulting & Web Development Agency in Smouha, Alexandria, Egypt.
+
+## Entity Identity
+- **Official Brand**: ALMORAD AMC (`المراد AMC`)
+- **Official Website**: https://almorad-amc.com
+- **Location**: 18 Zaki Ragab Street, High Class 1 Tower, Floor 7, Smouha, Alexandria Governorate, Egypt
+- **Area Served**: Egypt (Alexandria, Cairo, and nationwide)
+
+## Canonical Pages
+- English Home: https://almorad-amc.com/en
+- Arabic Home (العربية): https://almorad-amc.com/ar
+- Services Directory (EN): https://almorad-amc.com/en/services
+- Services Directory (AR): https://almorad-amc.com/ar/services
+- About Us: https://almorad-amc.com/en/about | https://almorad-amc.com/ar/about
+- FAQ: https://almorad-amc.com/en/faq | https://almorad-amc.com/ar/faq
+- Contact & Consultation Booking: https://almorad-amc.com/en/contact | https://almorad-amc.com/ar/contact
+- XML Sitemap: https://almorad-amc.com/sitemap.xml
+
+## Four Core Pillars
+1. **Marketing (التسويق)**: https://almorad-amc.com/en/services/marketing | https://almorad-amc.com/ar/services/marketing
+2. **Advertising (الإعلان)**: https://almorad-amc.com/en/services/advertising | https://almorad-amc.com/ar/services/advertising
+3. **Consulting (الاستشارات)**: https://almorad-amc.com/en/services/consulting | https://almorad-amc.com/ar/services/consulting
+4. **Web Development (تطوير المواقع)**: https://almorad-amc.com/en/services/web-development | https://almorad-amc.com/ar/services/web-development
+
+## Specialized Services
+- **Social Media Management (إدارة منصات التواصل الاجتماعي)**: https://almorad-amc.com/en/services/social-media-management | https://almorad-amc.com/ar/services/social-media-management
+- **Personal Branding (بناء العلامة الشخصية)**: https://almorad-amc.com/en/services/personal-branding | https://almorad-amc.com/ar/services/personal-branding
+- **Market Research & Analysis (أبحاث السوق وتحليلها)**: https://almorad-amc.com/en/services/market-research-analysis | https://almorad-amc.com/ar/services/market-research-analysis
+- **Branding (بناء الهوية والعلامة التجارية)**: https://almorad-amc.com/en/services/branding | https://almorad-amc.com/ar/services/branding
+- **Media Buying (شراء المساحات الإعلانية)**: https://almorad-amc.com/en/services/media-buying | https://almorad-amc.com/ar/services/media-buying
+- **Billboards & Outdoor Advertising (اللوحات والإعلانات الخارجية)**: https://almorad-amc.com/en/services/outdoor-advertising | https://almorad-amc.com/ar/services/outdoor-advertising
+- **Corporate Events (فعاليات الشركات)**: https://almorad-amc.com/en/services/corporate-events | https://almorad-amc.com/ar/services/corporate-events
+- **E-commerce Consulting (استشارات التجارة الإلكترونية)**: https://almorad-amc.com/en/services/ecommerce-consulting | https://almorad-amc.com/ar/services/ecommerce-consulting
+- **Management Consulting (الاستشارات الإدارية)**: https://almorad-amc.com/en/services/management-consulting | https://almorad-amc.com/ar/services/management-consulting
+- **E-commerce Websites (مواقع التجارة الإلكترونية)**: https://almorad-amc.com/en/services/ecommerce-website-development | https://almorad-amc.com/ar/services/ecommerce-website-development
+- **Company Websites & Landing Pages (مواقع الشركات وصفحات الهبوط)**: https://almorad-amc.com/en/services/company-websites-landing-pages | https://almorad-amc.com/ar/services/company-websites-landing-pages
+
+## Official Social Channels
+- LinkedIn: https://www.linkedin.com/company/almorad-amc/
+- Facebook: https://www.facebook.com/almoradamc
+- Instagram: https://www.instagram.com/almoradamc/
+- X: https://x.com/almoradamc
+- TikTok: https://www.tiktok.com/@almoradamc
+- YouTube: https://www.youtube.com/@AlmoradAMC

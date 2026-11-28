@@ -1,18 +1,48 @@
-import type {MetadataRoute} from 'next';
-import {siteOrigin} from '@/lib/seo/metadata';
+import type { MetadataRoute } from 'next';
+import { siteOrigin } from '@/lib/seo/metadata';
 
-export default function robots():MetadataRoute.Robots {
-  const origin=siteOrigin();
-  const published=Boolean(origin)&&process.env.NEXT_PUBLIC_CONTENT_APPROVED==='true';
+const PRIVATE_PATHS = ['/staff', '/*/staff', '/*/booking/manage', '/api'];
+const PUBLIC_ALLOW = [
+  '/',
+  '/favicon.ico',
+  '/favicon-48.png',
+  '/favicon-96.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png',
+];
+
+export default function robots(): MetadataRoute.Robots {
+  const origin = siteOrigin();
+  const published = Boolean(origin) && process.env.NEXT_PUBLIC_CONTENT_APPROVED === 'true';
+
+  if (!published) {
+    return {
+      rules: [{ userAgent: '*', disallow: '/' }],
+    };
+  }
+
   return {
-    rules:[
+    rules: [
+      { userAgent: '*', allow: PUBLIC_ALLOW, disallow: PRIVATE_PATHS },
+      { userAgent: 'Bingbot', allow: PUBLIC_ALLOW, disallow: PRIVATE_PATHS },
+      { userAgent: 'msnbot', allow: PUBLIC_ALLOW, disallow: PRIVATE_PATHS },
+      { userAgent: 'Googlebot', allow: PUBLIC_ALLOW, disallow: PRIVATE_PATHS },
+      { userAgent: 'Googlebot-Image', allow: PUBLIC_ALLOW, disallow: PRIVATE_PATHS },
       {
-        userAgent:'*',
-        allow:published?['/', '/favicon.ico', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png']:undefined,
-        disallow:published?['/staff','/*/staff','/*/booking/manage','/api']:'/',
+        userAgent: [
+          'GPTBot',
+          'OAI-SearchBot',
+          'ChatGPT-User',
+          'PerplexityBot',
+          'ClaudeBot',
+          'Claude-SearchBot',
+          'Google-Extended',
+        ],
+        allow: '/',
+        disallow: PRIVATE_PATHS,
       },
-      ...(published?[{userAgent:'Googlebot-Image',allow:['/','/icon-192.png','/icon-512.png','/favicon.ico']}]:[]),
     ],
-    sitemap:published?`${origin}/sitemap.xml`:undefined,
+    sitemap: `${origin}/sitemap.xml`,
   };
 }

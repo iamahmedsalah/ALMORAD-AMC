@@ -50,6 +50,10 @@ export function organizationJsonLd(locale: Locale, origin: string | null) {
       locale === 'ar'
         ? 'المراد AMC وكالة دعاية وإعلان وتسويق واستشارات في الإسكندرية، مصر.'
         : 'ALMORAD AMC is an advertising, marketing & consulting agency in Alexandria, Egypt.',
+    disambiguatingDescription:
+      locale === 'ar'
+        ? 'المراد AMC (almorad-amc.com) وكالة دعاية وإعلان وتسويق رقمي واستشارات وتطوير مواقع في سموحة، الإسكندرية، مصر.'
+        : 'ALMORAD AMC (almorad-amc.com) is an Alexandria, Egypt advertising, marketing, branding, consulting, and web development agency located in Smouha.',
     knowsAbout: [
       'Advertising',
       'Marketing',
