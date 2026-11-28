@@ -163,7 +163,7 @@ export function StaffWorkspaceShell({locale,view,children}:{locale:Locale;view:N
   <div className="staff-workspace operations-workspace dash-shell" data-sidebar-collapsed={collapsed||undefined}>
    <aside className="operations-sidebar" aria-label={c.title}>
     <div className="operations-sidebar-head">
-     {!collapsed&&<span className="operations-sidebar-brand"><Image className="operations-logo-light" src="/brand/amc-mark.svg" alt="" width={32} height={20} unoptimized/><Image className="operations-logo-dark" src="/brand/amc-mark-on-dark.svg" alt="" width={32} height={20} unoptimized/><span>ALMORAD AMC</span></span>}
+     {!collapsed&&<span className="operations-sidebar-brand"><Image className="operations-logo-light" src="/brand/amc-mark.svg" alt="ALMORAD AMC" width={32} height={20} unoptimized/><Image className="operations-logo-dark" src="/brand/amc-mark-on-dark.svg" alt="ALMORAD AMC" width={32} height={20} unoptimized/><span>ALMORAD AMC</span></span>}
      <Tooltip label={collapseLabel} locale={locale}>
       <button
        type="button"

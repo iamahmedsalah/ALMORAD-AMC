@@ -15,8 +15,8 @@ export function BrandTicker({locale}: {locale: Locale}) {
       {[0, 1].map((copy) => <div className="brand-ticker-set" key={copy} aria-hidden={copy === 1}>
         {labels.map((label) => <div className="brand-ticker-item" key={label}>
           <span className="brand-ticker-logo" aria-hidden="true">
-            <Image src="/brand/amc-mark.svg" alt="" width={120} height={45} className="brand-ticker-light" />
-            <Image src="/brand/amc-mark-on-dark.svg" alt="" width={120} height={45} className="brand-ticker-dark" />
+            <Image src="/brand/amc-mark.svg" alt={locale === 'ar' ? `شعار المراد AMC — ${label}` : `ALMORAD AMC — ${label}`} width={120} height={45} className="brand-ticker-light" />
+            <Image src="/brand/amc-mark-on-dark.svg" alt={locale === 'ar' ? `شعار المراد AMC — ${label}` : `ALMORAD AMC — ${label}`} width={120} height={45} className="brand-ticker-dark" />
           </span>
           <span className="brand-ticker-label" dir="auto">{label}</span>
         </div>)}

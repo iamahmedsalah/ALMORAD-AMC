@@ -101,7 +101,7 @@ export function Landing({ locale }: { locale: Locale }) {
                         unoptimized
                         loading="eager"
                         src={heroFramePhotos[idx] ?? '/studio/studio-01.svg'}
-                        alt=""
+                        alt={`${title} — ${sub}`}
                         width={480}
                         height={320}
                         className="w-full h-full object-cover"

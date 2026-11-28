@@ -23,10 +23,11 @@ export function Container({
   return <div className={`container ${className}`}>{children}</div>;
 }
 
-function LogoLockup() {
-  return <span className="brand-lockup footer-lockup">
-    <Image src="/brand/footer-logo-on-light.svg" alt="" width={1370} height={286} className="brand-lockup-light"  />
-    <Image src="/brand/footer-logo-on-dark.svg" alt="" width={1370} height={286} className="brand-lockup-dark"  />
+function LogoLockup({ locale }: { locale: Locale }) {
+  const alt = locale === 'ar' ? 'شعار المراد AMC — وكالة دعاية وإعلان وتسويق واستشارات' : 'ALMORAD AMC — Advertising, Marketing & Consulting Agency logo';
+  return <span className="brand-lockup footer-lockup" aria-hidden="true">
+    <Image src="/brand/footer-logo-on-light.svg" alt={alt} width={1370} height={286} className="brand-lockup-light"  />
+    <Image src="/brand/footer-logo-on-dark.svg" alt={alt} width={1370} height={286} className="brand-lockup-dark"  />
   </span>;
 }
 
@@ -94,7 +95,7 @@ export async function Footer() {
       <Container>
         <div className="footer-top-grid">
           <div className="footer-identity">
-            <Link href="/" aria-label="ALMORAD AMC"><LogoLockup /></Link>
+            <Link href="/" aria-label="ALMORAD AMC"><LogoLockup locale={locale} /></Link>
             <p>{c.footer}</p>
             <address className="footer-contact"><p><SolarIcon name="map-point-linear"/>{officeAddress[locale]}</p>{contact.phone&&<a href={'tel:'+contact.phone.replace(/[^+0-9]/g,'')}><SolarIcon name="phone-linear"/><bdi>{contact.phone}</bdi></a>}{contact.email&&<a href={'mailto:'+contact.email}><SolarIcon name="letter-linear"/><bdi>{contact.email}</bdi></a>}</address>
           </div>

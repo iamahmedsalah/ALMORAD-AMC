@@ -62,8 +62,8 @@ export function ApproachJourney({steps}: {steps: readonly (readonly string[])[]}
   }, []);
   return <div className="approach-journey" ref={root}>
     <div className="approach-traveller brand-lockup" aria-hidden="true">
-      <Image src="/brand/amc-mark.svg" width={72} height={27} alt="" className="brand-lockup-light" />
-      <Image src="/brand/amc-mark-on-dark.svg" width={72} height={27} alt="" className="brand-lockup-dark" />
+      <Image src="/brand/amc-mark.svg" width={72} height={27} alt="ALMORAD AMC emblem" className="brand-lockup-light" />
+      <Image src="/brand/amc-mark-on-dark.svg" width={72} height={27} alt="ALMORAD AMC emblem" className="brand-lockup-dark" />
     </div>
     <ol className="approach-grid grid sm:grid-cols-2 gap-6">
       {steps.map(([title, body]) => <li key={title} className="approach-card glass-surface rounded-squircle-lg p-6 sm:p-8">
